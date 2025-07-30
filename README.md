@@ -1,54 +1,89 @@
+# 🤖**🎉 FREE OPEN SOURCE RELEASE - Build Your Own AI Friend!**
 
-# Lackadaisical AI Chat – Frontend 🎨
+> **[🚀 GET STARTED NOW →](README-RELEASE.md)** | **[💾 Download Release](INSTALL.md)** | **[🤝 Contribute](CONTRIBUTING.md)** | **[🔒 Security](SECURITY.md)**
 
-> **Beautiful, responsive, and privacy-first React interface for your AI companion**
+**⚠️ Export Control Notice:** This software is subject to US export controls. Not authorized for use in embargoed countries. See [SECURITY.md](SECURITY.md) for details.Lackadaisical AI Chat
 
-A modern, feature-rich frontend built with React, TypeScript, and Tailwind CSS. This isn't just another chat interface—it's a complete AI companion experience with personality, memory, and extensibility.
+> **Your privacy-first AI companion that grows with you**
+
+**🎉 FREE OPEN SOURCE RELEASE - Build Your Own AI Friend!**
+
+> **[� GET STARTED NOW →](README-RELEASE.md)** | **[� Download Release](INSTALL.md)** | **[🤝 Contribute](CONTRIBUTING.md)**
 
 ---
 
-**Lackadaisical AI Chat by Lackadaisical Security**  
-**https://lackadaisical-security.com**  
-**Built: 25/07/2025**
+## ⚡ Quick Start
+
+### Want to Use It?
+**→ Read the [Complete Installation Guide](INSTALL.md)**
+
+### Want to Contribute?
+**→ Check the [Contributing Guide](CONTRIBUTING.md)**
+
+### Having Issues?
+**→ See the [Troubleshooting Guide](TROUBLESHOOTING.md)**
 
 ---
 
-## ✨ Features That Matter
+## 🌟 Why Lackadaisical AI Chat?
 
-### 🎨 **Stunning User Interface**
+### 🛡️ **100% Privacy Focused**
+- **Everything runs locally** - No cloud dependencies
+- **Zero data collection** - Your conversations stay on your machine
+- **Open source** - Verify exactly what the code does
+- **Encrypted storage** - Optional AES-256 encryption for conversations
+
+### 🧠 **True AI Companionship**
+- **Persistent memory** - Remembers your conversations across sessions
+- **Evolving personality** - Adapts and grows with your interactions
+- **Emotional intelligence** - Understands context and mood
+- **Local AI processing** - Works with Ollama and other local models
+
+### 🔌 **Extensible Platform**
+- **Plugin system** - Add weather, horoscopes, custom features
+- **Multiple AI providers** - Ollama, OpenAI, Anthropic, Google, xAI
+- **Modern tech stack** - React 18, Node.js, TypeScript, SQLite
+- **Developer friendly** - Well-documented APIs and architecture
+
+### 📄 **Dual License - Best of Both Worlds**
+- **Free for personal use** - Use, modify, and share for non-commercial purposes
+- **Commercial licensing available** - Fair pricing for business use
+- **Open source community** - Contributions welcome and encouraged
+- **Sustainable development** - Licensing supports continued development
+
+---
+
+## ✨ What Makes This Special?
+
+### 🛡️ **Privacy by Design**
+- **Zero Cloud Dependencies**: Everything runs locally on your machine
+- **No Telemetry**: We don't collect, track, or sell your data
+- **Encrypted Storage**: Optional AES-256 encryption for your conversations
+- **Local Processing**: AI responses generated on your hardware
+
+### 🧠 **Intelligent Memory System**
+- **Persistent Context**: Your AI remembers conversations across sessions
+- **Dynamic Personality**: AI personality evolves based on your interactions
+- **Sentiment Analysis**: Real-time mood tracking and emotional intelligence
+- **Cross-Session Recall**: Seamless conversation continuity
+
+### 🎨 **Beautiful, Modern Interface**
 - **5 Beautiful Themes**: Light, Dark, Retro, Terminal, and Matrix
-- **Responsive Design**: Perfect on desktop, tablet, and mobile
-- **Real-time Streaming**: Watch AI responses generate live
-- **Smooth Animations**: Polished interactions and transitions
-- **Accessibility**: WCAG AA compliant with keyboard navigation
+- **Responsive Design**: Works perfectly on desktop, tablet, and mobile
+- **Real-time Streaming**: Watch AI responses generate in real-time
+- **Intuitive Navigation**: Clean, accessible interface design
 
-### 🧠 **Intelligent Chat Experience**
-- **Message Streaming**: Real-time AI response generation
-- **Context Management**: View and control session memory
-- **Sentiment Analysis**: See emotional intelligence in action
-- **File Attachments**: Support for images, documents, and more
-- **Voice Messages**: Record and send audio messages
+### 🔌 **Extensible Plugin System**
+- **Weather Integration**: Get real-time weather updates
+- **Horoscope Plugin**: Daily astrological insights
+- **Poetry Generator**: AI-generated poems and creative content
+- **Custom Plugins**: Easy to create and integrate your own
 
 ### 📝 **Personal Journal System**
-- **AI-Assisted Writing**: Get help with reflective journaling
-- **Mood Tracking**: Automatic emotion and sentiment analysis
-- **Tag Organization**: Easy categorization and search
+- **Reflective Writing**: AI-assisted journaling with mood tracking
+- **Analytics Dashboard**: Insights into your writing patterns
 - **Export Options**: JSON, CSV, TXT, and Markdown formats
-- **Privacy Controls**: Choose what to keep private
-
-### 🔌 **Plugin Ecosystem**
-- **Built-in Plugins**: Weather, horoscope, poetry, and more
-- **Plugin Management**: Enable, disable, and configure plugins
-- **Real-time Execution**: Test plugins with live results
-- **Usage Statistics**: Track plugin performance and usage
-- **Custom Development**: Easy plugin creation and integration
-
-### ⚙️ **Comprehensive Settings**
-- **Theme Customization**: Choose from 5 beautiful themes
-- **AI Configuration**: Manage API keys and providers
-- **Privacy Controls**: Granular privacy and security settings
-- **Import/Export**: Backup and restore your settings
-- **Performance Tuning**: Optimize for your device
+- **Privacy Controls**: Choose what to keep private or share
 
 ---
 
@@ -57,243 +92,210 @@ A modern, feature-rich frontend built with React, TypeScript, and Tailwind CSS. 
 ### Prerequisites
 - **Node.js** v18+ (LTS recommended)
 - **npm** v9+ or **yarn** v1.22+
-- **Backend Server** running (see main README)
+- **Git** for version control
 
 ### Installation
 
-1. **Install dependencies**
+1. **Clone the repository**
    ```bash
-   cd frontend
+   git clone https://github.com/lackadaisical-security/lackadaisical-ai-chat.git
+   cd lackadaisical-ai-chat
+   ```
+
+2. **Set up environment variables**
+   ```bash
+   cp env.example .env
+   # Edit .env with your preferred settings
+   ```
+
+3. **Install dependencies**
+   ```bash
+   # Backend dependencies
+   cd backend
+   npm install
+   
+   # Frontend dependencies
+   cd ../frontend
    npm install
    ```
 
-2. **Configure environment**
+4. **Start the development servers**
    ```bash
-   # Create .env file
-   cp .env.example .env
+   # Terminal 1: Start backend
+   cd backend
+   npm run dev
    
-   # Edit .env with your backend URL
-   VITE_API_URL=http://localhost:3001
-   VITE_WS_HOST=localhost:3001
-   ```
-
-3. **Start development server**
-   ```bash
+   # Terminal 2: Start frontend
+   cd frontend
    npm run dev
    ```
 
-4. **Open your browser**
+5. **Open your browser**
    Navigate to `http://localhost:5173` and start chatting!
 
 ---
 
 ## 🏗️ Architecture
 
-### **Core Technologies**
+### **Frontend Stack**
 - **React 18** with TypeScript for type safety
 - **Vite** for lightning-fast development and builds
 - **Tailwind CSS** + **DaisyUI** for beautiful, responsive UI
 - **Zustand** for lightweight, powerful state management
 - **React Router** for seamless navigation
 
-### **State Management**
-```typescript
-// Zustand store with persistence
-interface AppStore {
-  // Chat state
-  currentSession: ChatSession | null;
-  messages: Message[];
-  isStreaming: boolean;
-  
-  // Context/Memory
-  contextWindow: any[] | null;
-  contextLoading: boolean;
-  
-  // UI state
-  theme: Theme;
-  sidebarOpen: boolean;
-  
-  // Actions
-  addMessage: (message: Message) => void;
-  setTheme: (theme: Theme) => void;
-  fetchContext: (sessionId: string) => Promise<void>;
-}
-```
+### **Backend Stack**
+- **Node.js** with **Express** and **TypeScript**
+- **SQLite** (default) with optional **PostgreSQL**/**MySQL** support
+- **better-sqlite3** for high-performance database operations
+- **WebSocket** + **Server-Sent Events** for real-time communication
 
-### **Component Architecture**
-```
-src/
-├── components/
-│   ├── Chat/
-│   │   ├── ChatInterface.tsx      # Main chat interface
-│   │   ├── MessageBubble.tsx      # Individual message display
-│   │   ├── ChatInput.tsx          # Message input with features
-│   │   └── ChatSidebar.tsx        # Session management
-│   ├── Journal/
-│   │   └── JournalInterface.tsx   # Journal management
-│   ├── Plugins/
-│   │   └── PluginInterface.tsx    # Plugin management
-│   ├── Settings/
-│   │   └── SettingsInterface.tsx  # Settings panel
-│   ├── Layout/
-│   │   └── Layout.tsx             # Main layout wrapper
-│   └── ui/
-│       └── Button.tsx             # Reusable UI components
-├── store/
-│   └── index.ts                   # Zustand store configuration
-├── services/
-│   └── api.ts                     # API client and utilities
-├── types/
-│   └── index.ts                   # TypeScript type definitions
-└── utils/
-    └── cn.ts                      # Utility functions
-```
+### **AI Integration**
+- **Ollama** for local AI processing (recommended)
+- **OpenAI** GPT models via API
+- **Anthropic** Claude models via API
+- **Google** Gemini models via API
+- **xAI** Grok models via API
+
+### **Security Features**
+- **Optional SQLCipher** encryption for database
+- **Rate limiting** and **CORS** protection
+- **JWT** authentication with secure session management
+- **Input validation** and **sanitization**
 
 ---
 
-## 🎯 Key Components
+## 🎯 Key Features
 
-### **ChatInterface**
-The heart of the application, featuring:
-- Real-time message streaming with Server-Sent Events
-- Message history with infinite scroll
+### **Chat Interface**
+- Real-time message streaming
+- Message history with search
 - Context window management
 - Sentiment analysis display
 - File attachment support
 - Voice message recording
 
-### **MessageBubble**
-Individual message display with:
-- User/assistant message styling
-- Copy, edit, and delete actions
-- Sentiment analysis indicators
-- Message metadata (timestamp, tokens, response time)
-- Accessibility features
+### **Session Management**
+- Multiple concurrent chat sessions
+- Session renaming and organization
+- Context preservation across sessions
+- Export conversation history
+- Session analytics and insights
 
-### **ChatInput**
-Advanced input component with:
-- Auto-resizing textarea
-- Character limit with validation
-- File upload support
-- Voice recording capability
-- Keyboard shortcuts (Enter to send, Shift+Enter for new line)
-- Input composition handling
+### **Personality Engine**
+- Dynamic mood tracking
+- Personality trait evolution
+- Context-aware responses
+- Emotional intelligence
+- Learning from interactions
 
-### **ChatSidebar**
-Session management panel with:
-- Session list with search and filtering
-- Context window display and management
-- Session creation, editing, and deletion
-- Real-time session updates
-- Mobile-responsive design
-
-### **JournalInterface**
-Complete journal management with:
-- AI-assisted writing interface
+### **Journal System**
+- AI-assisted reflective writing
 - Mood and emotion tracking
 - Tag-based organization
-- Export functionality (JSON, CSV, TXT, Markdown)
-- Analytics dashboard
+- Export in multiple formats
 - Privacy level controls
 
-### **PluginInterface**
-Plugin management system with:
-- Plugin listing and status
-- Enable/disable functionality
+### **Plugin Architecture**
+- Hot-reloadable plugins
+- Sandboxed execution
 - Configuration management
-- Real-time plugin execution
-- Usage statistics and analytics
-- Plugin development tools
-
-### **SettingsInterface**
-Comprehensive settings panel with:
-- Theme selection and customization
-- AI provider configuration
-- Privacy and security controls
-- Import/export functionality
-- Performance and accessibility options
+- Usage statistics
+- Custom plugin development
 
 ---
 
-## 🎨 Theming System
+## 🔧 Configuration
 
-### **Available Themes**
-- **Light**: Clean, modern interface for daytime use
-- **Dark**: Easy on the eyes for nighttime sessions
-- **Retro**: Vintage computing aesthetic
-- **Terminal**: Command-line inspired design
-- **Matrix**: Cyberpunk green theme
+### **Environment Variables**
+```bash
+# Server Configuration
+PORT=3001
+HOST=localhost
+NODE_ENV=development
 
-### **Theme Customization**
-```typescript
-// Theme switching
-const { theme, setTheme } = useAppStore();
+# Database
+DATABASE_URL=sqlite:./data/chat.db
+DATABASE_ENCRYPTED=false
+DATABASE_PASSPHRASE=your-secure-passphrase
 
-// Apply theme
-useEffect(() => {
-  document.documentElement.setAttribute('data-theme', theme);
-}, [theme]);
+# AI Providers
+AI_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.2:3b
+
+# Optional External APIs
+OPENAI_API_KEY=your-openai-key
+ANTHROPIC_API_KEY=your-anthropic-key
+GOOGLE_API_KEY=your-google-key
+XAI_API_KEY=your-xai-key
+
+# Security
+JWT_SECRET=your-jwt-secret
+RATE_LIMIT_WINDOW=900000
+RATE_LIMIT_MAX=100
 ```
 
-### **Custom Theme Development**
-```css
-/* Custom theme variables */
-[data-theme="custom"] {
-  --primary: #your-color;
-  --secondary: #your-color;
-  --accent: #your-color;
-  --neutral: #your-color;
-  --base-100: #your-color;
-  --base-200: #your-color;
-  --base-300: #your-color;
+### **Personality Configuration**
+Edit `config/personality.json` to customize your AI's base personality:
+```json
+{
+  "name": "Lackadaisical",
+  "baseTraits": ["curious", "empathetic", "creative"],
+  "moodVolatility": 0.3,
+  "empathyThreshold": 0.7,
+  "learningRate": 0.1
 }
 ```
 
 ---
 
-## 🔌 Plugin Integration
+## 🧪 Testing
 
-### **Plugin System Architecture**
+### **Run All Tests**
+```bash
+# Backend tests
+cd backend
+npm test
+
+# Frontend tests
+cd frontend
+npm test
+
+# End-to-end tests
+npm run test:e2e
+```
+
+### **Test Coverage**
+- **Unit Tests**: 95%+ coverage on core functionality
+- **Integration Tests**: API endpoints and database operations
+- **Component Tests**: React components and user interactions
+- **Security Tests**: Authentication and authorization flows
+
+---
+
+## 🔌 Plugin Development
+
+### **Creating a Custom Plugin**
 ```typescript
-interface PluginState {
-  plugin_name: string;
-  enabled: boolean;
-  config: Record<string, any>;
-  usage_count: number;
-  last_used: string | null;
-  version: string;
-  description: string;
-}
-
-interface PluginResult {
+// plugins/my-plugin/index.ts
+export interface PluginResult {
   success: boolean;
   data?: any;
   error?: string;
   executionTime: number;
 }
-```
 
-### **Built-in Plugins**
-- **Weather**: Real-time weather information
-- **Horoscope**: Daily astrological insights
-- **Poetry**: AI-generated creative content
-- **Calculator**: Mathematical computations
-- **Translator**: Multi-language translation
-
-### **Plugin Development**
-```typescript
-// Example plugin
-export default async function weatherPlugin(
-  input: string, 
-  context: any
-): Promise<PluginResult> {
+export default async function myPlugin(input: string, context: any): Promise<PluginResult> {
   const startTime = Date.now();
   
   try {
-    const weather = await fetchWeather(input);
+    // Your plugin logic here
+    const result = await processInput(input);
+    
     return {
       success: true,
-      data: weather,
+      data: result,
       executionTime: Date.now() - startTime
     };
   } catch (error) {
@@ -306,207 +308,59 @@ export default async function weatherPlugin(
 }
 ```
 
----
-
-## 🧪 Testing
-
-### **Test Setup**
-```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run specific test file
-npm test -- MessageBubble.test.tsx
+### **Plugin Configuration**
+```json
+{
+  "name": "my-plugin",
+  "version": "1.0.0",
+  "description": "My custom plugin",
+  "author": "Your Name",
+  "permissions": ["network", "filesystem"],
+  "config": {
+    "apiKey": "",
+    "endpoint": "https://api.example.com"
+  }
+}
 ```
-
-### **Test Structure**
-```
-tests/
-├── components/
-│   ├── ChatInterface.test.tsx
-│   ├── MessageBubble.test.tsx
-│   └── ChatInput.test.tsx
-├── store/
-│   └── index.test.ts
-├── services/
-│   └── api.test.ts
-└── utils/
-    └── cn.test.ts
-```
-
-### **Testing Best Practices**
-- **Component Testing**: Test user interactions and state changes
-- **Store Testing**: Test Zustand store actions and state updates
-- **API Testing**: Mock API calls and test error handling
-- **Accessibility Testing**: Ensure keyboard navigation and screen reader support
 
 ---
 
-## 🚀 Performance Optimization
+## 🚀 Deployment
 
-### **Build Optimization**
+### **Docker Deployment**
 ```bash
-# Production build
+# Build and run with Docker Compose
+docker-compose up -d
+
+# Or build individual containers
+docker build -t lackadaisical-ai-chat .
+docker run -p 3001:3001 -p 5173:5173 lackadaisical-ai-chat
+```
+
+### **Production Build**
+```bash
+# Build frontend for production
+cd frontend
 npm run build
 
-# Analyze bundle size
-npm run build:analyze
-
-# Preview production build
-npm run preview
-```
-
-### **Performance Features**
-- **Code Splitting**: Automatic route-based code splitting
-- **Lazy Loading**: Components loaded on demand
-- **Tree Shaking**: Unused code eliminated from bundle
-- **Image Optimization**: Automatic image compression and optimization
-- **Caching**: Efficient caching strategies for static assets
-
-### **Performance Monitoring**
-```typescript
-// Performance monitoring
-import { useEffect } from 'react';
-
-useEffect(() => {
-  // Monitor component render time
-  const startTime = performance.now();
-  
-  return () => {
-    const endTime = performance.now();
-    console.log(`Component render time: ${endTime - startTime}ms`);
-  };
-}, []);
-```
-
----
-
-## 🔧 Configuration
-
-### **Environment Variables**
-```bash
-# API Configuration
-VITE_API_URL=http://localhost:3001
-VITE_WS_HOST=localhost:3001
-
-# Feature Flags
-VITE_ENABLE_PLUGINS=true
-VITE_ENABLE_JOURNAL=true
-VITE_ENABLE_ANALYTICS=false
-
-# Development
-VITE_DEV_MODE=true
-VITE_LOG_LEVEL=debug
-```
-
-### **Build Configuration**
-```typescript
-// vite.config.ts
-export default defineConfig({
-  plugins: [react()],
-  build: {
-    target: 'esnext',
-    minify: 'terser',
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          ui: ['@headlessui/react', 'lucide-react'],
-        },
-      },
-    },
-  },
-});
-```
-
----
-
-## 🛠️ Development
-
-### **Development Scripts**
-```bash
-# Start development server
-npm run dev
-
-# Build for production
+# Build backend for production
+cd backend
 npm run build
 
-# Preview production build
-npm run preview
-
-# Run tests
-npm test
-
-# Run linter
-npm run lint
-
-# Run type checker
-npm run type-check
-
-# Format code
-npm run format
+# Start production server
+npm start
 ```
 
-### **Code Quality**
-- **ESLint**: Code linting and style enforcement
-- **Prettier**: Code formatting
-- **TypeScript**: Type safety and IntelliSense
-- **Husky**: Git hooks for pre-commit checks
-- **Commitlint**: Conventional commit message validation
-
-### **Development Tools**
-- **React DevTools**: Component inspection and debugging
-- **Redux DevTools**: State management debugging
-- **Vite DevTools**: Build and performance analysis
-- **TypeScript**: Type checking and IntelliSense
-
----
-
-## 📱 Mobile Support
-
-### **Responsive Design**
-- **Mobile-First**: Designed for mobile devices first
-- **Touch-Friendly**: Optimized for touch interactions
-- **Gesture Support**: Swipe gestures for navigation
-- **Offline Support**: Works without internet connection
-- **PWA Ready**: Progressive Web App capabilities
-
-### **Mobile Features**
-- **Sidebar Navigation**: Collapsible sidebar for mobile
-- **Touch Gestures**: Swipe to navigate between sections
-- **Voice Input**: Voice-to-text for message input
-- **Mobile Keyboard**: Optimized for mobile keyboards
-- **Battery Optimization**: Efficient power usage
-
----
-
-## 🔒 Security & Privacy
-
-### **Privacy Features**
-- **Local Storage**: All data stored locally by default
-- **No Telemetry**: Zero data collection or tracking
-- **Encrypted Storage**: Optional encryption for sensitive data
-- **Secure Communication**: HTTPS and secure WebSocket connections
-- **Input Sanitization**: Protection against XSS attacks
-
-### **Security Measures**
-- **Content Security Policy**: Protection against code injection
-- **Input Validation**: Comprehensive input sanitization
-- **Rate Limiting**: Protection against abuse
-- **CORS Protection**: Secure cross-origin requests
-- **Secure Headers**: Security headers for all requests
+### **Environment-Specific Configs**
+- **Development**: Hot reload, debug logging, local database
+- **Staging**: Production-like environment with test data
+- **Production**: Optimized builds, encrypted storage, monitoring
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions! Please see our [Contributing Guide](frontend/CONTRIBUTING.md) for details.
 
 ### **Development Setup**
 1. Fork the repository
@@ -516,40 +370,61 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 5. Submit a pull request
 
 ### **Code Style**
-- **TypeScript**: Use TypeScript for all new code
-- **Functional Components**: Prefer functional components with hooks
-- **Tailwind CSS**: Use Tailwind for styling
-- **Testing**: Write tests for all new features
-- **Documentation**: Update documentation for changes
+- **TypeScript** for type safety
+- **ESLint** + **Prettier** for code formatting
+- **Conventional Commits** for commit messages
+- **Jest** + **React Testing Library** for testing
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
+This project is licensed under the MIT License - see the [LICENSE](frontend/LICENSE.md) file for details.
 
 ---
 
 ## 🛡️ Security
 
-We take security seriously. Please review our [Security Policy](SECURITY.md) and report any vulnerabilities to security@lackadaisical-security.com.
+We take security seriously. Please review our [Security Policy](frontend/SECURITY.md) and report any vulnerabilities to security@lackadaisical-security.com.
+
+### **Security Features**
+- **Local Processing**: No data leaves your machine
+- **Encrypted Storage**: Optional AES-256 encryption
+- **Input Validation**: Comprehensive sanitization
+- **Rate Limiting**: Protection against abuse
+- **CORS Protection**: Secure cross-origin requests
 
 ---
 
 ## 📞 Support
 
 ### **Documentation**
-- [User Guide](DOCUMENTATION.md)
-- [API Reference](../backend/README.md)
-- [Plugin Development](CONTRIBUTING.md)
+- [User Guide](frontend/DOCUMENTATION.md)
+- [API Reference](backend/README.md)
+- [Plugin Development](frontend/CONTRIBUTING.md)
 
 ### **Community**
 - **GitHub Issues**: Bug reports and feature requests
 - **Discussions**: Community support and ideas
 - **Security**: security@lackadaisical-security.com
 
+### **Professional Support**
+- **Enterprise**: Custom deployments and support
+- **Consulting**: AI integration and customization
+- **Training**: Workshops and tutorials
+
+---
+
+## 🙏 Acknowledgments
+
+- **Ollama** for local AI processing capabilities
+- **React** and **Vite** communities for excellent tooling
+- **Tailwind CSS** for beautiful, utility-first styling
+- **SQLite** for reliable, embedded database technology
+- **Open Source Community** for inspiration and collaboration
+
 ---
 
 **Built with ❤️ by [Lackadaisical Security](https://lackadaisical-security.com)**
 
-*"Beautiful interfaces shouldn't compromise on privacy."*
+*"Privacy isn't just a feature—it's the foundation."* 

@@ -1,734 +1,487 @@
+# 🤝 Contributing to Lackadaisical AI Chat
 
-# Contributing to Lackadaisical AI Chat 🤝
+Thank you for your interest in contributing to Lackadaisical AI Chat! We're building the future of personal AI companionship together, and your contributions help make AI friends accessible to everyone.
 
-> **Join us in building the future of privacy-first AI companionship**
+## 🌟 Ways to Contribute
 
-We welcome contributions from developers, designers, security researchers, and community members! This guide will help you get started and ensure your contributions align with our project goals.
+### 🐛 Report Bugs
+Found something that doesn't work? Help us fix it!
 
----
+- **Use GitHub Issues** to report bugs
+- **Include details**: OS, Node.js version, steps to reproduce
+- **Add screenshots** if applicable
+- **Check existing issues** to avoid duplicates
 
-**🚀 Getting Started • 📝 Code Standards • 🧪 Testing • 🔒 Security • 🤝 Community**
+### 💡 Suggest Features
+Have ideas for new functionality?
 
----
+- **Create feature requests** on GitHub
+- **Explain the use case** - why would this be helpful?
+- **Describe the expected behavior**
+- **Consider implementation complexity**
 
-## 🌟 **Why Contribute?**
+### 🔌 Create Plugins
+Extend the AI companion with new capabilities!
 
-### **Our Mission**
-Lackadaisical AI Chat is more than just another chat application—it's a movement toward privacy-first, user-controlled AI experiences. By contributing, you're helping to:
+- **Follow the plugin architecture** in `/plugins/`
+- **Add documentation** for your plugin
+- **Include tests** for reliability
+- **Share with the community**
 
-- **🔒 Protect Privacy**: Ensure users maintain control over their data
-- **🧠 Advance AI**: Build intelligent, personality-driven AI companions
-- **🌐 Open Source**: Create accessible, transparent AI technology
-- **🤝 Community**: Build a supportive, inclusive developer community
-- **🔬 Innovation**: Push the boundaries of what's possible with local AI
+### 📖 Improve Documentation
+Help others get started and contribute!
 
-### **What We Value**
-- **Privacy First**: Every feature must respect user privacy
-- **Quality Code**: Clean, maintainable, and well-tested code
-- **User Experience**: Intuitive, accessible, and beautiful interfaces
-- **Security**: Robust security practices and vulnerability prevention
-- **Documentation**: Clear, comprehensive documentation
-- **Inclusivity**: Welcoming environment for all contributors
+- **Fix typos and errors**
+- **Add examples and tutorials**
+- **Translate to other languages**
+- **Create video guides**
 
----
+### 💻 Code Contributions
+Improve the core application!
 
-## 🚀 **Getting Started**
+- **Fix bugs** and performance issues
+- **Add new features** from the roadmap
+- **Improve UI/UX** design
+- **Optimize performance**
+- **Enhance security**
 
-### **Prerequisites**
-- **Node.js** v18+ (LTS recommended)
-- **npm** v9+ or **yarn** v1.22+
-- **Git** for version control
-- **Code Editor**: VS Code, WebStorm, or your preferred editor
-- **Browser**: Chrome, Firefox, Safari, or Edge for testing
+## 🚀 Getting Started
 
-### **Development Setup**
+### Development Setup
 
-1. **Fork the Repository**
+1. **Fork and Clone**
    ```bash
-   # Fork on GitHub, then clone your fork
-   git clone https://github.com/YOUR_USERNAME/lackadaisical-ai-chat.git
+   git clone https://github.com/Lackadaisical-Security/lackadaisical-ai-chat.git
    cd lackadaisical-ai-chat
    ```
 
-2. **Set Up Development Environment**
+2. **Install Dependencies**
    ```bash
-   # Install dependencies
-   cd frontend
    npm install
-   
-   cd ../backend
-   npm install
+   cd backend && npm install && cd ..
+   cd frontend && npm install && cd ..
    ```
 
-3. **Configure Environment**
+3. **Setup Development Environment**
    ```bash
-   # Copy environment files
+   # Copy environment template
    cp env.example .env
-   cp frontend/.env.example frontend/.env
    
-   # Edit configuration files
-   # See env.example for required variables
+   # Install development tools
+   npm run dev:setup
    ```
 
 4. **Start Development Servers**
    ```bash
-   # Terminal 1: Backend
-   cd backend
+   # Start both backend and frontend in development mode
    npm run dev
    
-   # Terminal 2: Frontend
-   cd frontend
-   npm run dev
+   # Or start separately:
+   cd backend && npm run dev &
+   cd frontend && npm run dev &
    ```
 
 5. **Verify Setup**
-   - Backend: http://localhost:3001/health
-   - Frontend: http://localhost:5173
-   - Tests: `npm test` (both directories)
+   - Backend: http://localhost:3001
+   - Frontend: http://localhost:3000
+   - Both should be running without errors
 
----
+### Development Tools
 
-## 📝 **Development Workflow**
+**Code Quality:**
+- **ESLint** - Code linting and style checking
+- **Prettier** - Code formatting
+- **TypeScript** - Type checking
+- **Husky** - Pre-commit hooks
 
-### **Branch Strategy**
-```bash
-# Create feature branch
-git checkout -b feature/amazing-feature
+**Testing:**
+- **Jest** - Unit testing framework
+- **React Testing Library** - Frontend component testing
+- **Supertest** - API endpoint testing
 
-# Or for bug fixes
-git checkout -b fix/bug-description
+**Development:**
+- **Nodemon** - Auto-restart backend on changes
+- **Vite** - Fast frontend development server
+- **VS Code settings** - Recommended extensions and settings
 
-# Or for documentation
-git checkout -b docs/update-readme
+## 📋 Development Guidelines
+
+### Code Style
+
+**TypeScript/JavaScript:**
+```typescript
+// Use descriptive names
+const userMessage = 'Hello AI friend';
+
+// Use proper types
+interface ChatMessage {
+  id: string;
+  content: string;
+  timestamp: Date;
+  role: 'user' | 'assistant';
+}
+
+// Use async/await over promises
+async function sendMessage(message: string): Promise<ChatMessage> {
+  const response = await aiService.generateResponse(message);
+  return response;
+}
 ```
 
-### **Commit Message Convention**
-We follow [Conventional Commits](https://www.conventionalcommits.org/):
+**React Components:**
+```tsx
+// Use functional components with hooks
+import React, { useState, useEffect } from 'react';
 
-```bash
-# Feature
-feat: add dark mode toggle to settings
+interface ChatProps {
+  sessionId: string;
+  onMessageSent: (message: string) => void;
+}
 
-# Bug fix
-fix: resolve memory leak in chat interface
-
-# Documentation
-docs: update API documentation
-
-# Style changes
-style: format code with prettier
-
-# Refactoring
-refactor: extract chat logic into custom hook
-
-# Performance
-perf: optimize message rendering
-
-# Test
-test: add unit tests for message validation
-
-# Chore
-chore: update dependencies
+export const Chat: React.FC<ChatProps> = ({ sessionId, onMessageSent }) => {
+  const [message, setMessage] = useState('');
+  
+  return (
+    <div className="chat-container">
+      {/* Component JSX */}
+    </div>
+  );
+};
 ```
 
-### **Pull Request Process**
+**Backend Services:**
+```typescript
+// Use dependency injection
+export class MemoryService {
+  constructor(
+    private db: DatabaseService,
+    private logger: Logger
+  ) {}
+  
+  async saveMemory(sessionId: string, content: string): Promise<void> {
+    // Implementation
+  }
+}
+```
 
-1. **Create Feature Branch**
+### Git Workflow
+
+1. **Create a Feature Branch**
    ```bash
    git checkout -b feature/your-feature-name
    ```
 
 2. **Make Your Changes**
-   - Write clean, well-documented code
+   - Write clean, documented code
    - Add tests for new functionality
    - Update documentation as needed
-   - Follow our coding standards
 
 3. **Test Your Changes**
    ```bash
-   # Run all tests
-   npm test
-   
-   # Run linting
-   npm run lint
-   
-   # Check types
-   npm run type-check
-   
-   # Build for production
-   npm run build
+   npm run test          # Run all tests
+   npm run lint          # Check code style
+   npm run type-check    # Verify TypeScript
    ```
 
-4. **Commit and Push**
+4. **Commit Your Changes**
    ```bash
    git add .
-   git commit -m "feat: add amazing new feature"
+   git commit -m "feat: add new memory recall feature"
+   ```
+
+5. **Push and Create Pull Request**
+   ```bash
    git push origin feature/your-feature-name
    ```
 
-5. **Create Pull Request**
-   - Use our PR template
-   - Describe your changes clearly
-   - Link related issues
-   - Request reviews from maintainers
+### Commit Message Convention
 
----
+We use conventional commits for clear history:
 
-## 🎨 **Code Standards**
+- `feat:` - New features
+- `fix:` - Bug fixes
+- `docs:` - Documentation changes
+- `style:` - Code style changes (formatting, etc.)
+- `refactor:` - Code refactoring
+- `test:` - Adding or updating tests
+- `chore:` - Maintenance tasks
 
-### **TypeScript Guidelines**
+Examples:
+```
+feat: add voice chat functionality
+fix: resolve memory leak in conversation service
+docs: update installation guide for Windows
+style: format code with prettier
+refactor: improve database query performance
+test: add unit tests for memory service
+chore: update dependencies to latest versions
+```
+
+## 🔌 Plugin Development
+
+### Plugin Structure
+
+```
+plugins/
+├── your-plugin/
+│   ├── index.ts          # Main plugin file
+│   ├── package.json      # Plugin metadata
+│   ├── README.md         # Plugin documentation
+│   ├── config.json       # Plugin configuration
+│   └── tests/           # Plugin tests
+```
+
+### Basic Plugin Template
+
 ```typescript
-// ✅ Good: Clear types and interfaces
-interface UserSettings {
-  theme: 'light' | 'dark' | 'retro' | 'terminal' | 'matrix';
-  autoSave: boolean;
-  notifications: boolean;
-  fontSize: 'small' | 'medium' | 'large';
-}
+import { Plugin, PluginContext } from '../types/Plugin';
 
-// ✅ Good: Proper error handling
-const handleApiCall = async (): Promise<ApiResponse> => {
-  try {
-    const response = await api.getData();
-    return { success: true, data: response };
-  } catch (error) {
-    logger.error('API call failed', { error });
-    return { success: false, error: error.message };
+export default class YourPlugin implements Plugin {
+  name = 'your-plugin';
+  version = '1.0.0';
+  description = 'Your plugin description';
+
+  async initialize(context: PluginContext): Promise<void> {
+    // Plugin initialization logic
   }
-};
 
-// ❌ Avoid: Any types
-const processData = (data: any) => {
-  // Implementation
-};
-
-// ✅ Good: Specific types
-const processData = (data: UserData) => {
-  // Implementation
-};
-```
-
-### **React Component Standards**
-```typescript
-// ✅ Good: Functional components with hooks
-import React, { useState, useEffect } from 'react';
-import { useAppStore } from '../store';
-
-interface ChatInputProps {
-  onSend: (message: string) => void;
-  disabled?: boolean;
-  placeholder?: string;
-}
-
-export const ChatInput: React.FC<ChatInputProps> = ({
-  onSend,
-  disabled = false,
-  placeholder = 'Type your message...',
-}) => {
-  const [message, setMessage] = useState('');
-  const { isStreaming } = useAppStore();
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (message.trim() && !disabled) {
-      onSend(message.trim());
-      setMessage('');
+  async onMessage(message: string, context: PluginContext): Promise<string | null> {
+    // Handle incoming messages
+    if (message.includes('/your-command')) {
+      return 'Your plugin response';
     }
-  };
+    return null;
+  }
 
-  return (
-    <form onSubmit={handleSubmit} className="chat-input">
-      <input
-        type="text"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        placeholder={placeholder}
-        disabled={disabled || isStreaming}
-        className="input input-bordered w-full"
-      />
-      <button
-        type="submit"
-        disabled={disabled || isStreaming || !message.trim()}
-        className="btn btn-primary"
-      >
-        Send
-      </button>
-    </form>
-  );
-};
+  async onShutdown(): Promise<void> {
+    // Cleanup logic
+  }
+}
 ```
 
-### **CSS/Styling Standards**
-```css
-/* ✅ Good: Use Tailwind CSS classes */
-.chat-container {
-  @apply flex flex-col h-full bg-base-100;
+### Plugin Configuration
+
+```json
+{
+  "name": "your-plugin",
+  "version": "1.0.0",
+  "description": "Your plugin description",
+  "author": "Your Name",
+  "license": "MIT",
+  "main": "index.ts",
+  "keywords": ["ai", "chat", "plugin"],
+  "permissions": ["network", "storage"],
+  "settings": {
+    "apiKey": {
+      "type": "string",
+      "description": "API key for external service",
+      "required": false
+    }
+  }
 }
-
-.message-bubble {
-  @apply p-4 rounded-lg border border-base-300;
-}
-
-/* ✅ Good: Custom CSS when needed */
-.custom-animation {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ❌ Avoid: Inline styles */
-<div style={{ color: 'red', fontSize: '16px' }}>Text</div>
-
-/* ✅ Good: Tailwind classes */
-<div className="text-red-500 text-base">Text</div>
 ```
 
----
+### Plugin Guidelines
 
-## 🧪 **Testing Standards**
+1. **Follow naming conventions** - Use kebab-case for plugin names
+2. **Include comprehensive documentation** - README with setup and usage
+3. **Add error handling** - Graceful failure and recovery
+4. **Respect user privacy** - No unauthorized data collection
+5. **Test thoroughly** - Unit tests and integration tests
+6. **Use semantic versioning** - Proper version management
 
-### **Component Testing**
+## 🧪 Testing
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run specific test suites
+npm run test:unit        # Unit tests
+npm run test:integration # Integration tests
+npm run test:e2e        # End-to-end tests
+
+# Run tests in watch mode
+npm run test:watch
+
+# Generate coverage report
+npm run test:coverage
+```
+
+### Writing Tests
+
+**Unit Tests (Jest):**
 ```typescript
-// ✅ Good: Test user behavior, not implementation
+import { MemoryService } from '../src/services/MemoryService';
+import { MockDatabaseService } from './mocks/DatabaseService';
+
+describe('MemoryService', () => {
+  let memoryService: MemoryService;
+  let mockDb: MockDatabaseService;
+
+  beforeEach(() => {
+    mockDb = new MockDatabaseService();
+    memoryService = new MemoryService(mockDb);
+  });
+
+  test('should save memory correctly', async () => {
+    const sessionId = 'test-session';
+    const content = 'Test memory content';
+
+    await memoryService.saveMemory(sessionId, content);
+
+    expect(mockDb.saveMemory).toHaveBeenCalledWith(sessionId, content);
+  });
+});
+```
+
+**React Component Tests:**
+```tsx
 import { render, screen, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { ChatInput } from './ChatInput';
+import { Chat } from '../src/components/Chat';
 
-describe('ChatInput', () => {
-  it('sends message when form is submitted', async () => {
-    const user = userEvent.setup();
-    const mockOnSend = jest.fn();
-    
-    render(<ChatInput onSend={mockOnSend} />);
-    
-    const input = screen.getByRole('textbox');
-    const button = screen.getByRole('button', { name: /send/i });
-    
-    await user.type(input, 'Hello, world!');
-    await user.click(button);
-    
-    expect(mockOnSend).toHaveBeenCalledWith('Hello, world!');
-  });
+describe('Chat Component', () => {
+  test('sends message when button clicked', () => {
+    const mockOnMessageSent = jest.fn();
+    render(<Chat sessionId="test" onMessageSent={mockOnMessageSent} />);
 
-  it('disables input when streaming', () => {
-    render(<ChatInput onSend={jest.fn()} disabled={true} />);
-    
-    const input = screen.getByRole('textbox');
-    const button = screen.getByRole('button', { name: /send/i });
-    
-    expect(input).toBeDisabled();
-    expect(button).toBeDisabled();
+    const input = screen.getByPlaceholderText('Type your message...');
+    const button = screen.getByText('Send');
+
+    fireEvent.change(input, { target: { value: 'Hello AI' } });
+    fireEvent.click(button);
+
+    expect(mockOnMessageSent).toHaveBeenCalledWith('Hello AI');
   });
 });
 ```
 
-### **Store Testing**
-```typescript
-// ✅ Good: Test store actions and state
-import { renderHook, act } from '@testing-library/react';
-import { useAppStore } from '../store';
+## 🎨 UI/UX Guidelines
 
-describe('App Store', () => {
-  beforeEach(() => {
-    act(() => {
-      useAppStore.getState().clearAll();
-    });
-  });
+### Design Principles
 
-  it('adds message to store', () => {
-    const { result } = renderHook(() => useAppStore());
-    
-    act(() => {
-      result.current.addMessage({
-        id: '1',
-        content: 'Test message',
-        role: 'user',
-        timestamp: new Date().toISOString(),
-      });
-    });
+1. **User-Friendly** - Intuitive and accessible interface
+2. **Privacy-Focused** - Clear privacy controls and indicators
+3. **Responsive** - Works well on all device sizes
+4. **Consistent** - Uniform design language throughout
+5. **Accessible** - WCAG 2.1 AA compliance
 
-    expect(result.current.messages).toHaveLength(1);
-    expect(result.current.messages[0].content).toBe('Test message');
-  });
-});
+### Component Guidelines
+
+**Use Tailwind CSS classes:**
+```tsx
+<div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+    Chat with Your AI Friend
+  </h2>
+</div>
 ```
 
-### **API Testing**
-```typescript
-// ✅ Good: Mock API calls and test responses
-import { apiService } from '../services/api';
-
-// Mock fetch globally
-global.fetch = jest.fn();
-
-describe('API Service', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('handles successful API calls', async () => {
-    const mockResponse = { success: true, data: { id: '1' } };
-    
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockResponse),
-    });
-
-    const result = await apiService.sendMessage('Hello');
-    expect(result).toEqual(mockResponse);
-  });
-
-  it('handles API errors gracefully', async () => {
-    (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
-
-    await expect(apiService.sendMessage('Hello')).rejects.toThrow('Network error');
-  });
-});
+**Follow accessibility best practices:**
+```tsx
+<button
+  className="btn btn-primary"
+  aria-label="Send message to AI companion"
+  disabled={!message.trim()}
+>
+  Send Message
+</button>
 ```
+
+**Use semantic HTML:**
+```tsx
+<main role="main">
+  <section aria-labelledby="chat-heading">
+    <h1 id="chat-heading">AI Companion Chat</h1>
+    {/* Chat content */}
+  </section>
+</main>
+```
+
+## 📦 Release Process
+
+### Version Management
+
+We use semantic versioning (SemVer):
+- **Major** (1.0.0) - Breaking changes
+- **Minor** (1.1.0) - New features, backward compatible
+- **Patch** (1.0.1) - Bug fixes, backward compatible
+
+### Release Checklist
+
+1. **Update version numbers** in package.json files
+2. **Update CHANGELOG.md** with new features and fixes
+3. **Run full test suite** and ensure all tests pass
+4. **Update documentation** for any API changes
+5. **Create release branch** and submit PR
+6. **Tag release** after PR is merged
+7. **Publish release** with detailed notes
+
+## 🤝 Community Guidelines
+
+### Code of Conduct
+
+- **Be respectful** - Treat everyone with kindness and respect
+- **Be inclusive** - Welcome contributors from all backgrounds
+- **Be collaborative** - Work together toward common goals
+- **Be constructive** - Provide helpful feedback and suggestions
+- **Be patient** - Remember that everyone is learning
+
+### Communication Channels
+
+- **GitHub Issues** - Bug reports and feature requests
+- **GitHub Discussions** - General questions and discussions
+- **Discord Server** - Real-time community chat
+- **Email** - Private or sensitive communications
+
+### Recognition
+
+We value all contributions! Contributors will be:
+
+- **Listed in CONTRIBUTORS.md** - Recognition for all contributors
+- **Mentioned in release notes** - Credit for significant contributions
+- **Invited to maintainer team** - For ongoing, high-quality contributions
+- **Featured in blog posts** - Highlighting community achievements
+
+## 🎯 Current Priorities
+
+### High Priority
+- [ ] Plugin management UI
+- [ ] Voice chat integration
+- [ ] Mobile app development
+- [ ] Performance optimizations
+- [ ] Advanced memory features
+
+### Medium Priority
+- [ ] Multi-language support
+- [ ] Advanced theming system
+- [ ] Analytics dashboard
+- [ ] Export/import features
+- [ ] Community plugin marketplace
+
+### Long Term
+- [ ] Collaborative AI companions
+- [ ] Custom AI model training
+- [ ] Enterprise features
+- [ ] Research partnerships
+
+## 💝 Thank You
+
+Every contribution, no matter how small, helps make AI companionship more accessible and privacy-respecting for everyone. Thank you for being part of this journey!
+
+**Together, we're building the future of AI friendship.** 🤖❤️
 
 ---
 
-## 🔒 **Security Guidelines**
+## Quick Links
 
-### **Input Validation**
-```typescript
-// ✅ Good: Always validate and sanitize input
-import DOMPurify from 'dompurify';
+- 🏠 [Main README](README-RELEASE.md)
+- 🔧 [Installation Guide](INSTALL.md)
+- 🐛 [Troubleshooting](TROUBLESHOOTING.md)
+- 📋 [Changelog](CHANGELOG.md)
+- 📄 [License](LICENSE)
+- 💬 [Discord Community](https://discord.gg/nyyXufEpeE)
 
-const validateMessage = (message: string): ValidationResult => {
-  // Sanitize HTML
-  const sanitized = DOMPurify.sanitize(message);
-  
-  // Check length
-  if (sanitized.length > 4000) {
-    return { isValid: false, error: 'Message too long' };
-  }
-  
-  // Check for malicious patterns
-  const maliciousPatterns = [
-    /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-    /javascript:/gi,
-    /on\w+\s*=/gi,
-  ];
-  
-  for (const pattern of maliciousPatterns) {
-    if (pattern.test(sanitized)) {
-      return { isValid: false, error: 'Invalid content detected' };
-    }
-  }
-  
-  return { isValid: true, sanitized };
-};
-```
-
-### **Authentication & Authorization**
-```typescript
-// ✅ Good: Implement proper authentication checks
-const requireAuth = (req: Request, res: Response, next: NextFunction) => {
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  
-  if (!token) {
-    return res.status(401).json({ error: 'Authentication required' });
-  }
-  
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
-};
-
-// ✅ Good: Role-based access control
-const requireRole = (role: UserRole) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    if (req.user?.role !== role) {
-      return res.status(403).json({ error: 'Insufficient permissions' });
-    }
-    next();
-  };
-};
-```
-
-### **Data Protection**
-```typescript
-// ✅ Good: Encrypt sensitive data
-import crypto from 'crypto';
-
-const encryptData = (data: string, key: string): string => {
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipher('aes-256-gcm', key);
-  
-  let encrypted = cipher.update(data, 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  
-  const authTag = cipher.getAuthTag();
-  
-  return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
-};
-
-const decryptData = (encryptedData: string, key: string): string => {
-  const [ivHex, authTagHex, encrypted] = encryptedData.split(':');
-  
-  const iv = Buffer.from(ivHex, 'hex');
-  const authTag = Buffer.from(authTagHex, 'hex');
-  const decipher = crypto.createDecipher('aes-256-gcm', key);
-  
-  decipher.setAuthTag(authTag);
-  
-  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-  
-  return decrypted;
-};
-```
-
----
-
-## 📚 **Documentation Standards**
-
-### **Code Documentation**
-```typescript
-/**
- * Sends a message to the AI and streams the response
- * 
- * @param message - The user's message to send
- * @param sessionId - Optional session ID for conversation continuity
- * @param options - Additional options for the request
- * @returns Promise that resolves when the message is sent
- * 
- * @example
- * ```typescript
- * await sendMessage('Hello, AI!', 'session-123', {
- *   temperature: 0.7,
- *   maxTokens: 1000
- * });
- * ```
- * 
- * @throws {ApiError} When the API request fails
- * @throws {ValidationError} When the message is invalid
- */
-export const sendMessage = async (
-  message: string,
-  sessionId?: string,
-  options: MessageOptions = {}
-): Promise<void> => {
-  // Implementation
-};
-```
-
-### **README Updates**
-When adding new features, update the relevant documentation:
-
-1. **Main README**: Update feature list and examples
-2. **Component README**: Document new components
-3. **API Documentation**: Update API endpoints
-4. **User Guide**: Add usage instructions
-5. **Changelog**: Document changes
-
----
-
-## 🤝 **Community Guidelines**
-
-### **Code of Conduct**
-We are committed to providing a welcoming and inclusive environment for all contributors. By participating, you agree to:
-
-- **Be Respectful**: Treat everyone with respect and dignity
-- **Be Inclusive**: Welcome contributors from all backgrounds
-- **Be Constructive**: Provide helpful, constructive feedback
-- **Be Patient**: Understand that everyone learns at their own pace
-- **Be Professional**: Maintain professional behavior in all interactions
-
-### **Communication Channels**
-- **💬 Discussions**: [GitHub Discussions](https://github.com/lackadaisical-security/lackadaisical-ai-chat/discussions)
-- **🐛 Issues**: [GitHub Issues](https://github.com/lackadaisical-security/lackadaisical-ai-chat/issues)
-- **📧 Email**: contribute@lackadaisical-security.com
-- **💻 Discord**: [Join our Discord server](https://discord.gg/lackadaisical)
-
-### **Getting Help**
-- **📖 Documentation**: Check our comprehensive documentation
-- **🔍 Search**: Search existing issues and discussions
-- **❓ Questions**: Ask questions in GitHub Discussions
-- **🐛 Bugs**: Report bugs with detailed information
-- **💡 Ideas**: Share feature ideas and improvements
-
----
-
-## 🏆 **Recognition & Rewards**
-
-### **Contributor Recognition**
-- **🌟 Hall of Fame**: Featured contributors on our website
-- **📜 Certificates**: Digital certificates for significant contributions
-- **🎁 Swag**: Limited edition merchandise for top contributors
-- **📢 Social Media**: Recognition on our social media channels
-- **🤝 Networking**: Invitations to exclusive events and meetups
-
-### **Contribution Levels**
-- **🥉 Bronze**: 1-5 contributions
-- **🥈 Silver**: 6-20 contributions
-- **🥇 Gold**: 21-50 contributions
-- **💎 Diamond**: 50+ contributions
-- **👑 Legend**: Exceptional contributions and leadership
-
-### **Special Recognition**
-- **🔒 Security**: Security researchers and vulnerability reporters
-- **📚 Documentation**: Documentation writers and maintainers
-- **🎨 Design**: UI/UX designers and accessibility advocates
-- **🧪 Testing**: Test writers and quality assurance contributors
-- **🌐 Community**: Community organizers and mentors
-
----
-
-## 📋 **Contribution Checklist**
-
-### **Before Submitting**
-- [ ] **Code Quality**: Code follows our standards and best practices
-- [ ] **Testing**: All new code has appropriate tests
-- [ ] **Documentation**: Code is well-documented
-- [ ] **Security**: Security implications have been considered
-- [ ] **Accessibility**: Features are accessible to all users
-- [ ] **Performance**: Changes don't negatively impact performance
-- [ ] **Compatibility**: Changes work across supported platforms
-
-### **Pull Request Checklist**
-- [ ] **Clear Description**: PR description explains the changes
-- [ ] **Related Issues**: Links to related issues or discussions
-- [ ] **Tests Pass**: All tests pass locally and in CI
-- [ ] **Linting**: Code passes linting checks
-- [ ] **Type Checking**: TypeScript compilation succeeds
-- [ ] **Build Success**: Production build completes successfully
-- [ ] **Screenshots**: UI changes include before/after screenshots
-
-### **Review Process**
-- [ ] **Self Review**: Review your own code before submitting
-- [ ] **Peer Review**: Request reviews from team members
-- [ ] **Address Feedback**: Respond to review comments
-- [ ] **Update PR**: Make requested changes
-- [ ] **Final Approval**: Get approval from maintainers
-- [ ] **Merge**: Maintainers merge the PR
-
----
-
-## 🚀 **Advanced Contributing**
-
-### **Plugin Development**
-```typescript
-// Example plugin structure
-export interface PluginResult {
-  success: boolean;
-  data?: any;
-  error?: string;
-  executionTime: number;
-}
-
-export default async function myPlugin(
-  input: string,
-  context: any
-): Promise<PluginResult> {
-  const startTime = Date.now();
-  
-  try {
-    // Your plugin logic here
-    const result = await processInput(input);
-    
-    return {
-      success: true,
-      data: result,
-      executionTime: Date.now() - startTime
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error.message,
-      executionTime: Date.now() - startTime
-    };
-  }
-}
-```
-
-### **Theme Development**
-```css
-/* Custom theme example */
-[data-theme="custom"] {
-  --primary: #6366f1;
-  --primary-focus: #4f46e5;
-  --primary-content: #ffffff;
-  
-  --secondary: #f59e0b;
-  --secondary-focus: #d97706;
-  --secondary-content: #ffffff;
-  
-  --accent: #10b981;
-  --accent-focus: #059669;
-  --accent-content: #ffffff;
-  
-  --neutral: #6b7280;
-  --neutral-focus: #4b5563;
-  --neutral-content: #ffffff;
-  
-  --base-100: #ffffff;
-  --base-200: #f9fafb;
-  --base-300: #f3f4f6;
-  --base-content: #1f2937;
-}
-```
-
-### **API Development**
-```typescript
-// Example API endpoint
-app.post('/api/chat', requireAuth, async (req, res) => {
-  try {
-    const { message, sessionId, options } = req.body;
-    
-    // Validate input
-    const validation = validateMessage(message);
-    if (!validation.isValid) {
-      return res.status(400).json({ error: validation.error });
-    }
-    
-    // Process message
-    const response = await aiService.processMessage(
-      validation.sanitized,
-      sessionId,
-      options
-    );
-    
-    res.json({ success: true, data: response });
-  } catch (error) {
-    logger.error('Chat API error', { error });
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-```
-
----
-
-## 📞 **Contact & Support**
-
-### **Getting Help**
-- **📧 Email**: contribute@lackadaisical-security.com
-- **💬 Discord**: [Join our community](https://discord.gg/lackadaisical)
-- **🐛 Issues**: [GitHub Issues](https://github.com/lackadaisical-security/lackadaisical-ai-chat/issues)
-- **💭 Discussions**: [GitHub Discussions](https://github.com/lackadaisical-security/lackadaisical-ai-chat/discussions)
-
-### **Mentorship Program**
-- **👨‍🏫 Mentors**: Experienced contributors available for guidance
-- **📚 Resources**: Learning materials and tutorials
-- **🤝 Pair Programming**: Collaborative coding sessions
-- **📖 Code Reviews**: Detailed feedback on your contributions
-
----
-
-**Built with ❤️ by [Lackadaisical Security](https://lackadaisical-security.com)**
-
-*"Together, we're building a more private, more intelligent future."*
-
----
-
-**Last Updated**: July 25, 2025  
-**Version**: 1.0.0  
-**Next Review**: October 25, 2025
+**Questions?** Create an issue or join our Discord server!

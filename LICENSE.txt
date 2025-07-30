@@ -1,0 +1,32 @@
+DUAL LICENSE AGREEMENT - LACKADAISICAL AI CHAT
+
+Copyright (c) 2025 Lackadaisical Security
+
+This software is dual-licensed:
+
+1. OPEN SOURCE LICENSE (Non-Commercial Use)
+   Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+   - Free for personal, educational, and non-commercial use
+   - Modifications must be shared under same license
+   - Full license: https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+2. COMMERCIAL LICENSE (Commercial Use)
+   Required for any commercial use, including:
+   - Business/corporate use
+   - Revenue-generating activities
+   - Commercial hosting or SaaS
+   - Integration into paid products
+   
+   Contact for commercial licensing:
+   - Email: [licensing@lackadaisical-security.com]
+   - GitHub: Create issue labeled "Commercial License"
+
+See LICENSE file for complete terms and conditions.
+
+SUMMARY:
+- Use freely for personal/educational purposes
+- Share improvements with the community
+- Contact us for commercial use licensing
+- Contributors welcome under same terms
+
+For questions: Create a GitHub issue or contact us directly.
