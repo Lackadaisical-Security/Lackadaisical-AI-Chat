@@ -1,14 +1,17 @@
-# 🎉 Lackadaisical AI Chat - Free Open Source Release
+# 🧠 Lackadaisical AI Chat - Alpha Release with Memory System
 
-**Release Date:** July 30, 2025  
-**Version:** 1.0.0 - Open Source Edition  
-**License:** Dual License - Free for Personal Use | Commercial License Available  
+**Release Date:** July 31, 2025  
+**Version:** 1.0.0-alpha.2 - Memory System Implementation  
+**License:** MIT (Free Forever)  
+**Development Status:** 🚧 Active Alpha Development 🚧
 
-## 💝 Your Personal AI Friend is Here!
+## 🎉 Alpha Stage: Your Personal AI Friend with Memory!
 
-Welcome to **Lackadaisical AI Chat** - an open-source AI companion that runs entirely on your computer. Meet **Lacky**, your personal AI friend who remembers your conversations, understands your emotions, and grows with you over time.
+Welcome to **Lackadaisical AI Chat** - an open-source AI companion that runs entirely on your computer and now features a complete Memory Management System! Meet **Lacky**, your personal AI friend who remembers your conversations, understands your emotions, and grows with you over time.
 
-Unlike cloud-based AI services, **everything stays private on your machine**. No data collection, no privacy concerns - just you and your AI companion.
+**⚠️ Alpha Stage Notice**: This project is in rapid alpha development (started July 24, 2025). Features are being added daily, and some functionality may be incomplete or subject to change. Perfect for early adopters and developers who want to help shape the future of AI companions!
+
+Unlike cloud-based AI services, **everything stays private on your machine**. No data collection, no privacy concerns - just you and your AI companion with persistent memory.
 
 ## 📄 Licensing - Best of Both Worlds
 
@@ -46,7 +49,13 @@ Unlike cloud-based AI services, **everything stays private on your machine**. No
 - **No Telemetry** - Zero tracking, zero analytics, zero data collection
 - **Open Source** - Full transparency, inspect and modify all code
 
-### 🧠 **Advanced Memory System**
+### 🧠 **Advanced Memory System (NEW in Alpha.2!)**
+- **Memory Dashboard** - Visual overview of conversation statistics and memory health
+- **Memory Search** - Full-text search across all conversation history with relevance ranking
+- **AI Summarization** - Generate conversation summaries using AI (framework ready)
+- **Export/Import** - Secure backup and restore of all conversation data
+- **Memory Visualization** - Interactive charts showing conversation patterns and insights
+- **Real-time Updates** - Live statistics and memory health monitoring
 - **Conversation History** - Full chat history with search and recall
 - **Personal Context** - Remembers your interests, goals, and important details
 - **Mood Tracking** - Emotional state awareness and support
