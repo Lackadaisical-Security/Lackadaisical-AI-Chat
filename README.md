@@ -286,9 +286,10 @@ To report a security issue:
 - Security Reporting → `VULNERABILITY_DISCLOSURE.md`
 
 ---
-> **Jurisdiction Notice:** This software is developed and maintained in accordance with United States law. By downloading or using it, you agree that any legal disputes will be governed under the laws of the State of [your state, e.g., California or just "USA"].
+> **Jurisdiction Notice:** This software is developed and maintained in accordance with United States law. By downloading or using it, you agree that any legal disputes will be governed under the laws of the USA.
 > **Intended Use:** This project is designed for personal, educational, and ethical research use. It is not intended for surveillance, military, or malicious automation applications.
 > **Disclaimer:** This software is provided “as is,” without warranty of any kind. The maintainers disclaim any responsibility for damage, loss, or misuse.
 
 🧾 **Legal Summary:** OSS licensed (MIT), U.S. export restricted, not for unethical use. Full details in [LICENSE](LICENSE) and [SECURITY.md](SECURITY.md).
+
 
