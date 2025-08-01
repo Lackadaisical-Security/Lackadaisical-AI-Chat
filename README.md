@@ -249,6 +249,19 @@ Your AI companion is ready to:
 
 Start chatting and discover what it's like to have an AI friend who truly knows you!
 
+### 📧 Security & Incident Reporting
+
+To report a security issue:
+1. Sign or encrypt your report using our PGP key available at:
+   https://lackadaisical-security.com/Lackadaisical_public.asc  
+   Fingerprint: `Fingerprint: *0C52 9D5E B799 EBC2 7C11 C9A1 0502 B195 B75E 7C87*`
+2. Email your disclosure to **admin@lackadaisical-security.com** or **security@lackadaisical-security.com**. 
+3. Please include:
+   - Agent name (e.g. Lackadaisical-AI-Chat, LTES).
+   - Software version and build timestamp.
+   - Detailed reproduction steps and PoC if available.
+   - Expected failure modes or mitigation suggestions.
+
 ---
 
 **💙 Enjoy your new AI companion!**
@@ -265,3 +278,17 @@ Start chatting and discover what it's like to have an AI friend who truly knows 
 - 🤝 [Contributing](CONTRIBUTING.md)
 - 📄 [License](LICENSE)
 - 🔒 [Security Policy](SECURITY.md)
+
+## 📄 Documentation
+- Acceptable Use Policy → `ACCEPTABLE_USE_POLICY.md`
+- Export Guidance → `EXPORT_NOTICE.txt`
+- Privacy Policy → `DATA_PRIVACY.md`
+- Security Reporting → `VULNERABILITY_DISCLOSURE.md`
+
+---
+> **Jurisdiction Notice:** This software is developed and maintained in accordance with United States law. By downloading or using it, you agree that any legal disputes will be governed under the laws of the State of [your state, e.g., California or just "USA"].
+> **Intended Use:** This project is designed for personal, educational, and ethical research use. It is not intended for surveillance, military, or malicious automation applications.
+> **Disclaimer:** This software is provided “as is,” without warranty of any kind. The maintainers disclaim any responsibility for damage, loss, or misuse.
+
+🧾 **Legal Summary:** OSS licensed (MIT), U.S. export restricted, not for unethical use. Full details in [LICENSE](LICENSE) and [SECURITY.md](SECURITY.md).
+

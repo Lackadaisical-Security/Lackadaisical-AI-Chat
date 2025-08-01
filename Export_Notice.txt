@@ -1,0 +1,11 @@
+# 🚀 Export Compliance & ECCN Classification
+
+• Export Classification: ECCN **5D992.c** — publicly available, open-source encryption software (EAR §742.15(b))  
+• Closed-weight AI model weights **do NOT exceed 10²⁶ training operations**, thus are **not controlled** under ECCN 4E091 §745.27 (U.S. “AI Diffusion” rule as of Jan 15, 2025) :contentReference[oaicite:3]{index=3}.
+
+By using, redistributing, or incorporating this software:
+- You must **not re-export** to embargoed or restricted countries.
+- You **cannot redistribute closed or reweighted versions** without proper licensing.
+- You acknowledge that this release is composed of **public/open model weights and wrappers**, not proprietary or restricted model logic.
+
+For details, consult BIS Decision Chart (ECCN 4E091/AIA exception) or EAR Section 734.7 — this project uses **standard-compliant cryptographic libraries**, not novel encryption algorithms requiring separate review.
