@@ -1,5 +1,4 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 import { aiLogger } from '../../backend/src/utils/logger';
 import { config, isExternalProviderConfigured } from '../../config/settings';
 import { AIResponse, StreamChunk, Conversation, PersonalityState } from '../../backend/src/types';
@@ -80,7 +79,7 @@ export class AnthropicAdapter {
     message: string, 
     personalityState: PersonalityState | null, 
     conversationContext: Conversation[]
-  ): { system: string; messages: MessageParam[] } {
+  ): { system: string; messages: Anthropic.Messages.MessageParam[] } {
     // System message with personality
     let systemMessage = '';
     if (personalityState) {
@@ -98,7 +97,7 @@ export class AnthropicAdapter {
       systemMessage = 'You are Lacky, a friendly and helpful AI companion.';
     }
 
-    const messages: MessageParam[] = [];
+    const messages: Anthropic.Messages.MessageParam[] = [];
 
     // Add conversation context
     conversationContext.slice(-5).forEach(conv => {

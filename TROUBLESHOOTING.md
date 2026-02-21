@@ -1,4 +1,4 @@
-# 🔧 Troubleshooting Guide - v2-Alpha
+# 🔧 Troubleshooting Guide
 
 Having issues with Lackadaisical AI Chat? This guide will help you resolve common problems and get your AI companion running smoothly.
 
@@ -13,7 +13,7 @@ Having issues with Lackadaisical AI Chat? This guide will help you resolve commo
    npm run start
    ```
 
-2. **Check if Ollama is Running** (if using local AI)
+2. **Check if Ollama is Running**
    ```bash
    # Windows PowerShell
    ollama list
@@ -618,68 +618,6 @@ After fixing issues, verify everything works:
 - [ ] No console errors in browser
 - [ ] No errors in backend logs
 
-### v2-Alpha Specific Checks
-- [ ] Can hot-swap models (Settings → Models)
-- [ ] Cross-session memory works (reference past conversations)
-- [ ] Web fetching works (ask about weather or current events)
-- [ ] Health endpoint responds (http://localhost:3001/api/health)
-- [ ] Auth endpoints work if enabled (/api/auth/login)
-
----
-
-## 🆕 v2-Alpha Specific Issues
-
-### Hot-Swap Model Issues
-
-**Model won't switch:**
-```bash
-# Check current model
-curl http://localhost:3001/api/models/current
-
-# List available models
-curl http://localhost:3001/api/models
-
-# Try switching manually
-curl -X POST http://localhost:3001/api/models/switch \
-  -H "Content-Type: application/json" \
-  -d '{"modelId": "llama2", "provider": "ollama"}'
-```
-
-**External provider not working:**
-- Check API keys in `.env` file
-- Verify network connectivity
-- Check provider health: `GET /api/health`
-
-### Cross-Session Memory Issues
-
-**AI doesn't remember past sessions:**
-1. Check if cross-session is enabled:
-   ```bash
-   curl http://localhost:3001/api/chat/preferences
-   ```
-2. Enable cross-session:
-   ```bash
-   curl -X POST http://localhost:3001/api/chat/preferences/toggle-cross-session
-   ```
-
-### Authentication Issues
-
-**Can't login:**
-- Check JWT_SECRET is set in `.env` (at least 32 chars)
-- Rate limiting: 5 attempts per 15 minutes
-- Wait and try again if rate limited
-
-**Token expired:**
-- Use refresh token: `POST /api/auth/refresh`
-- Re-login if refresh token also expired
-
-### Web Fetching Issues
-
-**Web search not working:**
-- Default uses DuckDuckGo (no API key needed)
-- For Brave/SerpAPI, add API keys to `.env`
-- Check network connectivity
-
 ---
 
 ## 🎯 Still Having Issues?
@@ -697,7 +635,7 @@ If you're still experiencing problems after trying these solutions:
 
 ## Quick Links
 
-- 🏠 [Main README](README.md)
+- 🏠 [Main README](README-RELEASE.md)
 - 🔧 [Installation Guide](INSTALL.md)
 - 🤝 [Contributing Guide](CONTRIBUTING.md)
 - 📋 [Changelog](CHANGELOG.md)

@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
+import { GoogleGenerativeAI, GenerativeModel, GenerateContentStreamResult } from '@google/generative-ai';
 import { aiLogger } from '../../backend/src/utils/logger';
 import { config, isExternalProviderConfigured } from '../../config/settings';
 import { AIResponse, StreamChunk, Conversation, PersonalityState } from '../../backend/src/types';

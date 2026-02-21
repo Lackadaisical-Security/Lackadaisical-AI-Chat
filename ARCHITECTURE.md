@@ -1,4 +1,4 @@
-# 🏗️ Architecture Documentation - Lackadaisical AI Chat v2-Alpha
+# 🏗️ Architecture Documentation - Lackadaisical AI Chat
 
 This document provides a comprehensive overview of the Lackadaisical AI Chat system architecture, including design decisions, data flow, and component interactions.
 
@@ -11,180 +11,45 @@ Lackadaisical AI Chat is a privacy-first, locally-running AI companion system bu
 - **Extensible Plugin System**: Easy to add new capabilities
 - **Persistent Memory**: Conversations and context preserved across sessions
 - **Real-time Interaction**: Streaming responses and live updates
-- **Hot-Swappable AI**: Switch between providers without restart (v2-alpha)
-- **Emotional Intelligence**: Genuine human connection (v2-alpha)
-- **Cross-Session Memory**: Reference past conversations (v2-alpha)
 
 ## 🔧 High-Level Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│              Lackadaisical AI Chat v2-Alpha                      │
-│                    System Architecture                           │
+│                    Lackadaisical AI Chat                        │
+│                      System Architecture                        │
 └─────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Frontend      │    │    Backend      │    │   AI Providers  │
-│   (React)       │    │   (Express)     │    │   (Hot-Swap)    │
+│   (React)       │    │   (Express)     │    │   (Ollama/API)  │
 │                 │    │                 │    │                 │
 │ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────┐ │
 │ │ Components  │ │◄──►│ │   Routes    │ │◄──►│ │   Ollama    │ │
 │ │ Services    │ │    │ │ Controllers │ │    │ │   OpenAI    │ │
 │ │ Store       │ │    │ │ Middleware  │ │    │ │ Anthropic   │ │
-│ └─────────────┘ │    │ │    Auth     │ │    │ │   Google    │ │
-│                 │    │ └─────────────┘ │    │ │     xAI     │ │
-│ ┌─────────────┐ │    │                 │    │ └─────────────┘ │
-│ │    Hooks    │ │    │ ┌─────────────┐ │    └─────────────────┘
-│ │   Utils     │ │    │ │  Services   │ │
-│ └─────────────┘ │    │ │ Database    │ │    ┌─────────────────┐
-└─────────────────┘    │ │   Memory    │ │    │   Database      │
-                       │ │Personality  │ │    │   (SQLite)      │
-┌─────────────────┐    │ │   Plugins   │ │    │                 │
-│   v2-Alpha      │    │ │ ModelMgr    │ │    │ ┌─────────────┐ │
-│   Services      │    │ │ WebFetcher  │ │    │ │11+ Tables   │ │
-│                 │    │ │ EmotionalAI │ │    │ │Indexes      │ │
-│ ┌─────────────┐ │    │ │ SmartAssist │ │    │ │Migrations   │ │
-│ │ModelManager │ │    │ └─────────────┘ │    │ └─────────────┘ │
-│ │ WebFetcher  │ │    └─────────────────┘    └─────────────────┘
-│ │EmotionalAI  │ │
-│ │EnhancedMem  │ │    ┌─────────────────┐
-│ │ResourceOpt  │ │    │   Plugin        │
-│ │ConvoManager │ │    │   System        │
-│ │SmartAssist  │ │    │ ┌─────────────┐ │
-│ │HealthSvc   │ │    │ │  Weather    │ │
-│ └─────────────┘ │    │ │ Horoscope   │ │
-└─────────────────┘    │ │   Poem      │ │
-                       │ │  Custom     │ │
-                       │ └─────────────┘ │
-                       └─────────────────┘
-```
-
-## 🆕 v2-Alpha Services
-
-### ModelManager
-Manages hot-swappable AI models across all providers.
-
-```typescript
-class ModelManager {
-  // Model registry with 15+ pre-configured models
-  registerModel(model: ModelConfig): void
-  
-  // Hot-swap to different model without restart
-  switchModel(modelId: string, provider: string): Promise<void>
-  
-  // Auto-select best model by criteria
-  selectBestModel(criteria: 'quality' | 'speed' | 'capability'): Model
-  
-  // Health checks every 30 seconds
-  checkModelHealth(): Promise<HealthStatus[]>
-}
-```
-
-### WebFetcher
-Real-time web search and content extraction.
-
-```typescript
-class WebFetcher {
-  // Multiple search providers
-  search(query: string, provider?: 'duckduckgo' | 'brave' | 'serpapi'): Promise<SearchResult[]>
-  
-  // URL content extraction with metadata
-  fetchUrl(url: string): Promise<PageContent>
-  
-  // Weather and time utilities
-  getWeather(location: string): Promise<Weather>
-  getTime(timezone: string): Promise<Time>
-}
-```
-
-### EmotionalIntelligence
-Genuine emotional support without restrictions.
-
-```typescript
-class EmotionalIntelligence {
-  // Analyze emotional content
-  analyzeEmotion(message: string): EmotionalContext
-  
-  // Generate supportive response
-  generateSupport(emotion: Emotion, context: Context): SupportResponse
-  
-  // Learn user's emotional patterns
-  learnPatterns(userId: string, interactions: Interaction[]): void
-  
-  // Remember significant moments
-  recordSignificantMoment(moment: SignificantMoment): void
-}
-```
-
-### EnhancedMemoryService
-Cross-session memory with generous limits.
-
-```typescript
-class EnhancedMemoryService {
-  // Generous limits
-  MAX_MESSAGES = 1000
-  MAX_TOKENS = 128_000
-  CROSS_SESSION_BUDGET = 32_000
-  
-  // Cross-session features
-  getSessionSummaries(): Promise<SessionSummary[]>
-  searchAllSessions(query: string): Promise<SearchResult[]>
-  buildCrossSessionContext(sessionId: string): Promise<Context>
-  
-  // User preferences
-  getUserPreferences(): MemoryPreferences
-  setUserPreferences(prefs: MemoryPreferences): void
-}
-```
-
-### ResourceOptimizer
-CPU/memory/disk load distribution.
-
-```typescript
-class ResourceOptimizer {
-  // Monitor system resources
-  getMetrics(): ResourceMetrics
-  
-  // Adaptive write batching
-  queueWrite(data: any, priority: 'high' | 'normal' | 'low'): void
-  
-  // Optimization recommendations
-  getRecommendations(): Recommendation[]
-}
-```
-
-### ConversationManager
-Complete conversation lifecycle management.
-
-```typescript
-class ConversationManager {
-  // Session management
-  createSession(name: string): Promise<Session>
-  archiveSession(sessionId: string): Promise<void>
-  
-  // Turn recording with full context
-  recordTurn(turn: ConversationTurn): Promise<void>
-  
-  // Analytics
-  getSessionAnalytics(sessionId: string): Analytics
-  getGlobalAnalytics(): GlobalAnalytics
-}
-```
-
-### SmartAssistant
-AI-powered conversation enhancement.
-
-```typescript
-class SmartAssistant {
-  // Topic analysis
-  analyzeTopics(messages: Message[]): Topic[]
-  
-  // Suggestions
-  generateSuggestions(context: Context): Suggestion[]
-  
-  // User preference detection
-  detectPreferences(interactions: Interaction[]): UserPreferences
-}
+│ └─────────────┘ │    │ └─────────────┘ │    │ │   Google    │ │
+│                 │    │                 │    │ │     xAI     │ │
+│ ┌─────────────┐ │    │ ┌─────────────┐ │    │ └─────────────┘ │
+│ │    Hooks    │ │    │ │  Services   │ │    └─────────────────┘
+│ │   Utils     │ │    │ │ Database    │ │
+│ └─────────────┘ │    │ │   Memory    │ │    ┌─────────────────┐
+└─────────────────┘    │ │Personality  │ │    │   Database      │
+                       │ │   Plugins   │ │    │   (SQLite)      │
+                       │ └─────────────┘ │    │                 │
+                       └─────────────────┘    │ ┌─────────────┐ │
+                                              │ │11 Tables    │ │
+┌─────────────────┐    ┌─────────────────┐    │ │Indexes      │ │
+│   Plugin        │    │   File System   │    │ │Migrations   │ │
+│   System        │    │                 │    │ └─────────────┘ │
+│                 │    │ ┌─────────────┐ │    └─────────────────┘
+│ ┌─────────────┐ │    │ │   Logs      │ │
+│ │  Weather    │ │    │ │ Database    │ │
+│ │ Horoscope   │ │    │ │   Config    │ │
+│ │   Poem      │ │    │ │   Temp      │ │
+│ │  Custom     │ │    │ └─────────────┘ │
+│ └─────────────┘ │    └─────────────────┘
+└─────────────────┘
 ```
 
 ## 🏛️ Architectural Patterns
@@ -879,37 +744,6 @@ class LoadBalancer {
 - Advanced reasoning capabilities
 - Multi-modal interactions (voice, images)
 
-## ✅ v2-Alpha Architecture Changes
-
-The following architectural changes were made in v2-alpha:
-
-### New Services Added
-- **ModelManager**: Hot-swappable AI model management
-- **WebFetcher**: Real-time web search and content extraction
-- **EmotionalIntelligence**: Unrestricted emotional support
-- **EnhancedMemoryService**: Cross-session memory with 128K token context
-- **ConversationManager**: Complete conversation lifecycle
-- **ResourceOptimizer**: CPU/memory/disk load balancing
-- **SmartAssistant**: AI-powered conversation enhancement
-- **HealthService**: Multi-service health monitoring
-
-### Authentication Layer
-- JWT-based authentication with access/refresh tokens
-- Rate limiting middleware (rate-limiter-flexible)
-- Auth routes with bcrypt password hashing
-
-### Memory System Upgrades
-- Max messages: 50 → 1000
-- Max tokens: 8K → 128K
-- Cross-session token budget: 32K
-- Adaptive write batching based on system load
-
-### AI Provider Integration
-- 5 providers: Ollama, OpenAI, Anthropic, Google, xAI
-- Hot-swap without restart
-- Automatic failover
-- Health monitoring
-
 ## 🤝 Contributing to Architecture
 
 We welcome architectural discussions and improvements:
@@ -927,14 +761,11 @@ We maintain decision records for major architectural choices:
 - ADR-002: State Management (Zustand vs Redux)
 - ADR-003: AI Provider Architecture
 - ADR-004: Plugin System Design
-- ADR-005: Hot-Swap Model Management (v2-alpha)
-- ADR-006: Cross-Session Memory Architecture (v2-alpha)
-- ADR-007: Emotional Intelligence Design (v2-alpha)
 
 ---
 
 This architecture documentation is a living document that evolves with the system. Please help us keep it current by submitting updates and improvements.
 
-**Last Updated**: February 2026  
-**Architecture Version**: 2.0-alpha  
-**System Version**: 2.0.0-alpha
+**Last Updated**: July 31, 2025  
+**Architecture Version**: 1.0  
+**System Version**: 1.0.0

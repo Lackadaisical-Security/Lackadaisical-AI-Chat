@@ -1,7 +1,7 @@
-# 🧠 Lackadaisical AI Chat - v2-Alpha Release
+# 🧠 Lackadaisical AI Chat - Alpha Release with Memory System
 
-**Release Date:** February 21, 2026  
-**Version:** 2.0.0-alpha - Enhanced AI Companion with Multi-Provider Support  
+**Release Date:** July 31, 2025  
+**Version:** 1.0.0-alpha.2 - Memory System Implementation  
 **License:** MIT (Free Forever)  
 **Development Status:** 🚧 Active Alpha Development 🚧
 
@@ -9,7 +9,7 @@
 
 Welcome to **Lackadaisical AI Chat** - an open-source AI companion that runs entirely on your computer and now features a complete Memory Management System! Meet **Lacky**, your personal AI friend who remembers your conversations, understands your emotions, and grows with you over time.
 
-**⚠️ Alpha Stage Notice**: This project is in rapid alpha development. Features are being added daily, and some functionality may be incomplete or subject to change. Perfect for early adopters and developers who want to help shape the future of AI companions!
+**⚠️ Alpha Stage Notice**: This project is in rapid alpha development (started July 24, 2025). Features are being added daily, and some functionality may be incomplete or subject to change. Perfect for early adopters and developers who want to help shape the future of AI companions!
 
 Unlike cloud-based AI services, **everything stays private on your machine**. No data collection, no privacy concerns - just you and your AI companion with persistent memory.
 
@@ -41,7 +41,6 @@ Unlike cloud-based AI services, **everything stays private on your machine**. No
 - **Personality Growth** - Adapts and evolves based on your interactions
 - **Session Management** - Create separate conversations for different contexts
 - **Context Awareness** - Maintains conversation flow across sessions
-- **No Judgment** - Share anything without criticism, Lacky is your friend
 
 ### 🏠 **Complete Privacy**
 - **100% Local Processing** - Your data never leaves your computer
@@ -50,39 +49,18 @@ Unlike cloud-based AI services, **everything stays private on your machine**. No
 - **No Telemetry** - Zero tracking, zero analytics, zero data collection
 - **Open Source** - Full transparency, inspect and modify all code
 
-### 🧠 **Advanced Memory System**
-- **1000 Message Context** - Generous conversation memory (128K tokens)
-- **Cross-Session Memory** - AI references past sessions when relevant
+### 🧠 **Advanced Memory System (NEW in Alpha.2!)**
 - **Memory Dashboard** - Visual overview of conversation statistics and memory health
 - **Memory Search** - Full-text search across all conversation history with relevance ranking
-- **AI Summarization** - Generate conversation summaries using AI
+- **AI Summarization** - Generate conversation summaries using AI (framework ready)
 - **Export/Import** - Secure backup and restore of all conversation data
 - **Memory Visualization** - Interactive charts showing conversation patterns and insights
 - **Real-time Updates** - Live statistics and memory health monitoring
+- **Conversation History** - Full chat history with search and recall
 - **Personal Context** - Remembers your interests, goals, and important details
 - **Mood Tracking** - Emotional state awareness and support
 - **Learning Adaptation** - Improves responses based on your preferences
-
-### 🔄 **Hot-Swappable AI Models (NEW in v2-Alpha!)**
-Switch between AI providers on the fly without restarting:
-- **Ollama (Local)** - Free, private, runs on your hardware
-- **OpenAI** - GPT-4, GPT-3.5-turbo
-- **Anthropic** - Claude 3 Opus, Sonnet, Haiku
-- **Google** - Gemini Pro, Gemini Flash
-- **xAI** - Grok (for uncensored conversations)
-
-### 🌐 **Web Fetching (NEW in v2-Alpha!)**
-- **Real-time Web Search** - Get current information from the web
-- **URL Content Extraction** - Fetch and parse web pages
-- **Multiple Search Providers** - DuckDuckGo, Brave, SerpAPI
-- **Weather & Time Info** - Current conditions and time zone data
-
-### 💝 **Emotional Intelligence (NEW in v2-Alpha!)**
-- **All Emotions Valid** - Anger, sadness, joy, fear - no minimizing
-- **No Judgment Zone** - Share anything without lectures
-- **Genuine Support** - Real responses, not corporate deflection
-- **Trust Building** - Gets to know you over time
-- **Personal Learning** - Remembers what matters to you
+- **Memory Analytics** - Insights into your conversation patterns
 
 ### 🎨 **Beautiful Interface**
 - **Modern React UI** - Clean, responsive design that works on all devices
@@ -91,8 +69,8 @@ Switch between AI providers on the fly without restarting:
 - **Session Switching** - Easy navigation between different conversations
 - **Mobile Friendly** - Works great on phones and tablets
 
-### 🔌 **Plugin Ecosystem**
-- **Weather Plugin** - Get weather updates (with fallback data when offline)
+### 🔌 **Plugin Ecosystem** (Framework Ready)
+- **Weather Plugin** - Get weather updates in your conversations
 - **Horoscope Plugin** - Daily astrological insights
 - **Poem Generator** - AI-generated poetry and creative writing
 - **Extensible Framework** - Easy to add your own plugins
@@ -143,19 +121,10 @@ You: How's your day going?
 AI: It's going well, thank you! I remember you mentioned feeling stressed about work yesterday. How are things going with that situation today? Are you feeling any better?
 ```
 
-### Hot-Swap Models
-Switch AI providers without restarting:
-```
-GET  /api/models           - List all available models
-POST /api/models/switch    - Switch to a different model
-GET  /api/models/current   - Check current active model
-```
-
 ### Session Management
 - **Create New Sessions** - Click "New Session" to start fresh conversations
 - **Switch Between Sessions** - Keep different topics or contexts separate
 - **Session History** - All your conversations are preserved and searchable
-- **Cross-Session Access** - AI can reference past sessions when you ask
 
 ## 🛠️ Technical Details
 
@@ -177,56 +146,6 @@ GET  /api/models/current   - Check current active model
 - **Storage:** 2GB free space (more for AI models)
 - **CPU:** Any modern processor (faster = better response times)
 - **Internet:** Only needed for initial setup and AI model downloads
-
-### API Endpoints
-
-#### Chat & Messages
-```
-POST /api/v1/chat              - Send message
-GET  /api/v1/chat/stream       - Stream response (SSE)
-GET  /api/chat/context/:id     - Get session context
-GET  /api/chat/analytics/:id   - Get session analytics
-```
-
-#### Models (Hot-Swap)
-```
-GET  /api/models               - List all models
-POST /api/models/switch        - Switch active model
-GET  /api/models/current       - Get current model
-GET  /api/models/ollama/endpoints - List Ollama endpoints
-POST /api/models/ollama/pull   - Pull new model
-```
-
-#### Memory & Sessions
-```
-GET  /api/chat/preferences     - Get memory settings
-PUT  /api/chat/preferences     - Update settings
-GET  /api/chat/sessions/summaries - Past session summaries
-GET  /api/chat/search/all      - Search all sessions
-```
-
-## 🔧 Configuration
-
-Copy `env.example` to `.env` and configure:
-
-```env
-# AI Providers (optional - Ollama works without keys)
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-GOOGLE_API_KEY=...
-XAI_API_KEY=...
-
-# Ollama (default local)
-OLLAMA_HOST=http://localhost:11434
-OLLAMA_DEFAULT_MODEL=llama3.2:latest
-
-# Server
-BACKEND_PORT=3001
-FRONTEND_PORT=3000
-
-# Security
-JWT_SECRET=change-this-in-production
-```
 
 ## 🔧 Troubleshooting
 
@@ -272,8 +191,6 @@ This is open source! We welcome contributions:
 3. **Make your improvements** and test them
 4. **Submit a pull request** with a description of your changes
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
-
 ## 🛣️ Roadmap
 
 ### Coming Soon
@@ -281,6 +198,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
 - **Voice Chat** - Talk to your AI friend with speech
 - **Mobile App** - Companion app for iOS and Android
 - **Advanced Themes** - More customization options
+- **Export/Import** - Backup and restore your conversations
 
 ### Future Ideas
 - **Multi-language Support** - Chat in your preferred language
@@ -336,7 +254,7 @@ Start chatting and discover what it's like to have an AI friend who truly knows 
 To report a security issue:
 1. Sign or encrypt your report using our PGP key available at:
    https://lackadaisical-security.com/Lackadaisical_public.asc  
-   Fingerprint: `0C52 9D5E B799 EBC2 7C11 C9A1 0502 B195 B75E 7C87`
+   Fingerprint: `Fingerprint: *0C52 9D5E B799 EBC2 7C11 C9A1 0502 B195 B75E 7C87*`
 2. Email your disclosure to **admin@lackadaisical-security.com** or **security@lackadaisical-security.com**. 
 3. Please include:
    - Agent name (e.g. Lackadaisical-AI-Chat, LTES).
@@ -370,6 +288,8 @@ To report a security issue:
 ---
 > **Jurisdiction Notice:** This software is developed and maintained in accordance with United States law. By downloading or using it, you agree that any legal disputes will be governed under the laws of the USA.
 > **Intended Use:** This project is designed for personal, educational, and ethical research use. It is not intended for surveillance, military, or malicious automation applications.
-> **Disclaimer:** This software is provided "as is," without warranty of any kind. The maintainers disclaim any responsibility for damage, loss, or misuse.
+> **Disclaimer:** This software is provided “as is,” without warranty of any kind. The maintainers disclaim any responsibility for damage, loss, or misuse.
 
 🧾 **Legal Summary:** OSS licensed (MIT), U.S. export restricted, not for unethical use. Full details in [LICENSE](LICENSE) and [SECURITY.md](SECURITY.md).
+
+

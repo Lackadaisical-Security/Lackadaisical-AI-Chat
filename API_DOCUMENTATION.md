@@ -1,34 +1,16 @@
 # 📡 API Documentation - Lackadaisical AI Chat
 
-**Version**: 2.0.0-alpha  
-**Base URL**: `http://localhost:3001/api`  
+**Version**: 1.0.0  
+**Base URL**: `http://localhost:3001/api/v1`  
 **Content Type**: `application/json`
 
 ## 🚀 Quick Start
 
-The Lackadaisical AI Chat API provides REST endpoints for interacting with your AI companion, managing conversations, hot-swapping AI models, web fetching, and accessing the enhanced memory system.
+The Lackadaisical AI Chat API provides REST endpoints for interacting with your AI companion, managing conversations, and accessing memory features.
 
 ### Authentication
 
-v2-alpha includes a full JWT-based authentication system:
-
-```typescript
-// Register a new user
-POST /api/auth/register
-{ "username": "your_username", "email": "email@example.com", "password": "secure_password" }
-
-// Login to get tokens
-POST /api/auth/login
-{ "email": "email@example.com", "password": "secure_password" }
-// Returns: { accessToken, refreshToken, user }
-
-// Include token in requests
-Authorization: Bearer <accessToken>
-```
-
-**Rate Limiting**: 5 attempts per 15 minutes on auth endpoints.
-
-For local development, many endpoints support optional authentication via `optionalAuth` middleware.
+Currently, no authentication is required for local installations. For production deployments, consider implementing API key authentication.
 
 ### Response Format
 
@@ -700,7 +682,6 @@ const journalData = await entries.json();
 ### Rate Limiting
 
 The API implements rate limiting:
-- **Auth Routes**: 5 requests per 15 minutes (strict)
 - **Default**: 100 requests per hour per IP
 - **Burst**: Up to 10 requests per minute
 - **Headers**: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
@@ -709,7 +690,6 @@ The API implements rate limiting:
 
 CORS is configured to allow requests from:
 - `http://localhost:3000` (frontend development)
-- `http://localhost:5173` (Vite dev server)
 - `http://127.0.0.1:3000`
 - Custom origins can be configured in settings
 
@@ -722,238 +702,6 @@ All API requests are logged with:
 - Status code
 - User agent (if available)
 
----
-
-## 🚀 v2-Alpha New Endpoints
-
-### Hot-Swap Model Management
-
-#### List All Models
-**Endpoint**: `GET /api/models`
-
-Returns all registered AI models across all providers.
-
-**Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "models": [
-      {
-        "id": "llama2",
-        "name": "Llama 2",
-        "provider": "ollama",
-        "capabilities": ["chat", "streaming"],
-        "contextLength": 4096,
-        "isAvailable": true
-      },
-      {
-        "id": "gpt-4",
-        "name": "GPT-4",
-        "provider": "openai",
-        "capabilities": ["chat", "streaming", "function_calling"],
-        "contextLength": 128000,
-        "isAvailable": true
-      }
-    ],
-    "currentModel": "llama2"
-  }
-}
-```
-
-#### Switch Model
-**Endpoint**: `POST /api/models/switch`
-
-Hot-swap to a different AI model without restart.
-
-**Request**:
-```json
-{
-  "modelId": "gpt-4",
-  "provider": "openai"
-}
-```
-
-#### Get Current Model
-**Endpoint**: `GET /api/models/current`
-
-#### Select Best Model
-**Endpoint**: `POST /api/models/select-best`
-
-**Request**:
-```json
-{
-  "criteria": "quality",  // or "speed", "capability"
-  "capability": "chat"    // optional: filter by capability
-}
-```
-
-### Ollama Cloud Endpoints
-
-#### List Ollama Endpoints
-**Endpoint**: `GET /api/models/ollama/endpoints`
-
-#### Add Cloud Endpoint
-**Endpoint**: `POST /api/models/ollama/endpoints`
-
-**Request**:
-```json
-{
-  "name": "Cloud Ollama",
-  "url": "https://ollama.example.com:11434",
-  "apiKey": "optional-api-key"
-}
-```
-
-#### Pull Model to Endpoint
-**Endpoint**: `POST /api/models/ollama/pull`
-
-**Request**:
-```json
-{
-  "model": "llama2:13b",
-  "endpointId": "cloud-1"
-}
-```
-
-### Enhanced Memory & Context
-
-#### Get Full Context Window
-**Endpoint**: `GET /api/chat/context/:sessionId`
-
-Returns context window for AI prompts (up to 128K tokens).
-
-#### Get Full Context with Cross-Session
-**Endpoint**: `GET /api/chat/context/full/:sessionId`
-
-Returns context including relevant past sessions.
-
-#### Get Session Analytics
-**Endpoint**: `GET /api/chat/analytics/:sessionId`
-
-#### Get Global Analytics
-**Endpoint**: `GET /api/chat/analytics/global`
-
-#### Get Active Sessions
-**Endpoint**: `GET /api/chat/sessions/active`
-
-#### Get Session Summaries
-**Endpoint**: `GET /api/chat/sessions/summaries`
-
-Returns summaries of all past sessions for cross-session memory.
-
-#### Search All Sessions
-**Endpoint**: `GET /api/chat/search/all`
-
-**Query Parameters**:
-- `q` (string): Search query
-
-#### User Preferences
-
-**Get Preferences**: `GET /api/chat/preferences`
-
-**Update Preferences**: `PUT /api/chat/preferences`
-
-**Request**:
-```json
-{
-  "crossSessionEnabled": true,
-  "maxCrossSessionHistory": 10,
-  "privacyLevel": "normal"
-}
-```
-
-**Toggle Cross-Session**: `POST /api/chat/preferences/toggle-cross-session`
-
-#### Resource Status
-**Endpoint**: `GET /api/chat/resources`
-
-Returns CPU, memory, disk usage and optimization recommendations.
-
-#### Force Flush
-**Endpoint**: `POST /api/chat/flush`
-
-Forces all pending data to be written to database.
-
-### Authentication Endpoints
-
-#### Register
-**Endpoint**: `POST /api/auth/register`
-
-**Request**:
-```json
-{
-  "username": "your_username",
-  "email": "email@example.com",
-  "password": "secure_password"
-}
-```
-
-#### Login
-**Endpoint**: `POST /api/auth/login`
-
-**Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "accessToken": "jwt_access_token",
-    "refreshToken": "jwt_refresh_token",
-    "user": { "id": "...", "username": "...", "email": "..." }
-  }
-}
-```
-
-#### Refresh Token
-**Endpoint**: `POST /api/auth/refresh`
-
-#### Logout
-**Endpoint**: `POST /api/auth/logout`
-
-#### Get Current User
-**Endpoint**: `GET /api/auth/me`
-
-#### Change Password
-**Endpoint**: `POST /api/auth/change-password`
-
-### Health Monitoring
-
-#### Comprehensive Health Check
-**Endpoint**: `GET /api/health`
-
-v2-alpha returns detailed health for all services.
-
-**Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "status": "healthy",
-    "version": "2.0.0-alpha",
-    "uptime": 86400,
-    "services": {
-      "database": { "status": "healthy", "latency": 5 },
-      "ai": { "status": "healthy", "provider": "ollama", "model": "llama2" },
-      "memory": { "status": "healthy", "usage": "245MB" },
-      "plugins": { "status": "healthy", "loaded": 3 }
-    },
-    "system": {
-      "cpuUsage": 25,
-      "memoryUsage": 45,
-      "diskUsage": 30
-    }
-  }
-}
-```
-
-#### Liveness Probe
-**Endpoint**: `GET /api/health/live`
-
-#### Readiness Probe
-**Endpoint**: `GET /api/health/ready`
-
----
-
 ## 📚 SDK and Libraries
 
 ### JavaScript/TypeScript
@@ -962,20 +710,11 @@ v2-alpha returns detailed health for all services.
 import { LackadaisicalAI } from 'lackadaisical-ai-client';
 
 const ai = new LackadaisicalAI({
-  baseUrl: 'http://localhost:3001/api'
+  baseUrl: 'http://localhost:3001/api/v1'
 });
-
-// Authenticate
-await ai.auth.login('email@example.com', 'password');
 
 // Send message
 const response = await ai.chat.send('Hello!');
-
-// Hot-swap model
-await ai.models.switch('gpt-4', 'openai');
-
-// Get cross-session context
-const context = await ai.chat.getFullContext('session-1');
 
 // Manage sessions
 const sessions = await ai.sessions.list();
@@ -993,17 +732,11 @@ const entry = await ai.journal.create({
 ```python
 from lackadaisical_ai import LackadaisicalAI
 
-ai = LackadaisicalAI(base_url='http://localhost:3001/api')
-
-# Authenticate
-ai.auth.login('email@example.com', 'password')
+ai = LackadaisicalAI(base_url='http://localhost:3001/api/v1')
 
 # Send message
 response = ai.chat.send('Hello!')
 print(response['ai_response'])
-
-# Hot-swap model
-ai.models.switch('gpt-4', 'openai')
 
 # Create journal entry
 entry = ai.journal.create(
@@ -1029,9 +762,10 @@ We welcome contributions to improve the API:
 - **GitHub Issues**: Report bugs and request features
 - **Community Discord**: Real-time help and discussions  
 - **Documentation**: Check TROUBLESHOOTING.md for common issues
+- **Email**: API-specific questions to api@lackadaisical-security.com
 
 ---
 
-**Last Updated**: February 2026  
-**API Version**: 2.0.0-alpha  
-**Documentation Version**: 2.0.0
+**Last Updated**: July 31, 2025  
+**API Version**: 1.0.0  
+**Documentation Version**: 1.0.0

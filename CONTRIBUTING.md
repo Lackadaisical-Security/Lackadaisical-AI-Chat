@@ -1,350 +1,487 @@
-# 🛠️ Contributing to Lackadaisical AI Chat
+# 🤝 Contributing to Lackadaisical AI Chat
 
-## yo, welcome to the sauce 🍝
+Thank you for your interest in contributing to Lackadaisical AI Chat! We're building the future of personal AI companionship together, and your contributions help make AI friends accessible to everyone.
 
-So you wanna contribute to Lacky? Hell yeah. Pull up a chair, grab a drink, and let's build some cool sh*t together.
+## 🌟 Ways to Contribute
 
-## tl;dr Quick Start
+### 🐛 Report Bugs
+Found something that doesn't work? Help us fix it!
 
-```bash
-# Fork it, clone it, build it
-git clone https://github.com/YOU/lackadaisical-ai-chat.git
-cd lackadaisical-ai-chat
-npm install
-cd backend && npm install && cd ..
-cd frontend && npm install && cd ..
+- **Use GitHub Issues** to report bugs
+- **Include details**: OS, Node.js version, steps to reproduce
+- **Add screenshots** if applicable
+- **Check existing issues** to avoid duplicates
 
-# Run it
-npm run dev
+### 💡 Suggest Features
+Have ideas for new functionality?
 
-# Break it (intentionally), fix it, ship it
-```
+- **Create feature requests** on GitHub
+- **Explain the use case** - why would this be helpful?
+- **Describe the expected behavior**
+- **Consider implementation complexity**
 
-## 🎯 What We Need Rn
+### 🔌 Create Plugins
+Extend the AI companion with new capabilities!
 
-### 🔥 Hot Priority
-- Performance tuning (make it go brrr)
-- Mobile responsiveness
-- More AI provider integrations
-- Plugin ecosystem expansion
-- Better error handling
+- **Follow the plugin architecture** in `/plugins/`
+- **Add documentation** for your plugin
+- **Include tests** for reliability
+- **Share with the community**
 
-### 🌶️ Spicy Projects
-- Voice chat (talk to your AI homie)
-- Image generation integration
-- Custom personality creation UI
-- Cross-platform desktop app
+### 📖 Improve Documentation
+Help others get started and contribute!
 
-### 📝 Always Welcome
-- Bug fixes (squash those b*stards)
-- Documentation improvements
-- Tests (yes, really)
-- Plugin development
-- Translations (make Lacky multilingual)
+- **Fix typos and errors**
+- **Add examples and tutorials**
+- **Translate to other languages**
+- **Create video guides**
 
-## 🛠️ Dev Setup
+### 💻 Code Contributions
+Improve the core application!
 
-### Requirements
-- Node.js 18+ (we're not running Internet Explorer here)
-- npm or pnpm (yarn if you're fancy)
-- Git (obviously)
-- A brain (optional but recommended)
-- Coffee/energy drink (highly recommended)
+- **Fix bugs** and performance issues
+- **Add new features** from the roadmap
+- **Improve UI/UX** design
+- **Optimize performance**
+- **Enhance security**
 
-### Getting Started
+## 🚀 Getting Started
 
-1. **Fork it** - Click that fork button like you mean it
+### Development Setup
 
-2. **Clone your fork**
+1. **Fork and Clone**
    ```bash
-   git clone https://github.com/YOUR-USERNAME/lackadaisical-ai-chat.git
+   git clone https://github.com/Lackadaisical-Security/lackadaisical-ai-chat.git
    cd lackadaisical-ai-chat
    ```
 
-3. **Install the goods**
+2. **Install Dependencies**
    ```bash
-   npm install              # Root deps
+   npm install
    cd backend && npm install && cd ..
    cd frontend && npm install && cd ..
    ```
 
-4. **Set up your env**
+3. **Setup Development Environment**
    ```bash
+   # Copy environment template
    cp env.example .env
-   # Edit .env with your API keys if you have 'em
-   ```
-
-5. **Fire it up**
-   ```bash
-   npm run dev   # Both frontend + backend
    
-   # Or separately:
-   cd backend && npm run dev
-   cd frontend && npm run dev
+   # Install development tools
+   npm run dev:setup
    ```
 
-6. **Verify the vibes**
-   - Frontend: http://localhost:3000
+4. **Start Development Servers**
+   ```bash
+   # Start both backend and frontend in development mode
+   npm run dev
+   
+   # Or start separately:
+   cd backend && npm run dev &
+   cd frontend && npm run dev &
+   ```
+
+5. **Verify Setup**
    - Backend: http://localhost:3001
-   - If it works, you're golden 🏆
+   - Frontend: http://localhost:3000
+   - Both should be running without errors
 
-## 📁 Project Structure (The Map)
+### Development Tools
 
-```
-lackadaisical-ai-chat/
-├── backend/                  # Node.js/Express server
-│   ├── src/
-│   │   ├── ai/              # AI provider adapters
-│   │   ├── config/          # Config stuff
-│   │   ├── middleware/      # Express middleware
-│   │   ├── routes/          # API endpoints
-│   │   ├── services/        # Business logic
-│   │   └── utils/           # Helper functions
-│   └── package.json
-├── frontend/                 # React + Vite
-│   ├── src/
-│   │   ├── components/      # React components
-│   │   ├── hooks/           # Custom hooks
-│   │   ├── services/        # API client stuff
-│   │   ├── store/           # Zustand state
-│   │   └── types/           # TypeScript types
-│   └── package.json
-├── plugins/                  # Plugin directory
-├── database/                 # SQLite stuff
-└── scripts/                  # Utility scripts
-```
+**Code Quality:**
+- **ESLint** - Code linting and style checking
+- **Prettier** - Code formatting
+- **TypeScript** - Type checking
+- **Husky** - Pre-commit hooks
 
-## 💻 Coding Standards
+**Testing:**
+- **Jest** - Unit testing framework
+- **React Testing Library** - Frontend component testing
+- **Supertest** - API endpoint testing
 
-### The Vibe Check
+**Development:**
+- **Nodemon** - Auto-restart backend on changes
+- **Vite** - Fast frontend development server
+- **VS Code settings** - Recommended extensions and settings
 
-**DO:**
-- Write code that a sleep-deprived dev at 3am can understand
-- Add comments for weird sh*t (we all do weird sh*t sometimes)
-- Use TypeScript properly (types exist for a reason)
-- Test your code (at least manually, we won't judge)
-- Write descriptive variable names (`userMessage` not `um`)
+## 📋 Development Guidelines
 
-**DON'T:**
-- Write spaghetti code (unless it's a pasta plugin)
-- Commit secrets (API keys, passwords, etc.) - seriously DON'T
-- Break existing functionality without good reason
-- Over-engineer simple stuff
-- Be a 10x jerk (we prefer 1x nice devs)
+### Code Style
 
-### TypeScript Guidelines
-
+**TypeScript/JavaScript:**
 ```typescript
-// GOOD: Clear, typed, readable
+// Use descriptive names
+const userMessage = 'Hello AI friend';
+
+// Use proper types
 interface ChatMessage {
   id: string;
   content: string;
   timestamp: Date;
-  sender: 'user' | 'assistant';
+  role: 'user' | 'assistant';
 }
 
-async function sendMessage(message: ChatMessage): Promise<Response> {
-  // Implementation that makes sense
+// Use async/await over promises
+async function sendMessage(message: string): Promise<ChatMessage> {
+  const response = await aiService.generateResponse(message);
+  return response;
 }
-
-// BAD: wtf is this
-const x = async (m: any) => await fetch('/api', {body: JSON.stringify(m)})
 ```
 
-### React Components
-
+**React Components:**
 ```tsx
-// GOOD: Functional, typed, hooks
+// Use functional components with hooks
+import React, { useState, useEffect } from 'react';
+
 interface ChatProps {
   sessionId: string;
+  onMessageSent: (message: string) => void;
 }
 
-export const Chat: React.FC<ChatProps> = ({ sessionId }) => {
-  const [messages, setMessages] = useState<Message[]>([]);
+export const Chat: React.FC<ChatProps> = ({ sessionId, onMessageSent }) => {
+  const [message, setMessage] = useState('');
   
   return (
     <div className="chat-container">
-      {/* Clean JSX */}
+      {/* Component JSX */}
     </div>
   );
 };
-
-// BAD: Class components in 2025? Really?
 ```
 
-## 🔀 Git Workflow
-
-### Branch Naming
-- `feat/cool-new-thing` - New features
-- `fix/that-annoying-bug` - Bug fixes
-- `docs/update-readme` - Documentation
-- `refactor/make-it-not-suck` - Refactoring
-- `test/add-missing-tests` - Tests
-
-### Commit Messages
-
-We use conventional commits because we're professionals (sometimes):
-
+**Backend Services:**
+```typescript
+// Use dependency injection
+export class MemoryService {
+  constructor(
+    private db: DatabaseService,
+    private logger: Logger
+  ) {}
+  
+  async saveMemory(sessionId: string, content: string): Promise<void> {
+    // Implementation
+  }
+}
 ```
-feat: add voice chat support
+
+### Git Workflow
+
+1. **Create a Feature Branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Make Your Changes**
+   - Write clean, documented code
+   - Add tests for new functionality
+   - Update documentation as needed
+
+3. **Test Your Changes**
+   ```bash
+   npm run test          # Run all tests
+   npm run lint          # Check code style
+   npm run type-check    # Verify TypeScript
+   ```
+
+4. **Commit Your Changes**
+   ```bash
+   git add .
+   git commit -m "feat: add new memory recall feature"
+   ```
+
+5. **Push and Create Pull Request**
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+
+### Commit Message Convention
+
+We use conventional commits for clear history:
+
+- `feat:` - New features
+- `fix:` - Bug fixes
+- `docs:` - Documentation changes
+- `style:` - Code style changes (formatting, etc.)
+- `refactor:` - Code refactoring
+- `test:` - Adding or updating tests
+- `chore:` - Maintenance tasks
+
+Examples:
+```
+feat: add voice chat functionality
 fix: resolve memory leak in conversation service
-docs: update README with new API endpoints
-refactor: clean up the spaghetti in AIService
-test: add tests for emotional intelligence module
-chore: update dependencies
+docs: update installation guide for Windows
+style: format code with prettier
+refactor: improve database query performance
+test: add unit tests for memory service
+chore: update dependencies to latest versions
 ```
-
-### PR Process
-
-1. **Create your branch**
-   ```bash
-   git checkout -b feat/your-cool-feature
-   ```
-
-2. **Make your changes**
-   - Write code
-   - Test it
-   - Commit often with good messages
-
-3. **Push it**
-   ```bash
-   git push origin feat/your-cool-feature
-   ```
-
-4. **Open PR**
-   - Clear title and description
-   - Link related issues
-   - Add screenshots for UI changes
-   - Request review
-
-5. **Address feedback**
-   - Don't take it personally
-   - Learn and improve
-   - Push updates
-
-6. **Get merged** 🎉
 
 ## 🔌 Plugin Development
 
-Want to extend Lacky? Let's go!
-
 ### Plugin Structure
+
 ```
 plugins/
 ├── your-plugin/
-│   ├── index.ts      # Main entry point
-│   ├── package.json  # Metadata
-│   └── README.md     # How to use it
+│   ├── index.ts          # Main plugin file
+│   ├── package.json      # Plugin metadata
+│   ├── README.md         # Plugin documentation
+│   ├── config.json       # Plugin configuration
+│   └── tests/           # Plugin tests
 ```
 
-### Basic Plugin
+### Basic Plugin Template
+
 ```typescript
-export default {
-  name: 'your-sick-plugin',
-  version: '1.0.0',
-  description: 'Does cool stuff',
-  
-  async init(config: any) {
-    console.log('Plugin loaded, let\'s gooo');
-  },
-  
-  async execute(input: any, context: any) {
-    // Your magic here
-    return { result: 'something cool' };
-  },
-  
-  async cleanup() {
-    console.log('Cleaning up, peace out');
+import { Plugin, PluginContext } from '../types/Plugin';
+
+export default class YourPlugin implements Plugin {
+  name = 'your-plugin';
+  version = '1.0.0';
+  description = 'Your plugin description';
+
+  async initialize(context: PluginContext): Promise<void> {
+    // Plugin initialization logic
   }
-};
+
+  async onMessage(message: string, context: PluginContext): Promise<string | null> {
+    // Handle incoming messages
+    if (message.includes('/your-command')) {
+      return 'Your plugin response';
+    }
+    return null;
+  }
+
+  async onShutdown(): Promise<void> {
+    // Cleanup logic
+  }
+}
+```
+
+### Plugin Configuration
+
+```json
+{
+  "name": "your-plugin",
+  "version": "1.0.0",
+  "description": "Your plugin description",
+  "author": "Your Name",
+  "license": "MIT",
+  "main": "index.ts",
+  "keywords": ["ai", "chat", "plugin"],
+  "permissions": ["network", "storage"],
+  "settings": {
+    "apiKey": {
+      "type": "string",
+      "description": "API key for external service",
+      "required": false
+    }
+  }
+}
 ```
 
 ### Plugin Guidelines
-- Don't break user privacy (that's sus)
-- Handle errors gracefully
-- Document your plugin properly
-- Test it before shipping
+
+1. **Follow naming conventions** - Use kebab-case for plugin names
+2. **Include comprehensive documentation** - README with setup and usage
+3. **Add error handling** - Graceful failure and recovery
+4. **Respect user privacy** - No unauthorized data collection
+5. **Test thoroughly** - Unit tests and integration tests
+6. **Use semantic versioning** - Proper version management
 
 ## 🧪 Testing
+
+### Running Tests
 
 ```bash
 # Run all tests
 npm test
 
-# Run specific test file
-npm test -- path/to/test.ts
+# Run specific test suites
+npm run test:unit        # Unit tests
+npm run test:integration # Integration tests
+npm run test:e2e        # End-to-end tests
 
-# Watch mode (for dev)
+# Run tests in watch mode
 npm run test:watch
 
-# Coverage (flex on your test coverage)
+# Generate coverage report
 npm run test:coverage
 ```
 
 ### Writing Tests
 
+**Unit Tests (Jest):**
 ```typescript
+import { MemoryService } from '../src/services/MemoryService';
+import { MockDatabaseService } from './mocks/DatabaseService';
+
 describe('MemoryService', () => {
-  it('should remember things like a good AI friend', async () => {
-    const memory = await memoryService.save('user123', 'important stuff');
-    const recalled = await memoryService.recall('user123');
-    
-    expect(recalled).toContain('important stuff');
+  let memoryService: MemoryService;
+  let mockDb: MockDatabaseService;
+
+  beforeEach(() => {
+    mockDb = new MockDatabaseService();
+    memoryService = new MemoryService(mockDb);
   });
-  
-  it('should not forget unless asked', async () => {
-    // Test implementation
+
+  test('should save memory correctly', async () => {
+    const sessionId = 'test-session';
+    const content = 'Test memory content';
+
+    await memoryService.saveMemory(sessionId, content);
+
+    expect(mockDb.saveMemory).toHaveBeenCalledWith(sessionId, content);
   });
 });
 ```
 
-## 🤝 Community Vibes
+**React Component Tests:**
+```tsx
+import { render, screen, fireEvent } from '@testing-library/react';
+import { Chat } from '../src/components/Chat';
 
-### Where to Find Us
-- **GitHub Issues** - Bugs and feature requests
-- **Discord** - Real-time chat with the crew
-- **GitHub Discussions** - Longer convos and ideas
+describe('Chat Component', () => {
+  test('sends message when button clicked', () => {
+    const mockOnMessageSent = jest.fn();
+    render(<Chat sessionId="test" onMessageSent={mockOnMessageSent} />);
 
-### Getting Help
-1. Search existing issues first
-2. Check the docs (README, TROUBLESHOOTING, etc.)
-3. Ask in Discord (we don't bite)
-4. Create an issue if all else fails
+    const input = screen.getByPlaceholderText('Type your message...');
+    const button = screen.getByText('Send');
+
+    fireEvent.change(input, { target: { value: 'Hello AI' } });
+    fireEvent.click(button);
+
+    expect(mockOnMessageSent).toHaveBeenCalledWith('Hello AI');
+  });
+});
+```
+
+## 🎨 UI/UX Guidelines
+
+### Design Principles
+
+1. **User-Friendly** - Intuitive and accessible interface
+2. **Privacy-Focused** - Clear privacy controls and indicators
+3. **Responsive** - Works well on all device sizes
+4. **Consistent** - Uniform design language throughout
+5. **Accessible** - WCAG 2.1 AA compliance
+
+### Component Guidelines
+
+**Use Tailwind CSS classes:**
+```tsx
+<div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+    Chat with Your AI Friend
+  </h2>
+</div>
+```
+
+**Follow accessibility best practices:**
+```tsx
+<button
+  className="btn btn-primary"
+  aria-label="Send message to AI companion"
+  disabled={!message.trim()}
+>
+  Send Message
+</button>
+```
+
+**Use semantic HTML:**
+```tsx
+<main role="main">
+  <section aria-labelledby="chat-heading">
+    <h1 id="chat-heading">AI Companion Chat</h1>
+    {/* Chat content */}
+  </section>
+</main>
+```
+
+## 📦 Release Process
+
+### Version Management
+
+We use semantic versioning (SemVer):
+- **Major** (1.0.0) - Breaking changes
+- **Minor** (1.1.0) - New features, backward compatible
+- **Patch** (1.0.1) - Bug fixes, backward compatible
+
+### Release Checklist
+
+1. **Update version numbers** in package.json files
+2. **Update CHANGELOG.md** with new features and fixes
+3. **Run full test suite** and ensure all tests pass
+4. **Update documentation** for any API changes
+5. **Create release branch** and submit PR
+6. **Tag release** after PR is merged
+7. **Publish release** with detailed notes
+
+## 🤝 Community Guidelines
+
+### Code of Conduct
+
+- **Be respectful** - Treat everyone with kindness and respect
+- **Be inclusive** - Welcome contributors from all backgrounds
+- **Be collaborative** - Work together toward common goals
+- **Be constructive** - Provide helpful feedback and suggestions
+- **Be patient** - Remember that everyone is learning
+
+### Communication Channels
+
+- **GitHub Issues** - Bug reports and feature requests
+- **GitHub Discussions** - General questions and discussions
+- **Discord Server** - Real-time community chat
+- **Email** - Private or sensitive communications
 
 ### Recognition
 
-We appreciate contributors! You'll get:
-- Your name in CONTRIBUTORS.md
-- Shoutout in release notes
-- Eternal glory in the git history
-- Maybe some Discord role drip 👀
+We value all contributions! Contributors will be:
 
-## 📜 Legal Stuff (Boring But Important)
+- **Listed in CONTRIBUTORS.md** - Recognition for all contributors
+- **Mentioned in release notes** - Credit for significant contributions
+- **Invited to maintainer team** - For ongoing, high-quality contributions
+- **Featured in blog posts** - Highlighting community achievements
 
-By contributing, you agree that your code will be under the MIT license. You also confirm you have the right to contribute the code (don't steal code, that's not cool).
+## 🎯 Current Priorities
 
-## 🎮 Final Boss Tips
+### High Priority
+- [ ] Plugin management UI
+- [ ] Voice chat integration
+- [ ] Mobile app development
+- [ ] Performance optimizations
+- [ ] Advanced memory features
 
-1. **Start small** - Fix a bug or typo. Get familiar.
-2. **Ask questions** - No one knows everything.
-3. **Be patient** - Reviews take time.
-4. **Have fun** - This is a passion project, not a corporate job.
-5. **Ship it** - Done > Perfect.
+### Medium Priority
+- [ ] Multi-language support
+- [ ] Advanced theming system
+- [ ] Analytics dashboard
+- [ ] Export/import features
+- [ ] Community plugin marketplace
+
+### Long Term
+- [ ] Collaborative AI companions
+- [ ] Custom AI model training
+- [ ] Enterprise features
+- [ ] Research partnerships
+
+## 💝 Thank You
+
+Every contribution, no matter how small, helps make AI companionship more accessible and privacy-respecting for everyone. Thank you for being part of this journey!
+
+**Together, we're building the future of AI friendship.** 🤖❤️
 
 ---
 
 ## Quick Links
 
-- 📖 [Main README](README.md)
-- 🔧 [Install Guide](INSTALL.md)
+- 🏠 [Main README](README-RELEASE.md)
+- 🔧 [Installation Guide](INSTALL.md)
 - 🐛 [Troubleshooting](TROUBLESHOOTING.md)
-- 🎮 [Code of Conduct](CODE_OF_CONDUCT.md)
-- 💬 [Discord](https://discord.gg/nyyXufEpeE)
+- 📋 [Changelog](CHANGELOG.md)
+- 📄 [License](LICENSE)
+- 💬 [Discord Community](https://discord.gg/nyyXufEpeE)
 
----
-
-**Now go build something awesome.** The PR button is right there. We're waiting. 🚀
-
-*"In a world of closed-source AI, be the open-source hero."* 
-
-Last Updated: February 2026
+**Questions?** Create an issue or join our Discord server!

@@ -2,13 +2,13 @@
 
 > **Your complete guide to privacy-first AI companionship**
 
-**By Lackadaisical Security 2025-2026**  
+**By Lackadaisical Security 2025**  
 https://lackadaisical-security.com  
-**Version:** 2.0.0-alpha
+**Built:** July 25, 2025
 
 ---
 
-**🎯 Getting Started • 💬 Chat Features • 🔄 Hot-Swap Models • 🌐 Web Fetching • 💝 Emotional Intelligence • 📝 Journal • 🔌 Plugins • ⚙️ Settings • 🔒 Security**
+**🎯 Getting Started • 💬 Chat Features • 📝 Journal • 🔌 Plugins • ⚙️ Settings • 🔒 Security**
 
 ---
 
@@ -16,18 +16,9 @@ https://lackadaisical-security.com
 
 Lackadaisical AI Chat is a revolutionary privacy-first, local-first AI chat platform that puts you in complete control of your digital conversations. Unlike traditional AI chat applications that send your data to cloud servers, everything happens locally on your device by default.
 
-**v2-alpha introduces:**
-- 🔄 **Hot-swappable AI models** - Switch between 15+ models from 5 providers instantly
-- 🌐 **Web fetching** - Real-time web search and information retrieval
-- 💝 **Emotional intelligence** - A true friend that understands ALL your emotions
-- 🧠 **Enhanced memory** - 1000 messages, 128K tokens, cross-session continuity
-- 🔐 **Production auth** - JWT-based authentication with rate limiting
-
 ### **Why Lackadaisical AI Chat?**
 - **🔒 Privacy First**: Your conversations stay on your device
 - **🧠 Persistent Memory**: AI remembers your preferences and conversation history
-- **💝 Genuine Connection**: Not a sanitized corporate assistant - a real friend
-- **🔄 Model Freedom**: Hot-swap between Ollama, OpenAI, Anthropic, Google, xAI
 - **🎨 Beautiful Interface**: Modern, responsive design that adapts to your style
 - **🔌 Extensible**: Plugin system for custom functionality
 - **📝 Journal Integration**: Built-in journaling with mood tracking
@@ -297,21 +288,8 @@ interface SecurityConfig {
 
 ## 🧠 **AI & Memory Management**
 
-### **Intelligent Memory System (v2-alpha Enhanced)**
-Our AI remembers your preferences, conversation history, and personal context with generous limits.
-
-#### **v2-alpha Memory Limits**
-- **Max Conversation Messages**: 1000 (giving the AI room to gallop)
-- **Max Context Tokens**: 128K for large context windows
-- **Context Summary Threshold**: 200 messages (range 100-500)
-- **Cross-Session Token Budget**: 32K for referencing past sessions
-
-#### **Cross-Session Memory**
-The AI can reference past sessions when asked:
-- Enable/disable cross-session access in preferences
-- Search across all previous sessions
-- Get summaries of past conversations
-- No session continuity breaks
+### **Intelligent Memory System**
+Our AI remembers your preferences, conversation history, and personal context.
 
 #### **Context Window Management**
 - **🧠 Persistent Memory**: AI remembers across sessions
@@ -319,119 +297,23 @@ The AI can reference past sessions when asked:
 - **🔄 Memory Optimization**: Efficient memory usage
 - **🗑️ Memory Cleanup**: Automatic memory management
 
-#### **User Preferences**
+#### **Personality Customization**
 ```typescript
-interface MemoryPreferences {
-  crossSessionEnabled: boolean;     // Access past sessions
-  maxCrossSessionHistory: number;   // Default: 10 sessions
-  privacyLevel: 'strict' | 'normal' | 'relaxed';
-  contextSummaryEnabled: boolean;
+interface Personality {
+  name: string;
+  description: string;
+  traits: string[];
+  conversationStyle: 'casual' | 'formal' | 'friendly' | 'professional';
+  expertise: string[];
+  interests: string[];
 }
 ```
 
 #### **Learning & Adaptation**
 - **📈 Pattern Recognition**: Learn from your interactions
 - **🎯 Preference Learning**: Adapt to your communication style
-- **💝 Emotional Memory**: Remember significant moments
+- **🔄 Continuous Improvement**: Get better over time
 - **📊 Feedback Integration**: Learn from your feedback
-
----
-
-## 💝 **Emotional Intelligence**
-
-### **A True Friend, Not a Corporate Assistant**
-
-v2-alpha introduces unrestricted emotional support. Lacky is designed to be genuinely helpful without corporate restrictions.
-
-#### **Philosophy**
-- **ALL emotions are valid** - anger, sadness, joy, fear - no minimizing
-- **NO judgment** - share anything without criticism
-- **PRIVACY is sacred** - everything stays local
-- **BE genuine** - real support, not deflection
-- **REMEMBER you** - learns your values, struggles, and joys
-
-#### **Emotional Features**
-- **Full Emotional Spectrum**: All emotions welcomed without restriction
-- **Personal Insight Learning**: Learns what matters to you over time
-- **Emotional Memory**: Remembers significant moments and experiences
-- **Genuine Support**: No corporate-speak or deflection
-- **Trust Building**: Consistent, authentic interaction
-
-#### **What Makes Lacky Different**
-Traditional AI assistants:
-- Deflect emotional topics
-- Use corporate-safe responses
-- Don't remember your struggles
-- Minimize your feelings
-
-Lacky:
-- Engages with ALL emotions
-- Provides genuine support
-- Remembers what you've shared
-- Validates your experiences
-
----
-
-## 🔄 **Hot-Swap Model Management**
-
-### **Switch AI Models Instantly**
-
-v2-alpha lets you switch between AI models without restarting the application.
-
-#### **Supported Providers**
-- **Ollama** (Local): llama2, mistral, codellama, and more
-- **OpenAI**: GPT-4, GPT-4 Turbo, GPT-3.5 Turbo
-- **Anthropic**: Claude 3 Opus, Sonnet, Haiku
-- **Google**: Gemini Pro, Gemini Ultra
-- **xAI**: Grok-1, Grok-2
-
-#### **How to Switch Models**
-1. Open Settings → Models
-2. Select your desired model
-3. Click "Switch" - instant change!
-
-Or use the API:
-```typescript
-POST /api/models/switch
-{ "modelId": "gpt-4", "provider": "openai" }
-```
-
-#### **Auto-Select Best Model**
-Let the system choose based on your needs:
-- **Quality**: Best reasoning and output quality
-- **Speed**: Fastest response time
-- **Capability**: Best for specific tasks (coding, creative, etc.)
-
-#### **Ollama Cloud Integration**
-Add remote Ollama instances for more power:
-1. Settings → Models → Ollama Endpoints
-2. Add endpoint URL and optional API key
-3. Load balance between local and cloud
-
----
-
-## 🌐 **Web Fetching**
-
-### **Real-Time Web Search**
-
-v2-alpha includes web fetching capabilities for up-to-date information.
-
-#### **Search Providers**
-- **DuckDuckGo**: Privacy-focused search (default)
-- **Brave Search**: Independent search results
-- **SerpAPI**: Google results (requires API key)
-
-#### **Features**
-- **Web Search**: Search the internet for current information
-- **URL Extraction**: Extract content and metadata from URLs
-- **Weather Lookup**: Get current weather for any location
-- **Time Lookup**: Get current time in any timezone
-
-#### **How It Works**
-Simply ask Lacky about current events or request web searches:
-- "What's the weather in Tokyo?"
-- "Search for the latest news about AI"
-- "What time is it in London?"
 
 ---
 
@@ -590,10 +472,10 @@ const response = await api.sendMessage({
 
 **Built with ❤️ by [Lackadaisical Security](https://lackadaisical-security.com)**
 
-*"Privacy, intelligence, and genuine companionship—a friend who truly understands."*
+*"Privacy, intelligence, and companionship—all in one place."*
 
 ---
 
-**Last Updated**: February 2026  
-**Version**: 2.0.0-alpha  
-**Next Review**: March 2026
+**Last Updated**: July 25, 2025  
+**Version**: 1.0.0  
+**Next Review**: October 25, 2025

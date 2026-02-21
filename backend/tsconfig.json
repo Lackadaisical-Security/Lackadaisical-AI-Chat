@@ -4,7 +4,7 @@
     "module": "CommonJS",
     "lib": ["ES2022"],
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "../",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -18,15 +18,15 @@
     "declarationMap": true,
     "sourceMap": true,
     "removeComments": false,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "exactOptionalPropertyTypes": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "exactOptionalPropertyTypes": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": false,
-    "noUncheckedIndexedAccess": false,
+    "noUncheckedIndexedAccess": true,
     "allowUnusedLabels": false,
     "allowUnreachableCode": false,
     "baseUrl": "./",
@@ -39,13 +39,15 @@
       "@/services/*": ["src/services/*"],
       "@/utils/*": ["src/utils/*"],
       "@/types/*": ["src/types/*"],
-      "@/ai/*": ["src/ai/*"],
-      "@/config/*": ["src/config/*"]
+      "@/ai/*": ["../ai/*"],
+      "@/config/*": ["../config/*"]
     }
   },
   "include": [
     "src/**/*",
-    "src/**/*.json"
+    "src/**/*.json",
+    "../ai/**/*",
+    "../config/**/*"
   ],
   "exclude": [
     "node_modules",
@@ -57,4 +59,4 @@
     "esm": true,
     "experimentalSpecifierResolution": "node"
   }
-}
+} 
