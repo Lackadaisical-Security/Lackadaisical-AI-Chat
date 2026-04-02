@@ -3,6 +3,60 @@ import path from 'path';
 import Database from 'better-sqlite3';
 import { config } from '../config/settings';
 
+/**
+ * Initialize the separate message log database for storing every user message
+ * and every model thinking + response. Uses WAL mode for concurrent access.
+ */
+export function initializeMessageLogDatabase(dbDir: string): Database.Database {
+  const logDbPath = path.join(dbDir, 'message_log.db');
+  const logDb = new Database(logDbPath);
+
+  // Enable WAL mode for concurrent reads/writes and SHM support
+  logDb.pragma('journal_mode = WAL');
+  logDb.pragma('synchronous = NORMAL');
+  logDb.pragma('wal_autocheckpoint = 1000');
+  logDb.pragma('foreign_keys = ON');
+  logDb.pragma('cache_size = -64000'); // 64MB cache
+  logDb.pragma('busy_timeout = 5000');
+
+  logDb.exec(`
+    CREATE TABLE IF NOT EXISTS message_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id TEXT NOT NULL,
+      role TEXT NOT NULL CHECK(role IN ('user', 'assistant', 'system', 'tool')),
+      content TEXT NOT NULL,
+      thinking TEXT,
+      thinking_duration_ms INTEGER,
+      model_used TEXT,
+      provider TEXT,
+      tokens_input INTEGER DEFAULT 0,
+      tokens_output INTEGER DEFAULT 0,
+      tokens_thinking INTEGER DEFAULT 0,
+      finish_reason TEXT,
+      tool_calls TEXT,
+      tool_results TEXT,
+      attachments TEXT,
+      metadata TEXT DEFAULT '{}',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_msglog_session ON message_log(session_id);
+    CREATE INDEX IF NOT EXISTS idx_msglog_role ON message_log(role);
+    CREATE INDEX IF NOT EXISTS idx_msglog_created ON message_log(created_at);
+    CREATE INDEX IF NOT EXISTS idx_msglog_model ON message_log(model_used);
+
+    CREATE TABLE IF NOT EXISTS message_log_schema_version (
+      version TEXT PRIMARY KEY,
+      applied_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    INSERT OR IGNORE INTO message_log_schema_version (version) VALUES ('1.0.0');
+  `);
+
+  console.log(`[DATABASE] Message log database initialized: ${logDbPath} (WAL mode)`);
+  return logDb;
+}
+
 export async function initializeDatabase(): Promise<Database.Database> {
   try {
     // Ensure database directory exists
@@ -19,10 +73,15 @@ export async function initializeDatabase(): Promise<Database.Database> {
     // Initialize SQLite database
     const db = new Database(dbPath);
     
-    // Enable foreign keys
+    // Enable WAL mode for better concurrent access (creates .db-wal and .db-shm files)
+    db.pragma('journal_mode = WAL');
+    db.pragma('synchronous = NORMAL');
+    db.pragma('wal_autocheckpoint = 1000');
     db.pragma('foreign_keys = ON');
+    db.pragma('cache_size = -64000'); // 64MB cache
+    db.pragma('busy_timeout = 5000');
     
-    console.log(`[DATABASE] SQLite database initialized: ${dbPath}`);
+    console.log(`[DATABASE] SQLite database initialized: ${dbPath} (WAL mode)`);
 
     // Create all tables from our enhanced schema
     console.log('[DATABASE] Creating tables from enhanced schema');

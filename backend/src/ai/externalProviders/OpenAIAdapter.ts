@@ -65,12 +65,19 @@ export class OpenAIAdapter {
     try {
       const response = await this.client.models.list();
       return response.data
-        .filter(model => model.id.includes('gpt'))
+        .filter(model => model.id.includes('gpt') || model.id.startsWith('o'))
         .map(model => model.id)
         .sort();
     } catch (error) {
       aiLogger.error('Failed to get OpenAI models:', error);
-      throw new Error('Failed to fetch available models from OpenAI');
+      // Return known current models as fallback
+      return [
+        'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.4-nano',
+        'gpt-5.2', 'gpt-5.1',
+        'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano',
+        'gpt-4o', 'gpt-4o-mini',
+        'o4-mini', 'o3', 'o3-mini', 'o1', 'o1-mini',
+      ];
     }
   }
 

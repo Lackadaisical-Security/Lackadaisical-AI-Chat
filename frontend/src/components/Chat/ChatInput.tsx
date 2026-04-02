@@ -115,7 +115,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         type="file"
         className="hidden"
         onChange={handleFileUpload}
-        accept="image/*,.pdf,.txt,.doc,.docx"
+        accept="image/*,.pdf,.txt,.doc,.docx,.md,.py,.js,.ts,.jsx,.tsx,.json,.yaml,.yml,.xml,.csv,.html,.css,.sql,.sh,.go,.rs,.java,.c,.cpp,.rb"
         aria-label="Upload file"
       />
 

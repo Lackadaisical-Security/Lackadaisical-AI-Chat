@@ -426,6 +426,85 @@ class ApiService {
     return response.data;
   }
 
+  // File upload for chat
+  async uploadChatFile(file: File, sessionId: string = 'default'): Promise<ApiResponse<{
+    id: string;
+    name: string;
+    size: number;
+    category: string;
+    mimeType: string;
+    hasExtractedText: boolean;
+    downloadUrl: string;
+  }>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('session_id', sessionId);
+
+    const response = await this.api.post('/api/v1/files/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60000,
+    });
+    return response.data;
+  }
+
+  // Web search
+  async webSearch(query: string, options?: {
+    maxResults?: number;
+    timeRange?: string;
+  }): Promise<ApiResponse<any>> {
+    const response = await this.api.post('/api/v1/search', {
+      query,
+      ...options,
+    });
+    return response.data;
+  }
+
+  // Deep research
+  async deepResearch(query: string, options?: {
+    steeringPrompt?: string;
+    focusAreas?: string[];
+    maxDepth?: number;
+    maxSources?: number;
+  }): Promise<ApiResponse<any>> {
+    const response = await this.api.post('/api/v1/search/deep-research', {
+      query,
+      ...options,
+    });
+    return response.data;
+  }
+
+  // Get available tools
+  async getTools(): Promise<ApiResponse<any>> {
+    const response = await this.api.get('/api/v1/search/tools');
+    return response.data;
+  }
+
+  // Execute tool
+  async executeTool(name: string, params: Record<string, any>): Promise<ApiResponse<any>> {
+    const response = await this.api.post('/api/v1/search/tool', { name, params });
+    return response.data;
+  }
+
+  // Get session files
+  async getSessionFiles(sessionId: string): Promise<ApiResponse<any>> {
+    const response = await this.api.get(`/api/v1/files/session/${sessionId}`);
+    return response.data;
+  }
+
+  // Get message logs
+  async getMessageLogs(sessionId: string, limit?: number): Promise<ApiResponse<any>> {
+    const response = await this.api.get(`/api/v1/logs/session/${sessionId}`, {
+      params: limit ? { limit } : {},
+    });
+    return response.data;
+  }
+
+  // Get log stats
+  async getLogStats(): Promise<ApiResponse<any>> {
+    const response = await this.api.get('/api/v1/logs/stats');
+    return response.data;
+  }
+
   async downloadFile(url: string, filename?: string): Promise<void> {
     const response = await this.api.get(url, {
       responseType: 'blob',

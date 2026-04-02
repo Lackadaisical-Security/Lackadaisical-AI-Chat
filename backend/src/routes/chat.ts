@@ -12,6 +12,14 @@ import { aiLogger, apiLogger } from '../utils/logger';
 import { config } from '../config/settings';
 import { v4 as uuidv4 } from 'uuid';
 
+// Import new services
+import { webSearchService } from '../services/WebSearchService';
+import { toolExecutionService, ToolResult } from '../services/ToolExecutionService';
+import { fileUploadService } from '../services/FileUploadService';
+import { codeBlockService } from '../services/CodeBlockService';
+import { extendedThinkingService } from '../services/ExtendedThinkingService';
+import { messageLogService } from '../services/MessageLogService';
+
 // Export a function that creates the router with dependencies
 export default function createChatRoutes(db: DatabaseService, aiService: AIService): Router {
   const router = Router();
@@ -58,6 +66,57 @@ export default function createChatRoutes(db: DatabaseService, aiService: AIServi
 }
 
 /**
+ * Parse tool calls from AI response content
+ */
+function parseToolCalls(content: string): Array<{ name: string; params: Record<string, unknown> }> {
+  const toolCalls: Array<{ name: string; params: Record<string, unknown> }> = [];
+  const toolBlockRegex = /```tool\n([\s\S]*?)```/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = toolBlockRegex.exec(content)) !== null) {
+    try {
+      const parsed = JSON.parse(match[1].trim());
+      if (parsed.tool && typeof parsed.tool === 'string') {
+        toolCalls.push({ name: parsed.tool, params: parsed.params || {} });
+      }
+    } catch {
+      // Not valid JSON, skip
+    }
+  }
+
+  return toolCalls;
+}
+
+/**
+ * Process tool calls and build result context
+ */
+async function processToolCalls(
+  toolCalls: Array<{ name: string; params: Record<string, unknown> }>,
+  sessionId: string
+): Promise<string> {
+  if (toolCalls.length === 0) return '';
+
+  let toolContext = '\n\nTool Results:\n';
+  for (const call of toolCalls) {
+    const result: ToolResult = await toolExecutionService.executeTool(call.name, call.params);
+    toolContext += `\n**${call.name}**: ${result.output}\n`;
+
+    // Log tool execution
+    try {
+      messageLogService.logToolExecution({
+        sessionId,
+        toolName: call.name,
+        toolInput: call.params,
+        toolOutput: result.data || result.output,
+      });
+    } catch (logError) {
+      aiLogger.warn('Failed to log tool execution:', logError);
+    }
+  }
+  return toolContext;
+}
+
+/**
  * Get conversation context for AI
  */
 async function getConversationContext(sessionId: string, limit: number = 10): Promise<Conversation[]> {
@@ -78,49 +137,160 @@ async function generateAIResponse(
   context: Conversation[], 
   personalityState: any,
   streamCallback?: (chunk: StreamChunk) => void,
-  useUncensored: boolean = true
-): Promise<{ content: string; model: string; tokens: number; responseTime: number; provider: string }> {
+  useUncensored: boolean = true,
+  additionalContext?: {
+    webSearchResults?: string;
+    fileContext?: string;
+    toolContext?: string;
+    attachmentIds?: string[];
+  }
+): Promise<{ content: string; model: string; tokens: number; responseTime: number; provider: string; thinking?: string }> {
   const startTime = Date.now();
   
   try {
+    // Build enhanced message with additional context
+    let enhancedMessage = message;
+
+    // Prepend web search results if available
+    if (additionalContext?.webSearchResults) {
+      enhancedMessage = `[Web Search Results for context]\n${additionalContext.webSearchResults}\n\n[User Message]\n${message}`;
+    }
+
+    // Prepend file context if available
+    if (additionalContext?.fileContext) {
+      enhancedMessage = `${additionalContext.fileContext}\n\n${enhancedMessage}`;
+    }
+
+    // Prepend tool context
+    if (additionalContext?.toolContext) {
+      enhancedMessage = `${additionalContext.toolContext}\n\n${enhancedMessage}`;
+    }
+
+    // Log user message to message log DB
+    try {
+      messageLogService.logUserMessage({
+        sessionId,
+        content: message,
+        attachments: additionalContext?.attachmentIds?.map(id => {
+          const file = fileUploadService.getFile(id);
+          return file ? { name: file.originalName, type: file.mimeType, size: file.size } : { name: id, type: 'unknown', size: 0 };
+        }),
+      });
+    } catch (logError) {
+      aiLogger.warn('Failed to log user message:', logError);
+    }
+
     if (streamCallback) {
       // Use streaming AI generation
       const result = await aiService.generateStreamingResponse(
-        message,
+        enhancedMessage,
         sessionId,
         streamCallback,
         {
           useUncensored,
           temperature: 0.7,
-          maxTokens: 500 // Increased from 1000 to 2048 for better responses with lackadaisical-assistant model
+          maxTokens: 4096
         }
       );
 
+      // Parse extended thinking from response
+      const thinkingResult = extendedThinkingService.parseThinkingFromResponse(result.response.content);
+      const finalContent = thinkingResult.hasThinking ? thinkingResult.response : result.response.content;
+
+      // Log assistant response to message log DB
+      try {
+        messageLogService.logAssistantResponse({
+          sessionId,
+          content: finalContent,
+          thinking: thinkingResult.thinking?.content || null,
+          thinkingDurationMs: thinkingResult.thinking?.durationMs,
+          modelUsed: result.response.model,
+          provider: result.provider as string,
+          tokensInput: result.response.metadata?.prompt_eval_count as number || 0,
+          tokensOutput: result.response.metadata?.eval_count as number || 0,
+          tokensThinking: thinkingResult.thinking?.tokenCount || 0,
+        });
+      } catch (logError) {
+        aiLogger.warn('Failed to log assistant response:', logError);
+      }
+
+      // Process code blocks in response
+      let processedContent = finalContent;
+      try {
+        const processed = await codeBlockService.processResponse(finalContent, sessionId);
+        if (processed.servedFiles.length > 0) {
+          // Append download links to response
+          processedContent += '\n\n📎 **Downloadable Files:**\n';
+          for (const file of processed.servedFiles) {
+            processedContent += `- [${file.filename}](${file.downloadUrl}) (${file.language})\n`;
+          }
+        }
+      } catch (codeError) {
+        aiLogger.warn('Code block processing failed:', codeError);
+      }
+
       return {
-        content: result.response.content,
+        content: processedContent,
         model: result.response.model,
         tokens: result.response.tokens_used || 0,
         responseTime: result.response.response_time_ms || 0,
-        provider: result.provider as string
+        provider: result.provider as string,
+        thinking: thinkingResult.thinking?.content,
       };
     } else {
       // Use regular AI generation
       const result = await aiService.generateResponse(
-        message,
+        enhancedMessage,
         sessionId,
         {
           useUncensored,
           temperature: 0.7,
-          maxTokens: 500 // Increased from 1000 to 2048 for better responses with lackadaisical-assistant model
+          maxTokens: 4096
         }
       );
 
+      // Parse extended thinking
+      const thinkingResult = extendedThinkingService.parseThinkingFromResponse(result.response.content);
+      const finalContent = thinkingResult.hasThinking ? thinkingResult.response : result.response.content;
+
+      // Log to message log DB
+      try {
+        messageLogService.logAssistantResponse({
+          sessionId,
+          content: finalContent,
+          thinking: thinkingResult.thinking?.content || null,
+          thinkingDurationMs: thinkingResult.thinking?.durationMs,
+          modelUsed: result.response.model,
+          provider: String(result.provider),
+          tokensInput: result.response.metadata?.prompt_eval_count as number || 0,
+          tokensOutput: result.response.metadata?.eval_count as number || 0,
+          tokensThinking: thinkingResult.thinking?.tokenCount || 0,
+        });
+      } catch (logError) {
+        aiLogger.warn('Failed to log assistant response:', logError);
+      }
+
+      // Process code blocks
+      let processedContent = finalContent;
+      try {
+        const processed = await codeBlockService.processResponse(finalContent, sessionId);
+        if (processed.servedFiles.length > 0) {
+          processedContent += '\n\n📎 **Downloadable Files:**\n';
+          for (const file of processed.servedFiles) {
+            processedContent += `- [${file.filename}](${file.downloadUrl}) (${file.language})\n`;
+          }
+        }
+      } catch (codeError) {
+        aiLogger.warn('Code block processing failed:', codeError);
+      }
+
       return {
-        content: result.response.content,
+        content: processedContent,
         model: result.response.model,
         tokens: result.response.tokens_used || 0,
         responseTime: result.response.response_time_ms || 0,
-        provider: String(result.provider)
+        provider: String(result.provider),
+        thinking: thinkingResult.thinking?.content,
       };
     }
 
@@ -215,6 +385,44 @@ router.post('/', sentimentMiddlewareWithDB, asyncHandler(async (req: Request, re
       stream: chatRequest.stream
     });
 
+    // Build additional context from web search and file uploads
+    let webSearchResults: string | undefined;
+    let fileContext: string | undefined;
+    let toolContext: string | undefined;
+
+    // Check if message should trigger web search
+    if (webSearchService.shouldTriggerSearch(chatRequest.message)) {
+      try {
+        const searchQuery = webSearchService.extractSearchQuery(chatRequest.message);
+        aiLogger.info('Triggering web search:', { query: searchQuery });
+        const searchResults = await webSearchService.search(searchQuery, { maxResults: 5 });
+        if (searchResults.results.length > 0) {
+          webSearchResults = searchResults.results
+            .map((r, i) => `${i + 1}. ${r.title}\n   URL: ${r.url}\n   ${r.snippet}`)
+            .join('\n\n');
+          // Add fetched content summaries
+          if (searchResults.fetchedContent.length > 0) {
+            webSearchResults += '\n\n--- Fetched Page Content ---\n';
+            for (const content of searchResults.fetchedContent) {
+              webSearchResults += `\nSource: ${content.title} (${content.url})\n`;
+              webSearchResults += content.content.substring(0, 2000) + '\n';
+            }
+          }
+        }
+      } catch (searchError) {
+        aiLogger.warn('Web search failed, continuing without:', searchError);
+      }
+    }
+
+    // Build file context from attached files
+    const attachmentIds = req.body.attachment_ids || [];
+    if (attachmentIds.length > 0) {
+      fileContext = fileUploadService.buildFileContext(attachmentIds);
+    }
+
+    // Build tool context for AI awareness
+    toolContext = toolExecutionService.buildToolContextForPrompt();
+
     // Handle streaming response
     if (chatRequest.stream && config.ai.streamMode === 'sse') {
       // Set up Server-Sent Events
@@ -242,7 +450,8 @@ router.post('/', sentimentMiddlewareWithDB, asyncHandler(async (req: Request, re
               aiResponse += chunk.content;
             }
           },
-          chatRequest.useUncensored
+          chatRequest.useUncensored,
+          { webSearchResults, fileContext, toolContext, attachmentIds }
         );
 
         responseMetadata = result;
@@ -306,7 +515,8 @@ router.post('/', sentimentMiddlewareWithDB, asyncHandler(async (req: Request, re
         conversationContext,
         personalityState,
         undefined,
-        chatRequest.useUncensored
+        chatRequest.useUncensored,
+        { webSearchResults, fileContext, toolContext, attachmentIds }
       );
 
       // Save conversation to database with full context tracking

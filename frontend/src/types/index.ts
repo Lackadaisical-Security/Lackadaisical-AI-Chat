@@ -16,6 +16,24 @@ export interface Message {
   tokens?: number;
   responseTime?: number;
   sentiment?: SentimentAnalysis;
+  thinking?: string;
+  thinkingDurationMs?: number;
+  attachments?: Array<{
+    id: string;
+    name: string;
+    size: number;
+    category: string;
+    downloadUrl?: string;
+  }>;
+  servedFiles?: Array<{
+    id: string;
+    filename: string;
+    downloadUrl: string;
+    language: string;
+    size: number;
+  }>;
+  webSearchUsed?: boolean;
+  toolsUsed?: string[];
 }
 
 export interface ChatSession {

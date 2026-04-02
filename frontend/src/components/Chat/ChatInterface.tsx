@@ -20,7 +20,10 @@ import {
   Sun,
   Moon,
   Maximize2,
-  Minimize2
+  Minimize2,
+  Globe,
+  Search,
+  Paperclip,
 } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { Message } from '../../types';
@@ -40,14 +43,36 @@ const toast = ({ title, description }: {
   alert(`${title}: ${description}`);
 };
 
-// AI Model options
+// AI Model options - Updated April 2026
 const AI_MODELS = [
-  { id: 'ollama-default', name: 'Lacky (Local)', provider: 'ollama', description: 'Fast, private, local AI' },
-  { id: 'ollama-uncensored', name: 'Lacky Uncensored', provider: 'ollama', description: 'Unrestricted local AI' },
-  { id: 'gpt-4', name: 'GPT-4', provider: 'openai', description: 'OpenAI most capable model' },
-  { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'openai', description: 'Fast and efficient' },
-  { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', provider: 'anthropic', description: 'Balanced performance' },
-  { id: 'gemini-pro', name: 'Gemini Pro', provider: 'google', description: 'Google AI' },
+  // Ollama Local Models
+  { id: 'gpt-oss:20b', name: 'GPT-OSS 20B (Local)', provider: 'ollama', description: 'OpenAI open-source reasoning model w/ 256k context' },
+  { id: 'gemma4:e4b', name: 'Gemma 4 E4B Vision', provider: 'ollama', description: 'Google vision model for image understanding' },
+  { id: 'lackadaisical-uncensored:latest', name: 'Lacky Uncensored', provider: 'ollama', description: 'Unrestricted local AI' },
+  { id: 'llama3.3:latest', name: 'Llama 3.3', provider: 'ollama', description: 'Meta flagship local model' },
+  { id: 'mistral:latest', name: 'Mistral 7B', provider: 'ollama', description: 'Efficient & fast local model' },
+  { id: 'codellama:latest', name: 'Code Llama', provider: 'ollama', description: 'Specialized code generation' },
+  { id: 'phi4:latest', name: 'Phi-4', provider: 'ollama', description: 'Microsoft lightweight reasoning' },
+  // OpenAI Models
+  { id: 'gpt-5.4', name: 'GPT-5.4', provider: 'openai', description: 'OpenAI flagship reasoning & coding' },
+  { id: 'gpt-5.4-mini', name: 'GPT-5.4 Mini', provider: 'openai', description: 'Fast, cost-effective GPT-5.4' },
+  { id: 'gpt-4.1', name: 'GPT-4.1', provider: 'openai', description: '1M token long context model' },
+  { id: 'o4-mini', name: 'O4 Mini', provider: 'openai', description: 'Budget reasoning model' },
+  { id: 'o3', name: 'O3', provider: 'openai', description: 'Advanced reasoning' },
+  { id: 'gpt-4o', name: 'GPT-4o (Legacy)', provider: 'openai', description: 'Multimodal vision & audio' },
+  // Anthropic Models
+  { id: 'claude-opus-4-6', name: 'Claude Opus 4.6', provider: 'anthropic', description: 'Anthropic flagship, 1M context' },
+  { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', provider: 'anthropic', description: 'Balanced speed & intelligence' },
+  { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', provider: 'anthropic', description: 'Fastest Claude, low-latency' },
+  // Google Models
+  { id: 'gemini-3.1-pro', name: 'Gemini 3.1 Pro', provider: 'google', description: 'Google flagship, 2M context' },
+  { id: 'gemini-3.1-flash', name: 'Gemini 3.1 Flash', provider: 'google', description: 'High-speed multimodal' },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'google', description: 'Agentic reasoning, 1M context' },
+  // xAI Models
+  { id: 'grok-4.20-beta', name: 'Grok 4.20 Beta', provider: 'xai', description: 'xAI flagship, 2M context, multi-agent' },
+  { id: 'grok-4-1-fast-reasoning', name: 'Grok 4.1 Fast', provider: 'xai', description: 'Fast reasoning, 2M context' },
+  { id: 'grok-3', name: 'Grok 3', provider: 'xai', description: 'Enterprise reasoning' },
+  { id: 'grok-code-fast-1', name: 'Grok Code Fast', provider: 'xai', description: 'Agentic code workflows' },
 ];
 
 const ChatInterface: React.FC = () => {
@@ -75,12 +100,14 @@ const ChatInterface: React.FC = () => {
   
   // Enhanced UI state
   const [showQuickSettings, setShowQuickSettings] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('ollama-default');
+  const [selectedModel, setSelectedModel] = useState('gpt-oss:20b');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [chatTemperature, setChatTemperature] = useState(0.7);
-  const [maxTokens, setMaxTokens] = useState(2048);
+  const [maxTokens, setMaxTokens] = useState(4096);
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{id: string; name: string; size: number; category: string}>>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Handle pre-filled message from companion dashboard
   useEffect(() => {
@@ -139,15 +166,20 @@ const ChatInterface: React.FC = () => {
       // Ensure we have a session
       const sessionId = currentSession?.id || 'default';
 
-      // Create user message
+      // Create user message with attachments
       const userMessage: Message = {
         id: Date.now().toString(),
         role: 'user',
         content: messageText,
         timestamp: new Date().toISOString(),
+        attachments: uploadedFiles.length > 0 ? uploadedFiles : undefined,
       };
 
       addMessage(userMessage);
+
+      // Clear uploaded files after sending
+      const currentAttachments = [...uploadedFiles];
+      setUploadedFiles([]);
 
       // Create placeholder assistant message
       const assistantMessage: Message = {
@@ -160,7 +192,7 @@ const ChatInterface: React.FC = () => {
       addMessage(assistantMessage);
       setCurrentAssistantMessageId(assistantMessage.id);
 
-      // Use the API service for streaming (FIXED)
+      // Use the API service for streaming
       let accumulatedContent = '';
       await api.streamMessage(
         messageText,
@@ -186,6 +218,36 @@ const ChatInterface: React.FC = () => {
       setIsLoading(false);
       setCurrentAssistantMessageId(null);
     }
+  };
+
+  // Handle file upload
+  const handleFileUpload = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const sessionId = currentSession?.id || 'default';
+      const result = await api.uploadChatFile(file, sessionId);
+      if (result.success && result.data) {
+        setUploadedFiles(prev => [...prev, {
+          id: result.data!.id,
+          name: result.data!.name,
+          size: result.data!.size,
+          category: result.data!.category,
+        }]);
+      }
+    } catch (error) {
+      console.error('File upload failed:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload file. Please try again."
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Remove uploaded file
+  const removeUploadedFile = (fileId: string) => {
+    setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
   };
 
   // Handle key press
@@ -498,18 +560,18 @@ const ChatInterface: React.FC = () => {
               {/* Quick Start Suggestions */}
               <div className="flex flex-wrap gap-2 justify-center max-w-lg">
                 {[
-                  "Tell me a joke",
-                  "Help me write code",
-                  "Explain a concept",
-                  "Creative writing",
-                  "Daily check-in"
+                  "🔍 Search the web for latest news",
+                  "💻 Help me write code",
+                  "📚 Deep research a topic",
+                  "📎 Upload a file to analyze",
+                  "🧠 Explain a concept",
+                  "💬 Daily check-in"
                 ].map((suggestion, index) => (
                   <button
                     key={index}
-                    onClick={() => setInputValue(suggestion)}
+                    onClick={() => setInputValue(suggestion.replace(/^[^\s]+\s/, ''))}
                     className="px-4 py-2 bg-base-200 hover:bg-base-300 rounded-full text-sm transition-colors"
                   >
-                    <Sparkles className="h-3 w-3 inline mr-2" />
                     {suggestion}
                   </button>
                 ))}
@@ -545,13 +607,38 @@ const ChatInterface: React.FC = () => {
 
         {/* Input Area */}
         <div className="p-4 border-t border-base-300 bg-base-200">
+          {/* Uploaded Files Preview */}
+          {uploadedFiles.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {uploadedFiles.map(file => (
+                <div key={file.id} className="flex items-center gap-1 px-2 py-1 bg-base-300 rounded-lg text-xs">
+                  <span>{file.name}</span>
+                  <span className="text-base-content/50">({Math.round(file.size / 1024)}KB)</span>
+                  <button
+                    onClick={() => removeUploadedFile(file.id)}
+                    className="ml-1 text-error hover:text-error-content"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {isUploading && (
+            <div className="text-xs text-info mb-2 flex items-center gap-1">
+              <span className="loading loading-spinner loading-xs"></span>
+              Uploading file...
+            </div>
+          )}
           <ChatInput
             value={inputValue}
             onChange={setInputValue}
             onSend={handleSendMessage}
             onKeyPress={handleKeyPress}
             disabled={isLoading || isStreaming}
-            placeholder="Type your message..."
+            placeholder="Type your message... (supports web search, code, file analysis)"
+            onFileUpload={handleFileUpload}
+            maxLength={262144}
           />
           <div className="flex items-center justify-between mt-2 text-xs text-base-content/50">
             <span>Press Enter to send, Shift+Enter for new line</span>

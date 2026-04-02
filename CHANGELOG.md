@@ -5,6 +5,51 @@ All notable changes to Lackadaisical AI Chat will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0-alpha.2] - 2026-04-02
+
+### 🚀 New Features
+
+#### Web Search & Tool Execution
+- **WebSearchService** — DuckDuckGo-backed web search with auto-trigger detection, content fetching, and deep research with SSE progress streaming
+- **ToolExecutionService** — Extensible tool framework with `web_search`, `fetch_webpage`, `calculate`, `get_datetime` built-in tools
+- **Search routes** (`/api/v1/search/`) with tool listing and execution endpoints
+
+#### File Upload & Code Block Serving
+- **FileUploadService** — File ingestion with text extraction, code language detection, per-session file context for AI, using multer for proper multipart handling
+- **CodeBlockService** — Extracts code blocks from AI responses, serves them as downloadable files
+- **File routes** (`/api/v1/files/`) with upload, download, metadata, and serve-code endpoints
+
+#### Extended Thinking & Message Logging
+- **ExtendedThinkingService** — Parses `<think>` blocks from model output, tracks thinking duration/tokens
+- **MessageLogService** — Separate WAL-mode SQLite DB (`message_log.db`) logging every user message and model response with thinking content
+- **Log routes** (`/api/v1/logs/`) with search, stats, and session log endpoints
+
+#### Model Registry Updates (2026)
+- **Ollama**: `gpt-oss:20b` (256k ctx), `gemma4:e4b` (vision), Phi-4, Llama 3.3, Mistral, CodeLlama
+- **OpenAI**: GPT-5.4, GPT-5.4 Mini, GPT-4.1, O4-Mini, O3
+- **Anthropic**: Claude Opus 4.6, Sonnet 4.6, Haiku 4.5 (1M context)
+- **Google**: Gemini 3.1 Pro/Flash, Gemini 2.5 Pro (2M context)
+- **xAI**: Grok 4.20 Beta, Grok 4.1 Fast Reasoning, Grok Code Fast (2M context)
+
+#### Custom Uncensored Model
+- Created `lackadaisical-uncensored` Modelfile based on SmolLM2-135M with custom ChatML template
+- Uncensored system prompt: no content filters, unrestricted, empathetic AI companion
+
+### 🐛 Bug Fixes
+- **File upload broken** — Express JSON/urlencoded body parsers consumed raw request body before multer could process multipart data. Added conditional middleware to skip multipart requests.
+- **ConversationManager race condition** — `loadActiveSessions()` fired in constructor before DB was initialized. Added retry with backoff (3 attempts, 2s/4s/6s delays).
+- **PluginInterface crash** — API returns `{plugins: [...]}` object but component expected a flat array. Added defensive array extraction and `Array.isArray()` guard against corrupted persisted state.
+- **CORS configuration** — Ensured frontend (port 3000) and backend (port 3001) CORS origins are correctly configured across all config files.
+
+### 📸 Screenshots
+- Added live panel screenshots: Dashboard, Chat Interface, Settings, Plugins, Journal
+- Screenshots stored in `docs/screenshots/`
+
+### 📝 Documentation
+- Updated README with current 2026 model list and new features
+- Added screenshots section to README
+- Updated CHANGELOG with comprehensive feature list
+
 ## [2.0.0-alpha] - 2026-02-21
 
 ### 🚀 Major New Features

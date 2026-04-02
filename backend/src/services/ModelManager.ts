@@ -97,11 +97,11 @@ export class ModelManager extends EventEmitter {
 
   // Default models for each provider
   private readonly defaultModels: Record<AIProviderType, string> = {
-    ollama: 'lackadaisical-uncensored:latest',
-    openai: 'gpt-4-turbo-preview',
-    anthropic: 'claude-3-sonnet-20240229',
-    google: 'gemini-1.5-pro',
-    xai: 'grok-beta'
+    ollama: 'gpt-oss:20b',
+    openai: 'gpt-5.4',
+    anthropic: 'claude-sonnet-4-6',
+    google: 'gemini-3.1-flash',
+    xai: 'grok-4-1-fast-reasoning'
   };
 
   constructor() {
@@ -116,7 +116,37 @@ export class ModelManager extends EventEmitter {
    * Initialize the model registry with known models
    */
   private initializeRegistry(): void {
-    // Ollama models
+    // ==================== OLLAMA MODELS ====================
+    this.registerModel({
+      id: 'gpt-oss:20b',
+      name: 'gpt-oss:20b',
+      provider: 'ollama',
+      displayName: 'GPT-OSS 20B',
+      description: 'OpenAI open-source reasoning model with 256k context, tool use, and extended thinking',
+      contextLength: 262144,
+      maxOutputTokens: 16384,
+      capabilities: ['chat', 'completion', 'code', 'function_calling', 'streaming', 'reasoning'],
+      isLocal: true,
+      isAvailable: false,
+      lastChecked: new Date(),
+      tags: ['reasoning', 'local', 'flagship', 'open-source', 'tool-use']
+    });
+
+    this.registerModel({
+      id: 'gemma4:e4b',
+      name: 'gemma4:e4b',
+      provider: 'ollama',
+      displayName: 'Gemma 4 E4B (Vision)',
+      description: 'Google Gemma 4 with vision capabilities for image understanding',
+      contextLength: 131072,
+      maxOutputTokens: 8192,
+      capabilities: ['chat', 'completion', 'vision', 'streaming'],
+      isLocal: true,
+      isAvailable: false,
+      lastChecked: new Date(),
+      tags: ['vision', 'local', 'multimodal']
+    });
+
     this.registerModel({
       id: 'lackadaisical-uncensored:latest',
       name: 'lackadaisical-uncensored',
@@ -133,11 +163,11 @@ export class ModelManager extends EventEmitter {
     });
 
     this.registerModel({
-      id: 'llama3.2:latest',
-      name: 'llama3.2',
+      id: 'llama3.3:latest',
+      name: 'llama3.3',
       provider: 'ollama',
-      displayName: 'Llama 3.2',
-      description: 'Latest Llama model from Meta',
+      displayName: 'Llama 3.3',
+      description: 'Meta Llama 3.3 for general conversation and coding',
       contextLength: 128000,
       maxOutputTokens: 4096,
       capabilities: ['chat', 'completion', 'code', 'streaming', 'reasoning'],
@@ -178,62 +208,46 @@ export class ModelManager extends EventEmitter {
     });
 
     this.registerModel({
-      id: 'deepseek-r1:latest',
-      name: 'deepseek-r1',
+      id: 'phi4:latest',
+      name: 'phi4',
       provider: 'ollama',
-      displayName: 'DeepSeek R1',
-      description: 'Advanced reasoning model from DeepSeek',
-      contextLength: 65536,
-      maxOutputTokens: 8192,
+      displayName: 'Phi-4',
+      description: 'Microsoft Phi-4 lightweight reasoning model',
+      contextLength: 16384,
+      maxOutputTokens: 4096,
       capabilities: ['chat', 'completion', 'code', 'streaming', 'reasoning'],
       isLocal: true,
       isAvailable: false,
       lastChecked: new Date(),
-      tags: ['reasoning', 'local', 'advanced']
+      tags: ['lightweight', 'local', 'reasoning']
     });
 
-    // OpenAI models
+    // ==================== OPENAI MODELS ====================
     this.registerModel({
-      id: 'gpt-4-turbo-preview',
-      name: 'gpt-4-turbo-preview',
+      id: 'gpt-5.4',
+      name: 'gpt-5.4',
       provider: 'openai',
-      displayName: 'GPT-4 Turbo',
-      description: 'Latest GPT-4 model with improved performance',
-      contextLength: 128000,
-      maxOutputTokens: 4096,
-      capabilities: ['chat', 'completion', 'code', 'vision', 'function_calling', 'json_mode', 'streaming'],
-      pricing: { inputPer1kTokens: 0.01, outputPer1kTokens: 0.03, currency: 'USD' },
-      isLocal: false,
-      isAvailable: !!config.ai.apiKeys.openai,
-      lastChecked: new Date(),
-      tags: ['premium', 'cloud', 'multimodal']
-    });
-
-    this.registerModel({
-      id: 'gpt-4o',
-      name: 'gpt-4o',
-      provider: 'openai',
-      displayName: 'GPT-4o',
-      description: 'Optimized GPT-4 with faster responses',
-      contextLength: 128000,
-      maxOutputTokens: 4096,
-      capabilities: ['chat', 'completion', 'code', 'vision', 'function_calling', 'json_mode', 'streaming'],
+      displayName: 'GPT-5.4',
+      description: 'OpenAI flagship model - top-tier reasoning, coding, and agentic workflows',
+      contextLength: 400000,
+      maxOutputTokens: 16384,
+      capabilities: ['chat', 'completion', 'code', 'vision', 'function_calling', 'json_mode', 'streaming', 'reasoning'],
       pricing: { inputPer1kTokens: 0.005, outputPer1kTokens: 0.015, currency: 'USD' },
       isLocal: false,
       isAvailable: !!config.ai.apiKeys.openai,
       lastChecked: new Date(),
-      tags: ['fast', 'cloud', 'multimodal']
+      tags: ['flagship', 'cloud', 'reasoning', 'multimodal']
     });
 
     this.registerModel({
-      id: 'gpt-3.5-turbo',
-      name: 'gpt-3.5-turbo',
+      id: 'gpt-5.4-mini',
+      name: 'gpt-5.4-mini',
       provider: 'openai',
-      displayName: 'GPT-3.5 Turbo',
-      description: 'Fast and cost-effective model',
-      contextLength: 16384,
-      maxOutputTokens: 4096,
-      capabilities: ['chat', 'completion', 'code', 'function_calling', 'json_mode', 'streaming'],
+      displayName: 'GPT-5.4 Mini',
+      description: 'Fast, cost-effective variant of GPT-5.4',
+      contextLength: 400000,
+      maxOutputTokens: 16384,
+      capabilities: ['chat', 'completion', 'code', 'vision', 'function_calling', 'json_mode', 'streaming'],
       pricing: { inputPer1kTokens: 0.0005, outputPer1kTokens: 0.0015, currency: 'USD' },
       isLocal: false,
       isAvailable: !!config.ai.apiKeys.openai,
@@ -241,119 +255,231 @@ export class ModelManager extends EventEmitter {
       tags: ['fast', 'cloud', 'budget']
     });
 
-    // Anthropic models
     this.registerModel({
-      id: 'claude-3-opus-20240229',
-      name: 'claude-3-opus-20240229',
-      provider: 'anthropic',
-      displayName: 'Claude 3 Opus',
-      description: 'Most capable Claude model for complex tasks',
-      contextLength: 200000,
-      maxOutputTokens: 4096,
-      capabilities: ['chat', 'completion', 'code', 'vision', 'streaming', 'reasoning'],
-      pricing: { inputPer1kTokens: 0.015, outputPer1kTokens: 0.075, currency: 'USD' },
-      isLocal: false,
-      isAvailable: !!config.ai.apiKeys.anthropic,
-      lastChecked: new Date(),
-      tags: ['premium', 'cloud', 'reasoning']
-    });
-
-    this.registerModel({
-      id: 'claude-3-sonnet-20240229',
-      name: 'claude-3-sonnet-20240229',
-      provider: 'anthropic',
-      displayName: 'Claude 3 Sonnet',
-      description: 'Balanced performance and cost',
-      contextLength: 200000,
-      maxOutputTokens: 4096,
-      capabilities: ['chat', 'completion', 'code', 'vision', 'streaming'],
-      pricing: { inputPer1kTokens: 0.003, outputPer1kTokens: 0.015, currency: 'USD' },
-      isLocal: false,
-      isAvailable: !!config.ai.apiKeys.anthropic,
-      lastChecked: new Date(),
-      tags: ['balanced', 'cloud']
-    });
-
-    this.registerModel({
-      id: 'claude-3-5-sonnet-20241022',
-      name: 'claude-3-5-sonnet-20241022',
-      provider: 'anthropic',
-      displayName: 'Claude 3.5 Sonnet',
-      description: 'Latest Claude with improved capabilities',
-      contextLength: 200000,
-      maxOutputTokens: 8192,
-      capabilities: ['chat', 'completion', 'code', 'vision', 'streaming', 'reasoning'],
-      pricing: { inputPer1kTokens: 0.003, outputPer1kTokens: 0.015, currency: 'USD' },
-      isLocal: false,
-      isAvailable: !!config.ai.apiKeys.anthropic,
-      lastChecked: new Date(),
-      tags: ['latest', 'cloud', 'reasoning']
-    });
-
-    // Google models
-    this.registerModel({
-      id: 'gemini-1.5-pro',
-      name: 'gemini-1.5-pro',
-      provider: 'google',
-      displayName: 'Gemini 1.5 Pro',
-      description: 'Google\'s most capable model with long context',
+      id: 'gpt-4.1',
+      name: 'gpt-4.1',
+      provider: 'openai',
+      displayName: 'GPT-4.1',
+      description: 'Long context model with up to 1M token window',
       contextLength: 1000000,
-      maxOutputTokens: 8192,
-      capabilities: ['chat', 'completion', 'code', 'vision', 'streaming', 'reasoning', 'multilingual'],
-      pricing: { inputPer1kTokens: 0.00125, outputPer1kTokens: 0.005, currency: 'USD' },
+      maxOutputTokens: 32768,
+      capabilities: ['chat', 'completion', 'code', 'vision', 'function_calling', 'json_mode', 'streaming'],
+      pricing: { inputPer1kTokens: 0.002, outputPer1kTokens: 0.008, currency: 'USD' },
       isLocal: false,
-      isAvailable: !!config.ai.apiKeys.google,
+      isAvailable: !!config.ai.apiKeys.openai,
       lastChecked: new Date(),
       tags: ['long-context', 'cloud', 'multimodal']
     });
 
     this.registerModel({
-      id: 'gemini-1.5-flash',
-      name: 'gemini-1.5-flash',
-      provider: 'google',
-      displayName: 'Gemini 1.5 Flash',
-      description: 'Fast and efficient Gemini model',
-      contextLength: 1000000,
-      maxOutputTokens: 8192,
-      capabilities: ['chat', 'completion', 'code', 'vision', 'streaming', 'multilingual'],
-      pricing: { inputPer1kTokens: 0.000075, outputPer1kTokens: 0.0003, currency: 'USD' },
+      id: 'o4-mini',
+      name: 'o4-mini',
+      provider: 'openai',
+      displayName: 'O4 Mini',
+      description: 'Latest lightweight reasoning model for math, science, and multi-step logic',
+      contextLength: 200000,
+      maxOutputTokens: 65536,
+      capabilities: ['chat', 'completion', 'code', 'function_calling', 'streaming', 'reasoning'],
+      pricing: { inputPer1kTokens: 0.0011, outputPer1kTokens: 0.0044, currency: 'USD' },
       isLocal: false,
-      isAvailable: !!config.ai.apiKeys.google,
+      isAvailable: !!config.ai.apiKeys.openai,
+      lastChecked: new Date(),
+      tags: ['reasoning', 'cloud', 'budget']
+    });
+
+    this.registerModel({
+      id: 'o3',
+      name: 'o3',
+      provider: 'openai',
+      displayName: 'O3',
+      description: 'Advanced balanced reasoning model',
+      contextLength: 200000,
+      maxOutputTokens: 65536,
+      capabilities: ['chat', 'completion', 'code', 'function_calling', 'streaming', 'reasoning'],
+      pricing: { inputPer1kTokens: 0.002, outputPer1kTokens: 0.008, currency: 'USD' },
+      isLocal: false,
+      isAvailable: !!config.ai.apiKeys.openai,
+      lastChecked: new Date(),
+      tags: ['reasoning', 'cloud']
+    });
+
+    this.registerModel({
+      id: 'gpt-4o',
+      name: 'gpt-4o',
+      provider: 'openai',
+      displayName: 'GPT-4o (Legacy)',
+      description: 'Multimodal model with vision and audio support',
+      contextLength: 128000,
+      maxOutputTokens: 4096,
+      capabilities: ['chat', 'completion', 'code', 'vision', 'function_calling', 'json_mode', 'streaming'],
+      pricing: { inputPer1kTokens: 0.0025, outputPer1kTokens: 0.01, currency: 'USD' },
+      isLocal: false,
+      isAvailable: !!config.ai.apiKeys.openai,
+      lastChecked: new Date(),
+      tags: ['legacy', 'cloud', 'multimodal']
+    });
+
+    // ==================== ANTHROPIC MODELS ====================
+    this.registerModel({
+      id: 'claude-opus-4-6',
+      name: 'claude-opus-4-6',
+      provider: 'anthropic',
+      displayName: 'Claude Opus 4.6',
+      description: 'Anthropic flagship - deep reasoning, coding, agentic workflows (1M context)',
+      contextLength: 1000000,
+      maxOutputTokens: 128000,
+      capabilities: ['chat', 'completion', 'code', 'vision', 'streaming', 'reasoning'],
+      pricing: { inputPer1kTokens: 0.015, outputPer1kTokens: 0.075, currency: 'USD' },
+      isLocal: false,
+      isAvailable: !!config.ai.apiKeys.anthropic,
+      lastChecked: new Date(),
+      tags: ['flagship', 'cloud', 'reasoning']
+    });
+
+    this.registerModel({
+      id: 'claude-sonnet-4-6',
+      name: 'claude-sonnet-4-6',
+      provider: 'anthropic',
+      displayName: 'Claude Sonnet 4.6',
+      description: 'Balanced intelligence and speed - agents, coding, business workflows (1M context)',
+      contextLength: 1000000,
+      maxOutputTokens: 64000,
+      capabilities: ['chat', 'completion', 'code', 'vision', 'streaming', 'reasoning'],
+      pricing: { inputPer1kTokens: 0.003, outputPer1kTokens: 0.015, currency: 'USD' },
+      isLocal: false,
+      isAvailable: !!config.ai.apiKeys.anthropic,
+      lastChecked: new Date(),
+      tags: ['balanced', 'cloud', 'agents']
+    });
+
+    this.registerModel({
+      id: 'claude-haiku-4-5-20251001',
+      name: 'claude-haiku-4-5',
+      provider: 'anthropic',
+      displayName: 'Claude Haiku 4.5',
+      description: 'Fastest Claude - low-latency for high-volume tasks (200K context)',
+      contextLength: 200000,
+      maxOutputTokens: 64000,
+      capabilities: ['chat', 'completion', 'code', 'vision', 'streaming'],
+      pricing: { inputPer1kTokens: 0.001, outputPer1kTokens: 0.005, currency: 'USD' },
+      isLocal: false,
+      isAvailable: !!config.ai.apiKeys.anthropic,
       lastChecked: new Date(),
       tags: ['fast', 'cloud', 'budget']
     });
 
-    // xAI models
+    // ==================== GOOGLE MODELS ====================
     this.registerModel({
-      id: 'grok-beta',
-      name: 'grok-beta',
-      provider: 'xai',
-      displayName: 'Grok Beta',
-      description: 'xAI\'s conversational model with real-time knowledge',
-      contextLength: 131072,
-      maxOutputTokens: 4096,
-      capabilities: ['chat', 'completion', 'code', 'streaming', 'uncensored'],
-      pricing: { inputPer1kTokens: 0.005, outputPer1kTokens: 0.015, currency: 'USD' },
+      id: 'gemini-3.1-pro',
+      name: 'gemini-3.1-pro',
+      provider: 'google',
+      displayName: 'Gemini 3.1 Pro',
+      description: 'Google flagship - top reasoning and 2M token context',
+      contextLength: 2000000,
+      maxOutputTokens: 32768,
+      capabilities: ['chat', 'completion', 'code', 'vision', 'function_calling', 'streaming', 'reasoning'],
+      pricing: { inputPer1kTokens: 0.00125, outputPer1kTokens: 0.005, currency: 'USD' },
       isLocal: false,
-      isAvailable: !!config.ai.apiKeys.xai,
+      isAvailable: !!config.ai.apiKeys.google,
       lastChecked: new Date(),
-      tags: ['real-time', 'cloud', 'uncensored']
+      tags: ['flagship', 'cloud', 'long-context', 'reasoning']
     });
 
     this.registerModel({
-      id: 'grok-2',
-      name: 'grok-2',
+      id: 'gemini-3.1-flash',
+      name: 'gemini-3.1-flash',
+      provider: 'google',
+      displayName: 'Gemini 3.1 Flash',
+      description: 'High-speed multimodal model for balanced intelligence and throughput',
+      contextLength: 1000000,
+      maxOutputTokens: 16384,
+      capabilities: ['chat', 'completion', 'code', 'vision', 'function_calling', 'streaming'],
+      pricing: { inputPer1kTokens: 0.000075, outputPer1kTokens: 0.0003, currency: 'USD' },
+      isLocal: false,
+      isAvailable: !!config.ai.apiKeys.google,
+      lastChecked: new Date(),
+      tags: ['fast', 'cloud', 'multimodal']
+    });
+
+    this.registerModel({
+      id: 'gemini-2.5-pro',
+      name: 'gemini-2.5-pro',
+      provider: 'google',
+      displayName: 'Gemini 2.5 Pro',
+      description: 'Highly capable agentic reasoning with 1M context',
+      contextLength: 1000000,
+      maxOutputTokens: 16384,
+      capabilities: ['chat', 'completion', 'code', 'vision', 'function_calling', 'streaming', 'reasoning'],
+      pricing: { inputPer1kTokens: 0.00125, outputPer1kTokens: 0.005, currency: 'USD' },
+      isLocal: false,
+      isAvailable: !!config.ai.apiKeys.google,
+      lastChecked: new Date(),
+      tags: ['reasoning', 'cloud', 'agentic']
+    });
+
+    // ==================== XAI MODELS ====================
+    this.registerModel({
+      id: 'grok-4.20-beta',
+      name: 'grok-4.20-beta',
       provider: 'xai',
-      displayName: 'Grok 2',
-      description: 'Latest Grok model with enhanced capabilities',
-      contextLength: 131072,
-      maxOutputTokens: 8192,
-      capabilities: ['chat', 'completion', 'code', 'streaming', 'uncensored', 'reasoning'],
-      pricing: { inputPer1kTokens: 0.01, outputPer1kTokens: 0.03, currency: 'USD' },
+      displayName: 'Grok 4.20 Beta',
+      description: 'xAI flagship multi-agent model with 2M context and low hallucination',
+      contextLength: 2000000,
+      maxOutputTokens: 32768,
+      capabilities: ['chat', 'completion', 'code', 'function_calling', 'streaming', 'reasoning'],
+      pricing: { inputPer1kTokens: 0.002, outputPer1kTokens: 0.006, currency: 'USD' },
       isLocal: false,
       isAvailable: !!config.ai.apiKeys.xai,
       lastChecked: new Date(),
-      tags: ['latest', 'cloud', 'uncensored', 'reasoning']
+      tags: ['flagship', 'cloud', 'multi-agent', 'reasoning']
+    });
+
+    this.registerModel({
+      id: 'grok-4-1-fast-reasoning',
+      name: 'grok-4-1-fast-reasoning',
+      provider: 'xai',
+      displayName: 'Grok 4.1 Fast (Reasoning)',
+      description: 'Fast, cost-effective with 2M context and reasoning mode',
+      contextLength: 2000000,
+      maxOutputTokens: 16384,
+      capabilities: ['chat', 'completion', 'code', 'function_calling', 'streaming', 'reasoning'],
+      pricing: { inputPer1kTokens: 0.0002, outputPer1kTokens: 0.0005, currency: 'USD' },
+      isLocal: false,
+      isAvailable: !!config.ai.apiKeys.xai,
+      lastChecked: new Date(),
+      tags: ['fast', 'cloud', 'reasoning', 'budget']
+    });
+
+    this.registerModel({
+      id: 'grok-3',
+      name: 'grok-3',
+      provider: 'xai',
+      displayName: 'Grok 3',
+      description: 'Enterprise-grade reasoning and data extraction',
+      contextLength: 131072,
+      maxOutputTokens: 8192,
+      capabilities: ['chat', 'completion', 'code', 'function_calling', 'streaming', 'reasoning'],
+      pricing: { inputPer1kTokens: 0.003, outputPer1kTokens: 0.015, currency: 'USD' },
+      isLocal: false,
+      isAvailable: !!config.ai.apiKeys.xai,
+      lastChecked: new Date(),
+      tags: ['enterprise', 'cloud', 'reasoning']
+    });
+
+    this.registerModel({
+      id: 'grok-code-fast-1',
+      name: 'grok-code-fast-1',
+      provider: 'xai',
+      displayName: 'Grok Code Fast',
+      description: 'Optimized for agentic code workflows with 256K context',
+      contextLength: 262144,
+      maxOutputTokens: 16384,
+      capabilities: ['chat', 'completion', 'code', 'function_calling', 'streaming'],
+      pricing: { inputPer1kTokens: 0.0002, outputPer1kTokens: 0.0015, currency: 'USD' },
+      isLocal: false,
+      isAvailable: !!config.ai.apiKeys.xai,
+      lastChecked: new Date(),
+      tags: ['code', 'cloud', 'agentic']
     });
 
     aiLogger.info(`Model registry initialized with ${this.modelRegistry.size} models`);

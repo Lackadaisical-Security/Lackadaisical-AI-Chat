@@ -23,12 +23,15 @@ import api from '../../services/api';
 
 const PluginInterface: React.FC = () => {
   const {
-    plugins,
+    plugins: rawPlugins,
     activePlugins,
     setPlugins,
     updatePlugin,
     setActivePlugins,
   } = useAppStore();
+
+  // Defensive: ensure plugins is always an array (protects against corrupted persisted state)
+  const plugins = Array.isArray(rawPlugins) ? rawPlugins : [];
 
   const [selectedPlugin, setSelectedPlugin] = useState<PluginState | null>(null);
   const [executionResult, setExecutionResult] = useState<PluginResult | null>(null);
@@ -55,7 +58,9 @@ const PluginInterface: React.FC = () => {
     try {
       const response = await api.getPlugins();
       if (response.success && response.data) {
-        setPlugins(response.data);
+        const data = response.data as any;
+        const pluginList = Array.isArray(data) ? data : (data.plugins || []);
+        setPlugins(pluginList);
       }
     } catch (error) {
       console.error('Failed to load plugins:', error);

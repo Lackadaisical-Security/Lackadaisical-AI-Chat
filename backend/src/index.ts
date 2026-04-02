@@ -33,7 +33,13 @@ import sessionRoutes, { createSessionRoutes } from './routes/sessions';
 import contextRoutes, { createContextRoutes } from './routes/context';
 import authRoutes from './routes/auth';
 import modelRoutes from './routes/models';
+import fileRoutes from './routes/files';
+import searchRoutes from './routes/search';
+import messageLogRoutes from './routes/messageLogs';
 import AIService from './services/AIService';
+
+// Import new services
+import { messageLogService } from './services/MessageLogService';
 
 // Import WebSocket handler
 import WebSocketService from './services/WebSocketService';
@@ -88,9 +94,24 @@ class LackadaisicalAIServer {
     // Compression
     this.app.use(compression());
 
-    // Body parsing
-    this.app.use(express.json({ limit: '10mb' }));
-    this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+    // Body parsing — skip for multipart/form-data (handled by multer in file routes)
+    this.app.use((req, res, next) => {
+      const contentType = req.headers['content-type'] || '';
+      if (contentType.includes('multipart/form-data')) {
+        return next();
+      }
+      express.json({ limit: '50mb' })(req, res, next);
+    });
+    this.app.use((req, res, next) => {
+      const contentType = req.headers['content-type'] || '';
+      if (contentType.includes('multipart/form-data')) {
+        return next();
+      }
+      express.urlencoded({ extended: true, limit: '50mb' })(req, res, next);
+    });
+
+    // Serve uploaded/generated files statically
+    this.app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads/serve')));
 
     // Request logging
     this.app.use(requestLogger);
@@ -149,6 +170,14 @@ class LackadaisicalAIServer {
     this.app.use('/api/models', modelRoutes);
     this.app.use('/api', contextRoutesWithDeps);
 
+    // New feature routes
+    this.app.use(`${apiBase}/files`, fileRoutes);
+    this.app.use(`${apiBase}/search`, searchRoutes);
+    this.app.use(`${apiBase}/logs`, messageLogRoutes);
+    this.app.use('/api/files', fileRoutes);
+    this.app.use('/api/search', searchRoutes);
+    this.app.use('/api/logs', messageLogRoutes);
+
     // Root endpoint
     this.app.get('/', (req: Request, res: Response) => {
       res.json({
@@ -172,6 +201,11 @@ class LackadaisicalAIServer {
           streaming: config.ai.streamMode !== 'off',
           journaling: config.features.journaling,
           webSearch: config.features.webSearch,
+          deepResearch: (config.features as any).deepResearch,
+          fileUpload: (config.features as any).fileUpload,
+          toolUse: (config.features as any).toolUse,
+          codeBlocks: (config.features as any).codeBlocks,
+          extendedThinking: (config.features as any).extendedThinking,
           encryption: config.features.encryption,
           plugins: config.plugins.enabled.length > 0,
         },
@@ -312,6 +346,11 @@ class LackadaisicalAIServer {
       this.memory = new MemoryService(this.database);
       // this.pluginService = new PluginService(this.database);
       // await this.pluginService.initialize();
+
+      // Initialize the message log service (separate WAL-mode SQLite DB)
+      await messageLogService.initialize();
+      logger.info('Message log service initialized (WAL mode)');
+
       logger.info('Dependent services initialized successfully');
 
     } catch (error) {
@@ -407,6 +446,14 @@ class LackadaisicalAIServer {
       logger.info('Database connection closed');
     } catch (error) {
       logger.error('Error closing database:', error);
+    }
+
+    // Close message log database
+    try {
+      messageLogService.close();
+      logger.info('Message log database closed');
+    } catch (error) {
+      logger.error('Error closing message log database:', error);
     }
 
     logger.info('Graceful shutdown completed');
