@@ -53,6 +53,7 @@ export class ConversationManager {
   private activeSessions: Map<string, ConversationSession> = new Map();
   private turnBuffer: Map<string, ConversationTurn[]> = new Map();
   private bufferFlushInterval: NodeJS.Timeout | null = null;
+  private sessionRetryTimeout: NodeJS.Timeout | null = null;
   
   // Configuration
   private config = {
@@ -110,7 +111,7 @@ export class ConversationManager {
       if (retryCount < 3) {
         const delayMs = (retryCount + 1) * 2000;
         logger.warn(`Failed to load sessions (attempt ${retryCount + 1}/3), retrying in ${delayMs}ms...`);
-        setTimeout(() => this.loadActiveSessions(retryCount + 1), delayMs);
+        this.sessionRetryTimeout = setTimeout(() => this.loadActiveSessions(retryCount + 1), delayMs);
       } else {
         logger.error('Failed to load active sessions after 3 attempts:', error);
       }
@@ -526,6 +527,11 @@ export class ConversationManager {
     if (this.bufferFlushInterval) {
       clearInterval(this.bufferFlushInterval);
       this.bufferFlushInterval = null;
+    }
+
+    if (this.sessionRetryTimeout) {
+      clearTimeout(this.sessionRetryTimeout);
+      this.sessionRetryTimeout = null;
     }
 
     await this.forceFlush();

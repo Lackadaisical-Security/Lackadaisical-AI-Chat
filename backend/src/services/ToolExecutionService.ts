@@ -193,7 +193,7 @@ export class ToolExecutionService {
             .replace(/e(?![a-z])/gi, 'Math.E');
 
           // Validate: only allow numbers, operators, Math functions, parentheses, and spaces
-          if (!/^[\d\s+\-*/().%,Math.sqrtabceilflooroundlogsincotan\s\dPI E**]+$/.test(expr)) {
+          if (!/^[\d\s+\-*/().%,MatheEPIsqrtabceilflooroundlogsincotan*]+$/.test(expr)) {
             return {
               success: false,
               output: 'Invalid expression: contains disallowed characters',
