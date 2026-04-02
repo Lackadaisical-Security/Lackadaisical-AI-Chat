@@ -94,9 +94,21 @@ class LackadaisicalAIServer {
     // Compression
     this.app.use(compression());
 
-    // Body parsing
-    this.app.use(express.json({ limit: '50mb' }));
-    this.app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+    // Body parsing — skip for multipart/form-data (handled by multer in file routes)
+    this.app.use((req, res, next) => {
+      const contentType = req.headers['content-type'] || '';
+      if (contentType.includes('multipart/form-data')) {
+        return next();
+      }
+      express.json({ limit: '50mb' })(req, res, next);
+    });
+    this.app.use((req, res, next) => {
+      const contentType = req.headers['content-type'] || '';
+      if (contentType.includes('multipart/form-data')) {
+        return next();
+      }
+      express.urlencoded({ extended: true, limit: '50mb' })(req, res, next);
+    });
 
     // Serve uploaded/generated files statically
     this.app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads/serve')));
