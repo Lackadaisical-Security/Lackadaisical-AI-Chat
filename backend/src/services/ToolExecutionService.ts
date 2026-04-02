@@ -126,7 +126,7 @@ export class ToolExecutionService {
       handler: async (params) => {
         const startTime = Date.now();
         try {
-          const content = await this.webFetcher.fetchPage(params.url as string, {
+          const content = await this.webFetcher.fetchUrl(params.url as string, {
             extractMainContent: true,
             maxContentLength: (params.max_length as number) || 5000,
             timeout: 15000,

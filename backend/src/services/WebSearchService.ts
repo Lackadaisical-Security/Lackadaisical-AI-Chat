@@ -71,7 +71,7 @@ export class WebSearchService {
 
       for (const result of topResults) {
         try {
-          const content = await this.webFetcher.fetchPage(result.url, {
+          const content = await this.webFetcher.fetchUrl(result.url, {
             extractMainContent: true,
             includeLinks: false,
             includeImages: false,
@@ -213,7 +213,7 @@ export class WebSearchService {
           }
 
           try {
-            const content = await this.webFetcher.fetchPage(result.url, {
+            const content = await this.webFetcher.fetchUrl(result.url, {
               extractMainContent: true,
               maxContentLength: 8000,
               timeout: 15000,
