@@ -21,7 +21,7 @@ export interface ExtendedThinkingResponse {
 
 // Regex patterns for detecting thinking blocks in model output
 const THINKING_PATTERNS = [
-  // <think>...</think> tags (Ollama/deepseek style)
+  // <think>...</think> tags (model-specific thinking style)
   { start: /<think>/i, end: /<\/think>/i, regex: /<think>([\s\S]*?)<\/think>/gi },
   // <thinking>...</thinking> tags
   { start: /<thinking>/i, end: /<\/thinking>/i, regex: /<thinking>([\s\S]*?)<\/thinking>/gi },
@@ -79,8 +79,6 @@ export class ExtendedThinkingService {
     // Different models need different thinking prompts
     const thinkingModels: Record<string, string> = {
       'gpt-oss': `Before responding, think through your reasoning step by step inside <think></think> tags. Your thinking will not be shown to the user. After thinking, provide your response outside the tags.`,
-      'deepseek': `Use <think></think> tags for internal reasoning before answering.`,
-      'qwq': `Think step by step inside <think></think> tags before providing your answer.`,
     };
 
     // Check if this model supports extended thinking
@@ -99,7 +97,7 @@ export class ExtendedThinkingService {
    */
   supportsExtendedThinking(modelId: string): boolean {
     const thinkingModels = [
-      'gpt-oss', 'deepseek-r1', 'qwq', 'o1', 'o3',
+      'gpt-oss', 'o1', 'o3',
       'claude-3.5-sonnet', 'gemini-2', 'thinking',
     ];
 

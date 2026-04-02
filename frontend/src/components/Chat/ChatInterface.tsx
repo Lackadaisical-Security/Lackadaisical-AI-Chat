@@ -50,8 +50,6 @@ const AI_MODELS = [
   { id: 'gemma4:e4b', name: 'Gemma 4 E4B Vision', provider: 'ollama', description: 'Google vision model for image understanding' },
   { id: 'lackadaisical-uncensored:latest', name: 'Lacky Uncensored', provider: 'ollama', description: 'Unrestricted local AI' },
   { id: 'llama3.3:latest', name: 'Llama 3.3', provider: 'ollama', description: 'Meta flagship local model' },
-  { id: 'deepseek-r1:latest', name: 'DeepSeek R1', provider: 'ollama', description: 'Advanced reasoning & thinking' },
-  { id: 'qwen2.5:latest', name: 'Qwen 2.5', provider: 'ollama', description: 'Alibaba tool-calling & agentic' },
   { id: 'mistral:latest', name: 'Mistral 7B', provider: 'ollama', description: 'Efficient & fast local model' },
   { id: 'codellama:latest', name: 'Code Llama', provider: 'ollama', description: 'Specialized code generation' },
   { id: 'phi4:latest', name: 'Phi-4', provider: 'ollama', description: 'Microsoft lightweight reasoning' },

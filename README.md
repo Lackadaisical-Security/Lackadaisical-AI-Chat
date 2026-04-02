@@ -65,17 +65,22 @@ Unlike cloud-based AI services, **everything stays private on your machine**. No
 
 ### 🔄 **Hot-Swappable AI Models (NEW in v2-Alpha!)**
 Switch between AI providers on the fly without restarting:
-- **Ollama (Local)** - Free, private, runs on your hardware
-- **OpenAI** - GPT-4, GPT-3.5-turbo
-- **Anthropic** - Claude 3 Opus, Sonnet, Haiku
-- **Google** - Gemini Pro, Gemini Flash
-- **xAI** - Grok (for uncensored conversations)
+- **Ollama (Local)** - GPT-OSS 20B, Gemma 4 E4B, Llama 3.3, Mistral, Phi-4, CodeLlama
+- **OpenAI** - GPT-5.4, GPT-5.4 Mini, GPT-4.1, O4-Mini, O3
+- **Anthropic** - Claude Opus 4.6, Claude Sonnet 4.6, Claude Haiku 4.5
+- **Google** - Gemini 3.1 Pro, Gemini 3.1 Flash, Gemini 2.5 Pro
+- **xAI** - Grok 4.20 Beta, Grok 4.1 Fast Reasoning, Grok Code Fast
 
-### 🌐 **Web Fetching (NEW in v2-Alpha!)**
-- **Real-time Web Search** - Get current information from the web
-- **URL Content Extraction** - Fetch and parse web pages
-- **Multiple Search Providers** - DuckDuckGo, Brave, SerpAPI
-- **Weather & Time Info** - Current conditions and time zone data
+### 🔍 **Web Search & Tool Use (NEW!)**
+- **Built-in Web Search** - DuckDuckGo-backed search with auto-trigger detection
+- **Deep Research** - Multi-step research with progress streaming via SSE
+- **Tool Execution** - Calculate, fetch webpages, get datetime with extensible framework
+- **File Upload & Analysis** - Upload code, text, and documents for AI analysis with text extraction
+
+### 🧪 **Extended Thinking & Code Blocks (NEW!)**
+- **Extended Thinking** - Parses `<think>` blocks from model output, tracks thinking duration/tokens
+- **Code Block Extraction** - Extracts code blocks from AI responses, serves them as downloadable files
+- **Message Logging** - Separate WAL-mode SQLite DB for full audit trail of all interactions
 
 ### 💝 **Emotional Intelligence (NEW in v2-Alpha!)**
 - **All Emotions Valid** - Anger, sadness, joy, fear - no minimizing
@@ -96,6 +101,16 @@ Switch between AI providers on the fly without restarting:
 - **Horoscope Plugin** - Daily astrological insights
 - **Poem Generator** - AI-generated poetry and creative writing
 - **Extensible Framework** - Easy to add your own plugins
+
+## 📸 Screenshots
+
+| Dashboard | Chat Interface |
+|:-:|:-:|
+| ![Dashboard](docs/screenshots/01-dashboard.png) | ![Chat](docs/screenshots/02-chat-interface.png) |
+
+| Settings | Plugins | Journal |
+|:-:|:-:|:-:|
+| ![Settings](docs/screenshots/03-settings-panel.png) | ![Plugins](docs/screenshots/04-plugins-panel.png) | ![Journal](docs/screenshots/05-journal-panel.png) |
 
 ## 🚀 Super Simple Setup
 

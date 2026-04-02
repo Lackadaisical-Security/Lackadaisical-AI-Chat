@@ -178,36 +178,6 @@ export class ModelManager extends EventEmitter {
     });
 
     this.registerModel({
-      id: 'deepseek-r1:latest',
-      name: 'deepseek-r1',
-      provider: 'ollama',
-      displayName: 'DeepSeek R1',
-      description: 'Advanced reasoning model with step-by-step thinking',
-      contextLength: 65536,
-      maxOutputTokens: 8192,
-      capabilities: ['chat', 'completion', 'code', 'streaming', 'reasoning'],
-      isLocal: true,
-      isAvailable: false,
-      lastChecked: new Date(),
-      tags: ['reasoning', 'local', 'advanced']
-    });
-
-    this.registerModel({
-      id: 'qwen2.5:latest',
-      name: 'qwen2.5',
-      provider: 'ollama',
-      displayName: 'Qwen 2.5',
-      description: 'Alibaba Qwen for agentic tool-calling and code tasks',
-      contextLength: 131072,
-      maxOutputTokens: 8192,
-      capabilities: ['chat', 'completion', 'code', 'function_calling', 'streaming'],
-      isLocal: true,
-      isAvailable: false,
-      lastChecked: new Date(),
-      tags: ['tool-use', 'local', 'agentic']
-    });
-
-    this.registerModel({
       id: 'mistral:latest',
       name: 'mistral',
       provider: 'ollama',
