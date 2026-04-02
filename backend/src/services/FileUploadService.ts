@@ -101,7 +101,12 @@ export class FileUploadService {
     const fileId = crypto.randomUUID();
     const ext = path.extname(originalName).toLowerCase();
     const storedName = `${fileId}${ext}`;
-    const storagePath = path.join(this.uploadDir, storedName);
+    const storagePath = path.resolve(this.uploadDir, storedName);
+
+    // Prevent path traversal: ensure resolved path stays within uploadDir
+    if (!storagePath.startsWith(path.resolve(this.uploadDir))) {
+      throw new Error('Invalid filename: path traversal detected');
+    }
 
     // Determine category
     const category = this.getFileCategory(ext);
@@ -253,7 +258,12 @@ export class FileUploadService {
     const ext = path.extname(filename) || '.txt';
     const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
     const storedName = `${fileId}_${safeFilename}`;
-    const filePath = path.join(this.serveDir, storedName);
+    const filePath = path.resolve(this.serveDir, storedName);
+
+    // Prevent path traversal: ensure resolved path stays within serveDir
+    if (!filePath.startsWith(path.resolve(this.serveDir))) {
+      throw new Error('Invalid filename: path traversal detected');
+    }
 
     await fsp.writeFile(filePath, content, 'utf-8');
 
