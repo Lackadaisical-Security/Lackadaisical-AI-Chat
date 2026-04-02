@@ -72,8 +72,17 @@ export class xAIAdapter {
         .sort();
     } catch (error) {
       aiLogger.error('Failed to get xAI models:', error);
-      // Return known models as fallback
-      return ['grok-beta', 'grok-vision-beta'];
+      // Return known current 2026 models as fallback
+      return [
+        'grok-4.20-beta',
+        'grok-4-1-fast-reasoning',
+        'grok-4-1-fast-non-reasoning',
+        'grok-4-0709',
+        'grok-3',
+        'grok-3-mini',
+        'grok-code-fast-1',
+        'grok-2-vision-1212',
+      ];
     }
   }
 

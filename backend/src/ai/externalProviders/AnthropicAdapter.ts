@@ -63,13 +63,17 @@ export class AnthropicAdapter {
    * Get available models
    */
   async getModels(): Promise<string[]> {
-    // Anthropic doesn't have a models endpoint, return known models
+    // Anthropic doesn't have a models endpoint, return known current 2026 models
     return [
+      'claude-opus-4-6',
+      'claude-sonnet-4-6',
+      'claude-haiku-4-5-20251001',
+      'claude-opus-4-20250514',
+      'claude-sonnet-4-20250514',
+      'claude-3-7-sonnet-20250219',
       'claude-3-5-sonnet-20241022',
       'claude-3-5-haiku-20241022',
       'claude-3-opus-20240229',
-      'claude-3-sonnet-20240229',
-      'claude-3-haiku-20240307'
     ];
   }
 

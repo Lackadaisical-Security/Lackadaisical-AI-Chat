@@ -40,14 +40,38 @@ const toast = ({ title, description }: {
   alert(`${title}: ${description}`);
 };
 
-// AI Model options
+// AI Model options - Updated April 2026
 const AI_MODELS = [
-  { id: 'ollama-default', name: 'Lacky (Local)', provider: 'ollama', description: 'Fast, private, local AI' },
-  { id: 'ollama-uncensored', name: 'Lacky Uncensored', provider: 'ollama', description: 'Unrestricted local AI' },
-  { id: 'gpt-4', name: 'GPT-4', provider: 'openai', description: 'OpenAI most capable model' },
-  { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'openai', description: 'Fast and efficient' },
-  { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', provider: 'anthropic', description: 'Balanced performance' },
-  { id: 'gemini-pro', name: 'Gemini Pro', provider: 'google', description: 'Google AI' },
+  // Ollama Local Models
+  { id: 'gpt-oss:20b', name: 'GPT-OSS 20B (Local)', provider: 'ollama', description: 'OpenAI open-source reasoning model w/ 256k context' },
+  { id: 'gemma4:e4b', name: 'Gemma 4 E4B Vision', provider: 'ollama', description: 'Google vision model for image understanding' },
+  { id: 'lackadaisical-uncensored:latest', name: 'Lacky Uncensored', provider: 'ollama', description: 'Unrestricted local AI' },
+  { id: 'llama3.3:latest', name: 'Llama 3.3', provider: 'ollama', description: 'Meta flagship local model' },
+  { id: 'deepseek-r1:latest', name: 'DeepSeek R1', provider: 'ollama', description: 'Advanced reasoning & thinking' },
+  { id: 'qwen2.5:latest', name: 'Qwen 2.5', provider: 'ollama', description: 'Alibaba tool-calling & agentic' },
+  { id: 'mistral:latest', name: 'Mistral 7B', provider: 'ollama', description: 'Efficient & fast local model' },
+  { id: 'codellama:latest', name: 'Code Llama', provider: 'ollama', description: 'Specialized code generation' },
+  { id: 'phi4:latest', name: 'Phi-4', provider: 'ollama', description: 'Microsoft lightweight reasoning' },
+  // OpenAI Models
+  { id: 'gpt-5.4', name: 'GPT-5.4', provider: 'openai', description: 'OpenAI flagship reasoning & coding' },
+  { id: 'gpt-5.4-mini', name: 'GPT-5.4 Mini', provider: 'openai', description: 'Fast, cost-effective GPT-5.4' },
+  { id: 'gpt-4.1', name: 'GPT-4.1', provider: 'openai', description: '1M token long context model' },
+  { id: 'o4-mini', name: 'O4 Mini', provider: 'openai', description: 'Budget reasoning model' },
+  { id: 'o3', name: 'O3', provider: 'openai', description: 'Advanced reasoning' },
+  { id: 'gpt-4o', name: 'GPT-4o (Legacy)', provider: 'openai', description: 'Multimodal vision & audio' },
+  // Anthropic Models
+  { id: 'claude-opus-4-6', name: 'Claude Opus 4.6', provider: 'anthropic', description: 'Anthropic flagship, 1M context' },
+  { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', provider: 'anthropic', description: 'Balanced speed & intelligence' },
+  { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', provider: 'anthropic', description: 'Fastest Claude, low-latency' },
+  // Google Models
+  { id: 'gemini-3.1-pro', name: 'Gemini 3.1 Pro', provider: 'google', description: 'Google flagship, 2M context' },
+  { id: 'gemini-3.1-flash', name: 'Gemini 3.1 Flash', provider: 'google', description: 'High-speed multimodal' },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'google', description: 'Agentic reasoning, 1M context' },
+  // xAI Models
+  { id: 'grok-4.20-beta', name: 'Grok 4.20 Beta', provider: 'xai', description: 'xAI flagship, 2M context, multi-agent' },
+  { id: 'grok-4-1-fast-reasoning', name: 'Grok 4.1 Fast', provider: 'xai', description: 'Fast reasoning, 2M context' },
+  { id: 'grok-3', name: 'Grok 3', provider: 'xai', description: 'Enterprise reasoning' },
+  { id: 'grok-code-fast-1', name: 'Grok Code Fast', provider: 'xai', description: 'Agentic code workflows' },
 ];
 
 const ChatInterface: React.FC = () => {

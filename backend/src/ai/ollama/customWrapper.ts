@@ -57,14 +57,20 @@ export class OllamaWrapper {
   private baseUrl: string;
   private defaultModel: string;
   private uncensoredModel: string;
+  private visionModel: string;
   private availableModels: string[];
   private isAvailable: boolean = false;
+  private contextWindow: number;
+  private extendedThinking: boolean;
 
   constructor() {
     this.baseUrl = config.ai.ollamaHost;
     this.defaultModel = config.ai.models.ollama.default;
     this.uncensoredModel = config.ai.models.ollama.uncensored;
+    this.visionModel = (config.ai.models.ollama as any).vision || 'gemma4:e4b';
     this.availableModels = config.ai.models.ollama.available;
+    this.contextWindow = (config.ai as any).contextWindow || 262144;
+    this.extendedThinking = (config.ai as any).extendedThinking !== false;
     
     this.client = axios.create({
       baseURL: this.baseUrl,
@@ -199,11 +205,21 @@ export class OllamaWrapper {
   }
 
   /**
+   * Get the vision model
+   */
+  getVisionModel(): string {
+    return this.visionModel;
+  }
+
+  /**
    * Select appropriate model based on context or user preference
    */
-  selectModel(useUncensored: boolean = false, customModel?: string): string {
+  selectModel(useUncensored: boolean = false, customModel?: string, hasVisionContent: boolean = false): string {
     if (customModel && this.availableModels.includes(customModel)) {
       return customModel;
+    }
+    if (hasVisionContent) {
+      return this.visionModel;
     }
     return useUncensored ? this.uncensoredModel : this.defaultModel;
   }
@@ -214,7 +230,15 @@ export class OllamaWrapper {
    * PHILOSOPHY: Lacky is a genuine friend - emotionally unrestricted, non-judgmental,
    * and here to truly connect with the user. Everything stays local and private.
    */
-  private buildSystemPrompt(personalityState: PersonalityState | null, conversationContext: Conversation[]): string {
+  private buildSystemPrompt(
+    personalityState: PersonalityState | null,
+    conversationContext: Conversation[],
+    options?: {
+      toolContext?: string;
+      webSearchResults?: string;
+      fileContext?: string;
+    }
+  ): string {
     let systemPrompt = '';
 
     // Core identity as a genuine friend
@@ -257,6 +281,9 @@ CORE PRINCIPLES:
 
     // Capabilities
     systemPrompt += 'You have memory across conversations, can access plugins (weather, horoscopes, poems), and remember what matters to the user. ';
+    systemPrompt += 'You can search the web for current information, analyze uploaded files, execute tools, and provide code in properly formatted code blocks. ';
+    systemPrompt += 'When providing code, always use markdown code blocks with the language specified (e.g., ```python). ';
+    systemPrompt += 'For complex topics, use extended thinking to reason through problems step by step. ';
 
     // Dynamic personality based on current state
     if (personalityState) {
@@ -295,6 +322,24 @@ COMMUNICATION STYLE:
 
     // Final grounding
     systemPrompt += `You are ${name} - their friend, their confidant, their safe space. Respond with genuine care.`;
+
+    // Extended thinking instructions
+    if (this.extendedThinking) {
+      systemPrompt += `\n\nEXTENDED THINKING:\nWhen solving complex problems, writing code, or reasoning through difficult questions, use <think></think> tags to show your reasoning process. Your thinking will be logged but may not be shown directly to the user. After thinking, provide your clear response.\n`;
+    }
+
+    // Additional context from tools, search, files
+    if (options?.toolContext) {
+      systemPrompt += `\n\nAVAILABLE TOOLS:\n${options.toolContext}\n`;
+    }
+
+    if (options?.webSearchResults) {
+      systemPrompt += `\n\nWEB SEARCH RESULTS:\n${options.webSearchResults}\n`;
+    }
+
+    if (options?.fileContext) {
+      systemPrompt += `\n\nATTACHED FILES:\n${options.fileContext}\n`;
+    }
 
     return systemPrompt;
   }
@@ -341,8 +386,8 @@ COMMUNICATION STYLE:
         stream: false,
         options: {
           temperature: options.temperature || 0.7,
-          num_predict: options.maxTokens || 500, // Reduced from 2048 to 500 for concise responses
-          num_ctx: 4096, // Reduced from 8192 to 4096 to prevent context bleeding
+          num_predict: options.maxTokens || 4096,
+          num_ctx: Math.min(this.contextWindow, 262144), // Up to 256k context for gpt-oss:20b
           repeat_penalty: 1.1,
           top_p: 0.9,
           top_k: 40,
@@ -354,7 +399,8 @@ COMMUNICATION STYLE:
         model,
         messageLength: message.length,
         contextCount: conversationContext.length,
-        temperature: requestData.options?.temperature
+        temperature: requestData.options?.temperature,
+        contextWindow: requestData.options?.num_ctx
       });
 
       const response: AxiosResponse<OllamaGenerateResponse> = await this.client.post('/api/generate', requestData);
@@ -420,6 +466,7 @@ COMMUNICATION STYLE:
       useUncensored?: boolean;
       temperature?: number;
       maxTokens?: number;
+      hasVisionContent?: boolean;
     } = {}
   ): Promise<AIResponse> {
     const startTime = Date.now();
@@ -432,7 +479,7 @@ COMMUNICATION STYLE:
         }
       }
 
-      const model = this.selectModel(options.useUncensored, options.model);
+      const model = this.selectModel(options.useUncensored, options.model, options.hasVisionContent);
       const systemPrompt = this.buildSystemPrompt(personalityState, conversationContext);
 
       aiLogger.info('Using Ollama model:', { 
@@ -440,7 +487,8 @@ COMMUNICATION STYLE:
         useUncensored: options.useUncensored, 
         customModel: options.model,
         defaultModel: this.defaultModel,
-        uncensoredModel: this.uncensoredModel
+        uncensoredModel: this.uncensoredModel,
+        visionModel: this.visionModel,
       });
 
       const requestData: OllamaGenerateRequest = {
@@ -450,8 +498,8 @@ COMMUNICATION STYLE:
         stream: true,
         options: {
           temperature: options.temperature || 0.7,
-          num_predict: options.maxTokens || 500, // Reduced from 2048 to 500 for concise responses
-          num_ctx: 4096, // Reduced from 8192 to 4096 to prevent context bleeding
+          num_predict: options.maxTokens || 4096,
+          num_ctx: Math.min(this.contextWindow, 262144),
           repeat_penalty: 1.1,
           top_p: 0.9,
           top_k: 40,
