@@ -84,8 +84,10 @@ export class ConversationManager {
 
   /**
    * Load active sessions from database
+   * Handles the case where database may not be initialized yet at construction time.
+   * Retries once after a short delay if the initial load fails.
    */
-  private async loadActiveSessions(): Promise<void> {
+  private async loadActiveSessions(retryCount: number = 0): Promise<void> {
     try {
       const sessions = await this.db.getSessions();
       
@@ -105,7 +107,13 @@ export class ConversationManager {
       
       logger.info(`Loaded ${this.activeSessions.size} active sessions`);
     } catch (error) {
-      logger.error('Failed to load active sessions:', error);
+      if (retryCount < 3) {
+        const delayMs = (retryCount + 1) * 2000;
+        logger.warn(`Failed to load sessions (attempt ${retryCount + 1}/3), retrying in ${delayMs}ms...`);
+        setTimeout(() => this.loadActiveSessions(retryCount + 1), delayMs);
+      } else {
+        logger.error('Failed to load active sessions after 3 attempts:', error);
+      }
     }
   }
 

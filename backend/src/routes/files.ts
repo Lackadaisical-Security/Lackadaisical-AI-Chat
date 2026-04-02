@@ -1,112 +1,52 @@
 /**
  * File upload and download routes
- * Handles multipart file uploads, file serving, and code file downloads
+ * Handles multipart file uploads via multer, file serving, and code file downloads
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
+import multer from 'multer';
 import { fileUploadService } from '../services/FileUploadService';
 import { codeBlockService } from '../services/CodeBlockService';
 import { aiLogger } from '../utils/logger';
 
 const router = Router();
 
-// Simple multipart parser for file uploads (no external dependency needed)
-// Reads raw body and parses multipart/form-data
-async function parseMultipartBody(req: Request): Promise<{
-  buffer: Buffer;
-  filename: string;
-  mimeType: string;
-  fields: Record<string, string>;
-}> {
-  return new Promise((resolve, reject) => {
-    const contentType = req.headers['content-type'] || '';
-    if (!contentType.includes('multipart/form-data')) {
-      reject(new Error('Content-Type must be multipart/form-data'));
+// Configure multer for memory storage (buffer-based, no temp files)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB max
+    files: 5, // Max 5 files per request
+  },
+  fileFilter: (_req, file, cb) => {
+    // Block executable files
+    const blockedExtensions = ['.exe', '.bat', '.cmd', '.com', '.msi', '.dll', '.scr'];
+    const ext = '.' + (file.originalname.split('.').pop() || '').toLowerCase();
+    if (blockedExtensions.includes(ext)) {
+      cb(new Error(`File type ${ext} is not allowed`));
       return;
     }
-
-    const boundaryMatch = contentType.match(/boundary=(.+)/);
-    if (!boundaryMatch) {
-      reject(new Error('No boundary found in Content-Type'));
-      return;
-    }
-
-    const boundary = boundaryMatch[1];
-    const chunks: Buffer[] = [];
-
-    req.on('data', (chunk: Buffer) => chunks.push(chunk));
-    req.on('end', () => {
-      try {
-        const body = Buffer.concat(chunks);
-        const bodyStr = body.toString('latin1');
-        const parts = bodyStr.split(`--${boundary}`).slice(1, -1);
-
-        let fileBuffer: Buffer | null = null;
-        let filename = 'upload';
-        let mimeType = 'application/octet-stream';
-        const fields: Record<string, string> = {};
-
-        for (const part of parts) {
-          const headerEnd = part.indexOf('\r\n\r\n');
-          if (headerEnd === -1) continue;
-
-          const headers = part.substring(0, headerEnd);
-          const content = part.substring(headerEnd + 4).replace(/\r\n$/, '');
-
-          const nameMatch = headers.match(/name="([^"]+)"/);
-          const filenameMatch = headers.match(/filename="([^"]+)"/);
-          const typeMatch = headers.match(/Content-Type:\s*(\S+)/i);
-
-          if (filenameMatch) {
-            // This is a file part
-            filename = filenameMatch[1];
-            mimeType = typeMatch ? typeMatch[1] : 'application/octet-stream';
-
-            // Get the raw bytes for the file content
-            const headerBytes = Buffer.byteLength(
-              bodyStr.substring(0, bodyStr.indexOf(content)),
-              'latin1'
-            );
-            const contentStart = body.indexOf(Buffer.from('\r\n\r\n', 'latin1'), 
-              body.indexOf(Buffer.from(headers.substring(0, 30), 'latin1'))) + 4;
-            const contentEnd = body.indexOf(
-              Buffer.from(`\r\n--${boundary}`, 'latin1'),
-              contentStart
-            );
-            fileBuffer = body.subarray(contentStart, contentEnd);
-          } else if (nameMatch) {
-            // This is a form field
-            fields[nameMatch[1]] = content.trim();
-          }
-        }
-
-        if (!fileBuffer) {
-          reject(new Error('No file found in upload'));
-          return;
-        }
-
-        resolve({ buffer: fileBuffer, filename, mimeType, fields });
-      } catch (error) {
-        reject(error);
-      }
-    });
-    req.on('error', reject);
-  });
-}
+    cb(null, true);
+  },
+});
 
 /**
  * POST /api/v1/files/upload
  * Upload a file for the current chat session
  */
-router.post('/upload', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/upload', upload.single('file'), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { buffer, filename, mimeType, fields } = await parseMultipartBody(req);
-    const sessionId = fields.session_id || 'default';
+    if (!req.file) {
+      res.status(400).json({ success: false, error: 'No file provided. Use form field name "file".' });
+      return;
+    }
+
+    const sessionId = (req.body?.session_id as string) || 'default';
 
     const uploadedFile = await fileUploadService.processUpload(
-      buffer,
-      filename,
-      mimeType,
+      req.file.buffer,
+      req.file.originalname,
+      req.file.mimetype,
       sessionId
     );
 
@@ -131,6 +71,8 @@ router.post('/upload', async (req: Request, res: Response, next: NextFunction) =
     aiLogger.error('File upload failed:', error);
     if (error instanceof Error && error.message.includes('too large')) {
       res.status(413).json({ success: false, error: error.message });
+    } else if (error instanceof Error && error.message.includes('not allowed')) {
+      res.status(415).json({ success: false, error: error.message });
     } else if (error instanceof Error && error.message.includes('Unsupported')) {
       res.status(415).json({ success: false, error: error.message });
     } else {
