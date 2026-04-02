@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, User, Copy, Check, MoreVertical } from 'lucide-react';
+import { Bot, User, Copy, Check, MoreVertical, Brain, Download, FileText, Globe, Wrench } from 'lucide-react';
 import { Message } from '../../types';
 import Button from '../ui/Button';
 
@@ -18,6 +18,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 }) => {
   const [copied, setCopied] = React.useState(false);
   const [showMenu, setShowMenu] = React.useState(false);
+  const [showThinking, setShowThinking] = React.useState(false);
 
   const isUser = message.role === 'user';
   const timestamp = new Date(message.timestamp).toLocaleTimeString([], {
@@ -60,6 +61,59 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
         {/* Message Content */}
         <div className={`relative group ${isUser ? 'text-right' : 'text-left'}`}>
+          {/* Attachments (for user messages) */}
+          {message.attachments && message.attachments.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {message.attachments.map((att) => (
+                <div key={att.id} className="flex items-center gap-1 px-2 py-1 bg-base-300 rounded-lg text-xs">
+                  <FileText className="w-3 h-3" />
+                  <span>{att.name}</span>
+                  <span className="text-base-content/50">({Math.round(att.size / 1024)}KB)</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Web Search / Tool Use Indicators */}
+          {!isUser && (message.webSearchUsed || (message.toolsUsed && message.toolsUsed.length > 0)) && (
+            <div className="flex items-center gap-2 mb-2 text-xs text-base-content/60">
+              {message.webSearchUsed && (
+                <span className="flex items-center gap-1 px-2 py-0.5 bg-info/10 text-info rounded-full">
+                  <Globe className="w-3 h-3" /> Web Search
+                </span>
+              )}
+              {message.toolsUsed?.map((tool, i) => (
+                <span key={i} className="flex items-center gap-1 px-2 py-0.5 bg-warning/10 text-warning rounded-full">
+                  <Wrench className="w-3 h-3" /> {tool}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Extended Thinking Toggle */}
+          {!isUser && message.thinking && (
+            <button
+              onClick={() => setShowThinking(!showThinking)}
+              className="flex items-center gap-1 mb-2 px-2 py-1 bg-purple-500/10 text-purple-400 rounded-lg text-xs hover:bg-purple-500/20 transition-colors"
+            >
+              <Brain className="w-3 h-3" />
+              {showThinking ? 'Hide' : 'Show'} Thinking
+              {message.thinkingDurationMs && (
+                <span className="text-purple-400/60 ml-1">({message.thinkingDurationMs}ms)</span>
+              )}
+            </button>
+          )}
+
+          {/* Thinking Content */}
+          {showThinking && message.thinking && (
+            <div className="mb-2 p-3 bg-purple-500/5 border border-purple-500/20 rounded-lg text-sm text-base-content/70 whitespace-pre-wrap max-h-64 overflow-y-auto">
+              <div className="flex items-center gap-1 mb-1 text-xs text-purple-400 font-medium">
+                <Brain className="w-3 h-3" /> Extended Thinking
+              </div>
+              {message.thinking}
+            </div>
+          )}
+
           <div className={`rounded-lg px-4 py-3 max-w-2xl ${
             isUser
               ? 'bg-primary text-primary-content'
@@ -69,6 +123,25 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             <div className="whitespace-pre-wrap break-words">
               {message.content || (message.role === 'assistant' ? 'Thinking...' : '')}
             </div>
+
+            {/* Served/Downloadable Code Files */}
+            {message.servedFiles && message.servedFiles.length > 0 && (
+              <div className="mt-3 border-t border-base-300/50 pt-2">
+                <div className="text-xs font-medium text-base-content/70 mb-1">📎 Downloadable Files:</div>
+                {message.servedFiles.map((file) => (
+                  <a
+                    key={file.id}
+                    href={file.downloadUrl}
+                    download={file.filename}
+                    className="flex items-center gap-2 px-2 py-1 bg-base-300/50 rounded text-xs hover:bg-base-300 transition-colors mt-1"
+                  >
+                    <Download className="w-3 h-3" />
+                    <span>{file.filename}</span>
+                    <span className="text-base-content/50">({file.language})</span>
+                  </a>
+                ))}
+              </div>
+            )}
 
             {/* Message Metadata */}
             <div className={`flex items-center justify-between mt-2 text-xs opacity-70 ${
@@ -143,4 +216,4 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   );
 };
 
-export default MessageBubble; 
+export default MessageBubble;

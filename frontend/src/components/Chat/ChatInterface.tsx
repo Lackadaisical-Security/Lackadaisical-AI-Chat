@@ -20,7 +20,10 @@ import {
   Sun,
   Moon,
   Maximize2,
-  Minimize2
+  Minimize2,
+  Globe,
+  Search,
+  Paperclip,
 } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { Message } from '../../types';
@@ -99,12 +102,14 @@ const ChatInterface: React.FC = () => {
   
   // Enhanced UI state
   const [showQuickSettings, setShowQuickSettings] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('ollama-default');
+  const [selectedModel, setSelectedModel] = useState('gpt-oss:20b');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [chatTemperature, setChatTemperature] = useState(0.7);
-  const [maxTokens, setMaxTokens] = useState(2048);
+  const [maxTokens, setMaxTokens] = useState(4096);
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{id: string; name: string; size: number; category: string}>>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Handle pre-filled message from companion dashboard
   useEffect(() => {
@@ -163,15 +168,20 @@ const ChatInterface: React.FC = () => {
       // Ensure we have a session
       const sessionId = currentSession?.id || 'default';
 
-      // Create user message
+      // Create user message with attachments
       const userMessage: Message = {
         id: Date.now().toString(),
         role: 'user',
         content: messageText,
         timestamp: new Date().toISOString(),
+        attachments: uploadedFiles.length > 0 ? uploadedFiles : undefined,
       };
 
       addMessage(userMessage);
+
+      // Clear uploaded files after sending
+      const currentAttachments = [...uploadedFiles];
+      setUploadedFiles([]);
 
       // Create placeholder assistant message
       const assistantMessage: Message = {
@@ -184,7 +194,7 @@ const ChatInterface: React.FC = () => {
       addMessage(assistantMessage);
       setCurrentAssistantMessageId(assistantMessage.id);
 
-      // Use the API service for streaming (FIXED)
+      // Use the API service for streaming
       let accumulatedContent = '';
       await api.streamMessage(
         messageText,
@@ -210,6 +220,36 @@ const ChatInterface: React.FC = () => {
       setIsLoading(false);
       setCurrentAssistantMessageId(null);
     }
+  };
+
+  // Handle file upload
+  const handleFileUpload = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const sessionId = currentSession?.id || 'default';
+      const result = await api.uploadChatFile(file, sessionId);
+      if (result.success && result.data) {
+        setUploadedFiles(prev => [...prev, {
+          id: result.data!.id,
+          name: result.data!.name,
+          size: result.data!.size,
+          category: result.data!.category,
+        }]);
+      }
+    } catch (error) {
+      console.error('File upload failed:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload file. Please try again."
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Remove uploaded file
+  const removeUploadedFile = (fileId: string) => {
+    setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
   };
 
   // Handle key press
@@ -522,18 +562,18 @@ const ChatInterface: React.FC = () => {
               {/* Quick Start Suggestions */}
               <div className="flex flex-wrap gap-2 justify-center max-w-lg">
                 {[
-                  "Tell me a joke",
-                  "Help me write code",
-                  "Explain a concept",
-                  "Creative writing",
-                  "Daily check-in"
+                  "🔍 Search the web for latest news",
+                  "💻 Help me write code",
+                  "📚 Deep research a topic",
+                  "📎 Upload a file to analyze",
+                  "🧠 Explain a concept",
+                  "💬 Daily check-in"
                 ].map((suggestion, index) => (
                   <button
                     key={index}
-                    onClick={() => setInputValue(suggestion)}
+                    onClick={() => setInputValue(suggestion.replace(/^[^\s]+\s/, ''))}
                     className="px-4 py-2 bg-base-200 hover:bg-base-300 rounded-full text-sm transition-colors"
                   >
-                    <Sparkles className="h-3 w-3 inline mr-2" />
                     {suggestion}
                   </button>
                 ))}
@@ -569,13 +609,38 @@ const ChatInterface: React.FC = () => {
 
         {/* Input Area */}
         <div className="p-4 border-t border-base-300 bg-base-200">
+          {/* Uploaded Files Preview */}
+          {uploadedFiles.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {uploadedFiles.map(file => (
+                <div key={file.id} className="flex items-center gap-1 px-2 py-1 bg-base-300 rounded-lg text-xs">
+                  <span>{file.name}</span>
+                  <span className="text-base-content/50">({Math.round(file.size / 1024)}KB)</span>
+                  <button
+                    onClick={() => removeUploadedFile(file.id)}
+                    className="ml-1 text-error hover:text-error-content"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {isUploading && (
+            <div className="text-xs text-info mb-2 flex items-center gap-1">
+              <span className="loading loading-spinner loading-xs"></span>
+              Uploading file...
+            </div>
+          )}
           <ChatInput
             value={inputValue}
             onChange={setInputValue}
             onSend={handleSendMessage}
             onKeyPress={handleKeyPress}
             disabled={isLoading || isStreaming}
-            placeholder="Type your message..."
+            placeholder="Type your message... (supports web search, code, file analysis)"
+            onFileUpload={handleFileUpload}
+            maxLength={262144}
           />
           <div className="flex items-center justify-between mt-2 text-xs text-base-content/50">
             <span>Press Enter to send, Shift+Enter for new line</span>

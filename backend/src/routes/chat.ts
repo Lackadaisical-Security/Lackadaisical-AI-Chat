@@ -385,6 +385,44 @@ router.post('/', sentimentMiddlewareWithDB, asyncHandler(async (req: Request, re
       stream: chatRequest.stream
     });
 
+    // Build additional context from web search and file uploads
+    let webSearchResults: string | undefined;
+    let fileContext: string | undefined;
+    let toolContext: string | undefined;
+
+    // Check if message should trigger web search
+    if (webSearchService.shouldTriggerSearch(chatRequest.message)) {
+      try {
+        const searchQuery = webSearchService.extractSearchQuery(chatRequest.message);
+        aiLogger.info('Triggering web search:', { query: searchQuery });
+        const searchResults = await webSearchService.search(searchQuery, { maxResults: 5 });
+        if (searchResults.results.length > 0) {
+          webSearchResults = searchResults.results
+            .map((r, i) => `${i + 1}. ${r.title}\n   URL: ${r.url}\n   ${r.snippet}`)
+            .join('\n\n');
+          // Add fetched content summaries
+          if (searchResults.fetchedContent.length > 0) {
+            webSearchResults += '\n\n--- Fetched Page Content ---\n';
+            for (const content of searchResults.fetchedContent) {
+              webSearchResults += `\nSource: ${content.title} (${content.url})\n`;
+              webSearchResults += content.content.substring(0, 2000) + '\n';
+            }
+          }
+        }
+      } catch (searchError) {
+        aiLogger.warn('Web search failed, continuing without:', searchError);
+      }
+    }
+
+    // Build file context from attached files
+    const attachmentIds = req.body.attachment_ids || [];
+    if (attachmentIds.length > 0) {
+      fileContext = fileUploadService.buildFileContext(attachmentIds);
+    }
+
+    // Build tool context for AI awareness
+    toolContext = toolExecutionService.buildToolContextForPrompt();
+
     // Handle streaming response
     if (chatRequest.stream && config.ai.streamMode === 'sse') {
       // Set up Server-Sent Events
@@ -412,7 +450,8 @@ router.post('/', sentimentMiddlewareWithDB, asyncHandler(async (req: Request, re
               aiResponse += chunk.content;
             }
           },
-          chatRequest.useUncensored
+          chatRequest.useUncensored,
+          { webSearchResults, fileContext, toolContext, attachmentIds }
         );
 
         responseMetadata = result;
@@ -476,7 +515,8 @@ router.post('/', sentimentMiddlewareWithDB, asyncHandler(async (req: Request, re
         conversationContext,
         personalityState,
         undefined,
-        chatRequest.useUncensored
+        chatRequest.useUncensored,
+        { webSearchResults, fileContext, toolContext, attachmentIds }
       );
 
       // Save conversation to database with full context tracking
