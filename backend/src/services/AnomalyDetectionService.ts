@@ -78,7 +78,7 @@ export class AnomalyDetectionService extends EventEmitter {
   // Injection pattern detection
   private readonly injectionPatterns: Array<{ pattern: RegExp; type: AnomalyType; description: string }> = [
     { pattern: /(\b(union|select|insert|update|delete|drop|alter|exec|execute)\b.*\b(from|into|table|where|set)\b)/i, type: 'injection_attempt', description: 'SQL injection pattern' },
-    { pattern: /<script\b[^>]*>[\s\S]*?<\/script>/i, type: 'xss_attempt', description: 'Script tag injection' },
+    { pattern: /<\s*script\b[^>]*>[\s\S]*?<\s*\/\s*script\s*>/i, type: 'xss_attempt', description: 'Script tag injection' },
     { pattern: /javascript\s*:/i, type: 'xss_attempt', description: 'JavaScript protocol injection' },
     { pattern: /on(error|load|click|mouse|focus|blur)\s*=/i, type: 'xss_attempt', description: 'Event handler injection' },
     { pattern: /\.\.\//g, type: 'path_traversal', description: 'Path traversal attempt' },

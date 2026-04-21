@@ -128,13 +128,14 @@ export class SecurityAuditService {
       logger.info('[SecurityAudit] Audit trail initialized', { dbPath });
 
       // Log system startup
+      const packageVersion = require('../../../package.json')?.version || 'unknown';
       this.log({
         event_type: 'system.startup',
         actor_ip: '127.0.0.1',
         resource: 'system',
         action: 'startup',
         outcome: 'success',
-        details: { version: '2.0.0-rc1', timestamp: new Date().toISOString() },
+        details: { version: packageVersion, timestamp: new Date().toISOString() },
       });
     } catch (error) {
       logger.error('[SecurityAudit] Failed to initialize:', error);

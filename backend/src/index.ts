@@ -513,6 +513,10 @@ class LackadaisicalAIServer {
     const { Router } = require('express');
     const router = Router();
     const { asyncHandler } = require('./middleware/errorHandler');
+    const { endpointRateLimiter: secRateLimiter } = require('./middleware/rateLimiter');
+
+    // Apply rate limiting to all security routes
+    router.use(secRateLimiter('settings'));
 
     // GET /security/anomalies — List detected anomalies
     router.get('/anomalies', asyncHandler(async (req: Request, res: Response) => {
