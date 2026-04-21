@@ -449,7 +449,7 @@ export class PluginService {
         last_interaction: null,
         mood_history: [],
         learning_data: {},
-        personality_version: '2.0.0-alpha',
+        personality_version: '2.0.0-rc1',
         created_at: new Date().toISOString(),
         last_updated: new Date().toISOString()
       }

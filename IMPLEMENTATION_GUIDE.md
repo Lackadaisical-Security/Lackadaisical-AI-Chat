@@ -1,60 +1,60 @@
 # Lackadaisical AI Chat — Implementation Guide
 
-**Version:** 2.0.0-rc2  
+**Version:** 2.0.0-rc1  
 **Updated:** 2026-04-21  
 **Status:** All major features implemented. Security hardening complete. Ready for integration testing.
 
 ---
 
-## Completed Features (RC2)
+## Completed Features 
 
-### ✅ Phase 1: Repository Cleanup (RC1)
+### ✅ Phase 1: Repository Cleanup 
 - Removed 26 redundant `.gitkeep` files and empty legacy directories
 
-### ✅ Phase 2: Code IDE Workspace (RC1)
+### ✅ Phase 2: Code IDE Workspace 
 - **Component:** `frontend/src/components/IDE/IDEWorkspace.tsx`
 - **Route:** `/ide`
 - **Features:** Monaco editor, file explorer, terminal, multi-tab, themes, settings
 - **Dependency:** `@monaco-editor/react`
 
-### ✅ Phase 3: Mock/Placeholder Code Eliminated (RC1)
+### ✅ Phase 3: Mock/Placeholder Code Eliminated 
 - `BackupService` — pg_dump/mysqldump export/import
 - `LoggingService` — tar.gz log archiving
 - `AIService` — proper error handling
 - `auth routes` — Database-backed users (createAuthRoutes)
 - `API docs` — Full endpoint listing at `/api`
 
-### ✅ Phase 4: History Pruning (RC1)
+### ✅ Phase 4: History Pruning 
 - **Service:** `backend/src/services/HistoryPruningService.ts`
 - Retention days, max messages, auto-schedule, per-session prune
 
-### ✅ Phase 5: Traffic Emulator (RC1)
+### ✅ Phase 5: Traffic Emulator 
 - **Service:** `backend/src/services/TrafficEmulatorService.ts`
 - Fingerprint randomization, proxy support, human-like behavior, multi-engine search
 
-### ✅ Phase 6: Enhanced File Handling (RC1)
+### ✅ Phase 6: Enhanced File Handling 
 - ZIP extraction, PDF generation, inline image preview, document generation API
 
-### ✅ Phase 7: Chain-of-Thought Streaming (RC1)
+### ✅ Phase 7: Chain-of-Thought Streaming 
 - `thinking_start/content/end` SSE events, `useStreamingResponse` hook
 
-### ✅ Phase 7b: Sessions Tab (RC1)
+### ✅ Phase 7b: Sessions Tab 
 - Browse, search, sort, rename, delete sessions with cross-session memory
 
-### ✅ Phase 8: Ollama/Gemma 4 + ComfyUI (RC1 → RC2 enhanced)
+### ✅ Phase 8: Ollama/Gemma 4 + ComfyUI 
 - Chat API with tool calling, structured outputs, vision
-- **RC2:** Added `think` parameter, `thinking` response field, `done_reason`,
+  - Added `think` parameter, `thinking` response field, `done_reason`,
   `tool_name`, `capabilities`, `showModelInfo()`, `/api/version` fetch,
   full option support (min_p, typical_p, frequency_penalty, seed, etc.),
   image generation params (width, height, steps), `keep_alive`
 
-### ✅ Phase 9: Companion Name Customization (RC2)
+### ✅ Phase 9: Companion Name Customization
 - **Settings:** `companionName` field in UserSettings type
 - **UI:** Text input in Settings → General tab
 - **Backend sync:** Saves to personality state via PUT /api/personality
 - **Default:** 'Lacky'
 
-### ✅ Phase 10: Security Hardening (RC2)
+### ✅ Phase 10: Security Hardening
 - **Middleware:** `backend/src/middleware/security.ts`
 - **Request Sanitizer:** HTML entity encoding for XSS prevention, null byte removal, safe-field exemption
 - **Depth Limiter:** Prevents deeply nested JSON (max depth: 15)
@@ -107,7 +107,7 @@ backend/src/
 │   ├── imageGeneration.ts (NEW)
 │   ├── files.ts         (enhanced: document generation)
 │   └── ... (sessions, journal, search, personality, plugins, etc.)
-├── middleware/        — Auth, rate limiter, error handler, sentiment, security (RC2)
+├── middleware/        — Auth, rate limiter, error handler, sentiment, security 
 ├── config/            — settings.ts (updated model defaults)
 └── types/             — Backend type definitions
 ```
@@ -121,7 +121,7 @@ Total Tests: 93
 ├── Backend: 64
 │   ├── DatabaseService: 16 tests
 │   ├── SentimentAnalyzer: 18 tests
-│   └── SecurityMiddleware: 30 tests (RC2)
+│   └── SecurityMiddleware: 30 tests 
 │       ├── requestSanitizer: 9 tests
 │       ├── securityHeaders: 8 tests
 │       ├── requestDepthLimiter: 4 tests
@@ -135,7 +135,7 @@ Total Tests: 93
     │   ├── UI State: 3 tests
     │   ├── Memory Preferences: 1 test
     │   ├── Toast Management: 1 test
-    │   ├── Settings: 4 tests (includes companion name RC2)
+    │   ├── Settings: 4 tests (includes companion name)
     │   └── Clear All: 1 test
     └── (3 new companion name tests)
 ```
@@ -174,7 +174,7 @@ PERSONALITY_NAME=Lacky
 
 ---
 
-## Future Work (Post-RC2)
+## Future Work (Post-RC1)
 
 - [ ] IDE: WebSocket terminal connected to backend shell execution
 - [ ] IDE: Git integration within workspace

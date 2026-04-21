@@ -133,7 +133,7 @@ export async function initializeDatabase(): Promise<Database.Database> {
         last_interaction DATETIME,
         mood_history TEXT DEFAULT '[]',
         learning_data TEXT DEFAULT '{}',
-        personality_version TEXT DEFAULT '2.0.0-alpha',
+        personality_version TEXT DEFAULT '2.0.0-rc1',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
         CHECK (id = 1)
@@ -166,7 +166,7 @@ export async function initializeDatabase(): Promise<Database.Database> {
         config TEXT DEFAULT '{}',
         usage_stats TEXT DEFAULT '{}',
         last_used DATETIME,
-        version TEXT DEFAULT '2.0.0-alpha'
+        version TEXT DEFAULT '2.0.0-rc1'
       );
       
       CREATE TABLE IF NOT EXISTS training_data (
@@ -266,7 +266,7 @@ export async function initializeDatabase(): Promise<Database.Database> {
       
       if (!personalityColumnNames.includes('personality_version')) {
         console.log('[DATABASE] Adding personality_version column...');
-        db.exec("ALTER TABLE personality_state ADD COLUMN personality_version TEXT DEFAULT '2.0.0-alpha'");
+        db.exec("ALTER TABLE personality_state ADD COLUMN personality_version TEXT DEFAULT '2.0.0-rc1'");
       }
       
       if (!personalityColumnNames.includes('created_at')) {

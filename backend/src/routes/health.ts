@@ -130,7 +130,7 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
         ai_providers: aiProviders,
         plugins: plugins
       },
-      version: '2.0.0-alpha'
+      version: '2.0.0-rc1'
     };
     
     const responseTime = Date.now() - startTime;
@@ -166,7 +166,7 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
         ai_providers: {},
         plugins: {}
       },
-      version: '2.0.0-alpha'
+      version: '2.0.0-rc1'
     };
     
     res.status(503).json({
@@ -186,7 +186,7 @@ router.get('/ping', (req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     memory: process.memoryUsage(),
-    version: '2.0.0-alpha'
+    version: '2.0.0-rc1'
   });
 });
 
@@ -210,7 +210,7 @@ router.get('/detailed', asyncHandler(async (req: Request, res: Response) => {
     const detailedHealth = {
       status: overallStatus,
       timestamp: new Date().toISOString(),
-      version: '2.0.0-alpha',
+      version: '2.0.0-rc1',
       system: {
         uptime: process.uptime(),
         memory: process.memoryUsage(),

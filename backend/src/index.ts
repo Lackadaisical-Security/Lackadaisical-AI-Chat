@@ -137,7 +137,7 @@ class LackadaisicalAIServer {
 
     // API info middleware
     this.app.use((req: Request, res: Response, next: NextFunction) => {
-      res.setHeader('X-API-Version', '2.0.0-rc2');
+      res.setHeader('X-API-Version', '2.0.0-rc1');
       // Don't expose server technology in headers (security best practice)
       res.removeHeader('X-Powered-By');
       next();
@@ -199,8 +199,7 @@ class LackadaisicalAIServer {
     this.app.get('/', (req: Request, res: Response) => {
       res.json({
         name: 'Lackadaisical AI Chat API',
-        version: '2.0.0-alpha',
-        description: 'A companion-oriented modular AI chatbot backend',
+        version: '2.0.0-rc1',        description: 'A companion-oriented modular AI chatbot backend',
         author: 'Lackadaisical Security 2025',
         website: 'https://lackadaisical-security.com',
         endpoints: {
@@ -232,7 +231,7 @@ class LackadaisicalAIServer {
     // API documentation
     this.app.get('/api', (req: Request, res: Response) => {
       res.json({
-        api_version: '2.0.0-rc2',
+        api_version: '2.0.0-rc1',
         documentation_url: '/api',
         endpoints: {
           health: {
@@ -418,7 +417,7 @@ class LackadaisicalAIServer {
               ollama: 'up'
             }
           },
-          version: '2.0.0-alpha'
+          version: '2.0.0-rc1'
         },
         response_time_ms: Date.now() % 100
       };

@@ -4,7 +4,7 @@
 
 **By Lackadaisical Security 2025-2026**  
 https://lackadaisical-security.com  
-**Version:** 2.0.0-alpha
+**Version:** 2.0.0-rc1
 
 ---
 
@@ -595,5 +595,5 @@ const response = await api.sendMessage({
 ---
 
 **Last Updated**: February 2026  
-**Version**: 2.0.0-alpha  
+**Version**: 2.0.0-rc1  
 **Next Review**: March 2026

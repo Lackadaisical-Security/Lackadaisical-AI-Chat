@@ -18,7 +18,7 @@ interface HoroscopeConfig {
 
 class HoroscopePlugin implements Plugin {
   name = 'horoscope';
-  version = '2.0.0-alpha';
+  version = '2.0.0-rc1';
   description = 'Get daily horoscopes and astrological insights';
   author = 'Lackadaisical Security';
   permissions = ['network'];

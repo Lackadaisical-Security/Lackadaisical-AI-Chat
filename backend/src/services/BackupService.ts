@@ -119,7 +119,7 @@ export class BackupService {
         dbType: config.database.type,
         fileSize,
         compressed: compress,
-        version: '2.0.0-alpha',
+        version: '2.0.0-rc1',
         description: options.description
       };
 
