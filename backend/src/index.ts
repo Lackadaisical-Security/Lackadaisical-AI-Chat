@@ -36,6 +36,7 @@ import modelRoutes from './routes/models';
 import fileRoutes from './routes/files';
 import searchRoutes from './routes/search';
 import emulatorRoutes from './routes/emulator';
+import imageGenerationRoutes from './routes/imageGeneration';
 import messageLogRoutes from './routes/messageLogs';
 import AIService from './services/AIService';
 
@@ -176,10 +177,12 @@ class LackadaisicalAIServer {
     this.app.use(`${apiBase}/files`, fileRoutes);
     this.app.use(`${apiBase}/search`, searchRoutes);
     this.app.use(`${apiBase}/emulator`, emulatorRoutes);
+    this.app.use(`${apiBase}/image`, imageGenerationRoutes);
     this.app.use(`${apiBase}/logs`, messageLogRoutes);
     this.app.use('/api/files', fileRoutes);
     this.app.use('/api/search', searchRoutes);
     this.app.use('/api/emulator', emulatorRoutes);
+    this.app.use('/api/image', imageGenerationRoutes);
     this.app.use('/api/logs', messageLogRoutes);
 
     // Root endpoint
@@ -298,6 +301,20 @@ class LackadaisicalAIServer {
             'GET /api/v1/logs/session/:sessionId': 'Get message logs for a session',
             'GET /api/v1/logs/stats': 'Get log statistics',
           },
+          imageGeneration: {
+            'POST /api/v1/image/generate': 'Generate images from text prompt (ComfyUI)',
+            'GET /api/v1/image/models': 'List available Stable Diffusion models',
+            'GET /api/v1/image/samplers': 'List available samplers',
+            'GET /api/v1/image/status': 'Check if ComfyUI is available',
+          },
+          emulator: {
+            'POST /api/v1/emulator/start': 'Start a new emulator session',
+            'GET /api/v1/emulator/sessions': 'List active emulator sessions',
+            'POST /api/v1/emulator/sessions/:id/stop': 'Stop an emulator session',
+            'POST /api/v1/emulator/search': 'Search via emulated browser',
+            'POST /api/v1/emulator/navigate': 'Navigate to a URL',
+            'POST /api/v1/emulator/stop-all': 'Stop all emulator sessions',
+          },
           models: {
             'GET /api/models': 'List available AI models',
           },
@@ -310,6 +327,7 @@ class LackadaisicalAIServer {
           toolUse: true,
           codeBlocks: true,
           extendedThinking: true,
+          imageGeneration: true,
           encryption: config.features.encryption,
           plugins: config.plugins.enabled.length > 0,
         },

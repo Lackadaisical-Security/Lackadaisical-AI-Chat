@@ -52,6 +52,64 @@ interface OllamaModelsResponse {
   models: OllamaModel[];
 }
 
+// Ollama Chat API interfaces (newer /api/chat endpoint)
+interface OllamaChatMessage {
+  role: 'system' | 'user' | 'assistant' | 'tool';
+  content: string;
+  images?: string[]; // base64 encoded images for vision models
+  tool_calls?: OllamaToolCall[];
+}
+
+interface OllamaToolCall {
+  function: {
+    name: string;
+    arguments: Record<string, unknown>;
+  };
+}
+
+interface OllamaToolDefinition {
+  type: 'function';
+  function: {
+    name: string;
+    description: string;
+    parameters: {
+      type: 'object';
+      required?: string[];
+      properties: Record<string, { type: string; description: string; enum?: string[] }>;
+    };
+  };
+}
+
+interface OllamaChatRequest {
+  model: string;
+  messages: OllamaChatMessage[];
+  stream?: boolean;
+  format?: string | Record<string, unknown>; // 'json' or JSON Schema for structured outputs
+  tools?: OllamaToolDefinition[];
+  options?: {
+    temperature?: number;
+    top_p?: number;
+    top_k?: number;
+    repeat_penalty?: number;
+    num_predict?: number;
+    num_ctx?: number;
+    stop?: string[];
+  };
+}
+
+interface OllamaChatResponse {
+  model: string;
+  created_at: string;
+  message: OllamaChatMessage;
+  done: boolean;
+  total_duration?: number;
+  load_duration?: number;
+  prompt_eval_count?: number;
+  prompt_eval_duration?: number;
+  eval_count?: number;
+  eval_duration?: number;
+}
+
 export class OllamaWrapper {
   private client: AxiosInstance;
   private baseUrl: string;
@@ -627,6 +685,203 @@ COMMUNICATION STYLE:
       };
     }
   }
+
+  /**
+   * Generate response using the /api/chat endpoint (supports tools, vision, structured output)
+   * This is the newer Ollama API that supports advanced features like tool calling.
+   */
+  async generateChatResponse(
+    messages: OllamaChatMessage[],
+    options: {
+      model?: string;
+      temperature?: number;
+      maxTokens?: number;
+      tools?: OllamaToolDefinition[];
+      format?: string | Record<string, unknown>;
+      images?: string[];
+      stream?: boolean;
+      onChunk?: (chunk: StreamChunk) => void;
+    } = {}
+  ): Promise<AIResponse & { toolCalls?: OllamaToolCall[] }> {
+    const startTime = Date.now();
+
+    try {
+      if (!this.isAvailable) {
+        await this.checkAvailability();
+        if (!this.isAvailable) {
+          throw new Error('Ollama service is not available');
+        }
+      }
+
+      const model = options.model || this.defaultModel;
+
+      const requestData: OllamaChatRequest = {
+        model,
+        messages,
+        stream: options.stream ?? false,
+        options: {
+          temperature: options.temperature || 0.7,
+          num_predict: options.maxTokens || 4096,
+          num_ctx: Math.min(this.contextWindow, 262144),
+          repeat_penalty: 1.1,
+          top_p: 0.9,
+          top_k: 40,
+        },
+      };
+
+      // Add tools if provided
+      if (options.tools && options.tools.length > 0) {
+        requestData.tools = options.tools;
+      }
+
+      // Add format for structured outputs
+      if (options.format) {
+        requestData.format = options.format;
+      }
+
+      aiLogger.info('Generating Ollama chat response:', {
+        model,
+        messageCount: messages.length,
+        hasTools: !!(options.tools && options.tools.length > 0),
+        hasFormat: !!options.format,
+        stream: options.stream,
+      });
+
+      if (options.stream && options.onChunk) {
+        // Streaming chat response
+        return await this.streamChatResponse(requestData, options.onChunk, startTime);
+      }
+
+      // Non-streaming chat response
+      const response: AxiosResponse<OllamaChatResponse> = await this.client.post('/api/chat', requestData);
+
+      if (!response.data.done) {
+        throw new Error('Ollama chat response incomplete');
+      }
+
+      const responseTime = Date.now() - startTime;
+      const tokensUsed = (response.data.prompt_eval_count || 0) + (response.data.eval_count || 0);
+
+      const aiResponse: AIResponse & { toolCalls?: OllamaToolCall[] } = {
+        content: response.data.message.content.trim(),
+        model: response.data.model,
+        tokens_used: tokensUsed,
+        response_time_ms: responseTime,
+        metadata: {
+          total_duration: response.data.total_duration,
+          load_duration: response.data.load_duration,
+          prompt_eval_count: response.data.prompt_eval_count,
+          prompt_eval_duration: response.data.prompt_eval_duration,
+          eval_count: response.data.eval_count,
+          eval_duration: response.data.eval_duration,
+        },
+      };
+
+      // Extract tool calls if present
+      if (response.data.message.tool_calls) {
+        aiResponse.toolCalls = response.data.message.tool_calls;
+      }
+
+      aiLogger.info('Ollama chat response generated:', {
+        model: aiResponse.model,
+        responseLength: aiResponse.content.length,
+        tokensUsed: aiResponse.tokens_used,
+        hasToolCalls: !!aiResponse.toolCalls?.length,
+      });
+
+      return aiResponse;
+    } catch (error) {
+      const responseTime = Date.now() - startTime;
+      aiLogger.error('Ollama chat generation failed:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        responseTime,
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Stream a chat response
+   */
+  private async streamChatResponse(
+    requestData: OllamaChatRequest,
+    onChunk: (chunk: StreamChunk) => void,
+    startTime: number,
+  ): Promise<AIResponse> {
+    onChunk({ type: 'start' });
+
+    let fullResponse = '';
+    let tokensUsed = 0;
+
+    const response = await this.client.post('/api/chat', { ...requestData, stream: true }, {
+      responseType: 'stream',
+    });
+
+    return new Promise((resolve, reject) => {
+      let buffer = '';
+
+      response.data.on('data', (chunk: Buffer) => {
+        buffer += chunk.toString();
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine) continue;
+
+          try {
+            const data: OllamaChatResponse = JSON.parse(trimmedLine);
+
+            if (data.message?.content) {
+              fullResponse += data.message.content;
+              onChunk({ type: 'content', content: data.message.content });
+            }
+
+            if (data.done) {
+              const responseTime = Date.now() - startTime;
+              tokensUsed = (data.prompt_eval_count || 0) + (data.eval_count || 0);
+
+              const aiResponse: AIResponse = {
+                content: fullResponse.trim(),
+                model: data.model,
+                tokens_used: tokensUsed,
+                response_time_ms: responseTime,
+                metadata: {
+                  total_duration: data.total_duration,
+                  load_duration: data.load_duration,
+                  prompt_eval_count: data.prompt_eval_count,
+                  prompt_eval_duration: data.prompt_eval_duration,
+                  eval_count: data.eval_count,
+                  eval_duration: data.eval_duration,
+                },
+              };
+
+              onChunk({ type: 'end' });
+              resolve(aiResponse);
+            }
+          } catch (parseError) {
+            const errorMessage = parseError instanceof Error ? parseError.message : String(parseError);
+            if (!errorMessage.includes('Unexpected token') && !errorMessage.includes('Expected')) {
+              aiLogger.warn('Failed to parse chat stream chunk:', errorMessage);
+            }
+          }
+        }
+      });
+
+      response.data.on('error', (error: Error) => {
+        onChunk({ type: 'error', error: error.message });
+        reject(error);
+      });
+
+      response.data.on('end', () => {
+        if (!fullResponse) {
+          const error = new Error('Chat stream ended without complete response');
+          onChunk({ type: 'error', error: error.message });
+          reject(error);
+        }
+      });
+    });
+  }
 }
 
-export default OllamaWrapper; 
+export default OllamaWrapper;

@@ -46,8 +46,9 @@ const toast = ({ title, description }: {
 // AI Model options - Updated April 2026
 const AI_MODELS = [
   // Ollama Local Models
+  { id: 'gemma3:4b', name: 'Gemma 3 4B', provider: 'ollama', description: 'Google lightweight model for testing' },
+  { id: 'gemma4:e4b', name: 'Gemma 4 E4B Vision', provider: 'ollama', description: 'Google vision + image generation (ComfyUI)' },
   { id: 'gpt-oss:20b', name: 'GPT-OSS 20B (Local)', provider: 'ollama', description: 'OpenAI open-source reasoning model w/ 256k context' },
-  { id: 'gemma4:e4b', name: 'Gemma 4 E4B Vision', provider: 'ollama', description: 'Google vision model for image understanding' },
   { id: 'lackadaisical-uncensored:latest', name: 'Lacky Uncensored', provider: 'ollama', description: 'Unrestricted local AI' },
   { id: 'llama3.3:latest', name: 'Llama 3.3', provider: 'ollama', description: 'Meta flagship local model' },
   { id: 'mistral:latest', name: 'Mistral 7B', provider: 'ollama', description: 'Efficient & fast local model' },
