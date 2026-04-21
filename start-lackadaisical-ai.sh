@@ -29,6 +29,8 @@ echo -e "                             ${BLUE}By Lackadaisical Security 2025${NC}
 echo ""
 echo "═══════════════════════════════════════════════════════════════════════════════════════════════"
 echo ""
+echo -e "  💡 First time? Run ${BOLD}./setup-lackadaisical-ai.sh${NC} first to install dependencies and init the DB."
+echo ""
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

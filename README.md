@@ -154,8 +154,8 @@ Switch between AI providers on the fly without restarting:
 2. **Install Prerequisites:**
    - [Node.js](https://nodejs.org/) (v18 or newer)
    - [Ollama](https://ollama.ai/) (optional but recommended for best performance)
-3. **Double-click** `start-lackadaisical-ai.bat` (auto-starts Ollama if installed)
-4. **Wait** for automatic setup (first time takes 2-5 minutes)
+3. **Run setup (first time only):** Double-click `setup-lackadaisical-ai.bat`
+4. **Start the app:** Double-click `start-lackadaisical-ai.bat` (auto-starts Ollama if installed)
 5. **Open** http://localhost:3000 when ready
 6. **Start chatting** with your new AI friend!
 7. **To stop**: Double-click `stop-lackadaisical-ai.bat`
@@ -163,16 +163,15 @@ Switch between AI providers on the fly without restarting:
 ### Mac/Linux
 1. **Download and extract** this project
 2. **Install** [Node.js](https://nodejs.org/) and [Ollama](https://ollama.ai/)
-3. **Open Terminal** in the project folder
-4. **Run setup:**
+3. **Run setup (first time only):**
    ```bash
-   npm install
-   cd backend && npm install && cd ..
-   cd frontend && npm install && cd ..
+   chmod +x setup-lackadaisical-ai.sh
+   ./setup-lackadaisical-ai.sh
    ```
-5. **Start the application:**
+4. **Start the application:**
    ```bash
-   npm run start:all
+   ./start-lackadaisical-ai.sh
+   # or: npm run dev
    ```
 6. **Open** http://localhost:3000
 

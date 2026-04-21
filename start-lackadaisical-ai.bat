@@ -17,6 +17,8 @@ echo                              https://lackadaisical-security.com
 echo.
 echo  ═══════════════════════════════════════════════════════════════════════════════════════════════
 echo.
+echo   💡 First time? Run setup-lackadaisical-ai.bat first to install dependencies and init the DB.
+echo.
 
 :: Record start time for PID tracking
 set "SCRIPT_DIR=%~dp0"

@@ -27,25 +27,28 @@ Welcome to the Lackadaisical AI Chat development guide! This document will help 
 
 ### Quick Setup
 
-1. **Clone and Install**
+1. **Clone and Run Setup**
    ```bash
-   git clone https://github.com/your-repo/lackadaisical-ai-chat.git
-   cd lackadaisical-ai-chat
+   git clone https://github.com/Lackadaisical-Security/Lackadaisical-AI-Chat.git
+   cd Lackadaisical-AI-Chat
+   
+   # Option A: Use the setup script (recommended — handles deps, env, db)
+   chmod +x setup-lackadaisical-ai.sh
+   ./setup-lackadaisical-ai.sh
+   
+   # Option B: Manual steps
    npm run install:all
+   cp env.example backend/.env
+   npm run init:db
    ```
 
 2. **Environment Configuration**
    ```bash
-   cp env.example .env
-   # Edit .env with your configuration
+   # Edit backend/.env with your configuration (created by setup script)
+   # At minimum, change JWT_SECRET and SESSION_SECRET for production
    ```
 
-3. **Initialize Database**
-   ```bash
-   npm run init:db
-   ```
-
-4. **Start Development Servers**
+3. **Start Development Servers**
    ```bash
    npm run dev
    ```
