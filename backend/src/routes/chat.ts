@@ -19,6 +19,7 @@ import { fileUploadService } from '../services/FileUploadService';
 import { codeBlockService } from '../services/CodeBlockService';
 import { extendedThinkingService } from '../services/ExtendedThinkingService';
 import { messageLogService } from '../services/MessageLogService';
+import { HistoryPruningService } from '../services/HistoryPruningService';
 
 // Export a function that creates the router with dependencies
 export default function createChatRoutes(db: DatabaseService, aiService: AIService): Router {
@@ -29,6 +30,7 @@ export default function createChatRoutes(db: DatabaseService, aiService: AIServi
   const sentimentAnalyzer = SentimentAnalyzer.getInstance(db);
   const resourceOptimizer = ResourceOptimizer.getInstance();
   const enhancedMemory = new EnhancedMemoryService(db);
+  const historyPruning = new HistoryPruningService(db, enhancedMemory);
 
   // Apply rate limiting to chat endpoints
   router.use(endpointRateLimiter('chat'));
@@ -982,7 +984,13 @@ router.put('/preferences', asyncHandler(async (req: Request, res: Response) => {
     maxContextMessages,
     autoSummarize,
     privacyLevel,
-    summaryThreshold
+    summaryThreshold,
+    // History pruning settings
+    historyPruningEnabled,
+    historyRetentionDays,
+    historyMaxMessages,
+    historyPruneArchived,
+    historyPruneIntervalHours,
   } = req.body;
 
   const updatedPrefs = await enhancedMemory.setUserPreferences(userId, {
@@ -992,10 +1000,20 @@ router.put('/preferences', asyncHandler(async (req: Request, res: Response) => {
     maxContextMessages,
     autoSummarize,
     privacyLevel,
-    summaryThreshold
+    summaryThreshold,
+    historyPruningEnabled,
+    historyRetentionDays,
+    historyMaxMessages,
+    historyPruneArchived,
+    historyPruneIntervalHours,
   });
 
-  apiLogger.info('User preferences updated', { userId, crossSessionEnabled });
+  // Update auto-prune schedule if pruning settings changed
+  if (historyPruningEnabled !== undefined || historyPruneIntervalHours !== undefined) {
+    await historyPruning.startAutoSchedule(userId);
+  }
+
+  apiLogger.info('User preferences updated', { userId, crossSessionEnabled, historyPruningEnabled });
 
   res.json({
     success: true,
@@ -1107,6 +1125,67 @@ router.post('/preferences/toggle-cross-session', asyncHandler(async (req: Reques
       crossSessionEnabled: updatedPrefs.crossSessionEnabled
     },
     message: `Cross-session memory access ${enabled ? 'enabled' : 'disabled'}`,
+    timestamp: new Date().toISOString()
+  });
+}));
+
+/**
+ * POST /chat/history/prune - Manually trigger history pruning
+ */
+router.post('/history/prune', asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req.body.userId as string) || 'default';
+  const summary = await historyPruning.pruneHistory(userId);
+
+  res.json({
+    success: true,
+    data: summary,
+    message: summary.totalMessagesDeleted > 0
+      ? `Pruned ${summary.totalMessagesDeleted} messages from ${summary.totalSessionsPruned} sessions`
+      : 'No messages needed pruning',
+    timestamp: new Date().toISOString()
+  });
+}));
+
+/**
+ * POST /chat/history/prune/:sessionId - Manually prune a specific session
+ */
+router.post('/history/prune/:sessionId', asyncHandler(async (req: Request, res: Response) => {
+  const { sessionId } = req.params;
+  const { olderThanDays, keepNewest } = req.body;
+
+  if (!olderThanDays && !keepNewest) {
+    res.status(400).json({
+      success: false,
+      error: 'Specify olderThanDays or keepNewest',
+    });
+    return;
+  }
+
+  const result = await historyPruning.pruneSession(sessionId, {
+    olderThanDays: olderThanDays ? Number(olderThanDays) : undefined,
+    keepNewest: keepNewest ? Number(keepNewest) : undefined,
+  });
+
+  res.json({
+    success: true,
+    data: result,
+    message: result.messagesDeleted > 0
+      ? `Pruned ${result.messagesDeleted} messages from session ${sessionId}`
+      : 'No messages needed pruning',
+    timestamp: new Date().toISOString()
+  });
+}));
+
+/**
+ * GET /chat/history/prune/stats - Get pruning statistics
+ */
+router.get('/history/prune/stats', asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req.query.userId as string) || 'default';
+  const stats = await historyPruning.getPruneStats(userId);
+
+  res.json({
+    success: true,
+    data: stats,
     timestamp: new Date().toISOString()
   });
 }));

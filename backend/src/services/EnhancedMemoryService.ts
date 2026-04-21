@@ -93,6 +93,12 @@ export interface UserPreferences {
   autoSummarize: boolean;
   privacyLevel: 'strict' | 'normal' | 'relaxed';
   summaryThreshold: number;
+  // History pruning settings
+  historyPruningEnabled: boolean;
+  historyRetentionDays: number;        // 0 = keep forever
+  historyMaxMessages: number;          // 0 = no limit
+  historyPruneArchived: boolean;       // Whether to prune archived sessions too
+  historyPruneIntervalHours: number;   // How often to auto-prune (0 = manual only)
 }
 
 export interface SessionSummary {
@@ -320,7 +326,13 @@ export class EnhancedMemoryService {
       maxContextMessages: this.config.maxContextMessages,        // 1000 messages
       autoSummarize: this.config.autoSummarize,
       privacyLevel: 'normal',
-      summaryThreshold: this.config.contextSummaryThreshold      // 200 messages
+      summaryThreshold: this.config.contextSummaryThreshold,     // 200 messages
+      // History pruning defaults — disabled by default (keep everything)
+      historyPruningEnabled: false,
+      historyRetentionDays: 0,           // 0 = keep forever
+      historyMaxMessages: 0,             // 0 = no limit
+      historyPruneArchived: false,
+      historyPruneIntervalHours: 0,      // 0 = manual only
     };
 
     this.userPreferences.set(userId, defaultPrefs);

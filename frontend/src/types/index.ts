@@ -296,6 +296,12 @@ export interface UserMemoryPreferences {
   autoSummarize: boolean;
   privacyLevel: 'strict' | 'normal' | 'relaxed';
   summaryThreshold: number;
+  // History pruning settings
+  historyPruningEnabled: boolean;
+  historyRetentionDays: number;        // 0 = keep forever
+  historyMaxMessages: number;          // 0 = no limit
+  historyPruneArchived: boolean;
+  historyPruneIntervalHours: number;   // 0 = manual only
 }
 
 export interface SessionSummary {
