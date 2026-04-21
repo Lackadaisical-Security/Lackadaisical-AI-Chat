@@ -38,6 +38,8 @@ const ConfigSchema = z.object({
       ollama: z.object({
         default: z.string().default('gemma3:4b'),
         uncensored: z.string().default('lackadaisical-uncensored:latest'),
+        vision: z.string().default('gemma4:e4b'),
+        audio: z.string().default('gemma4:e4b'),  // Gemma 4 supports audio/voice input
         available: z.array(z.string()).default([
           'gemma3:4b', 'gemma4:e4b',
           'lackadaisical-assistant:latest', 'lackadaisical-uncensored:latest',
@@ -148,6 +150,8 @@ function parseConfig(): AppConfig {
         ollama: {
           default: process.env.OLLAMA_DEFAULT_MODEL || 'gemma3:4b',
           uncensored: process.env.OLLAMA_UNCENSORED_MODEL || 'lackadaisical-uncensored:latest',
+          vision: process.env.OLLAMA_VISION_MODEL || 'gemma4:e4b',
+          audio: process.env.OLLAMA_AUDIO_MODEL || 'gemma4:e4b',
           available: (process.env.OLLAMA_AVAILABLE_MODELS?.split(',') || [
             'gemma3:4b', 'gemma4:e4b',
             'lackadaisical-assistant:latest', 'lackadaisical-uncensored:latest',

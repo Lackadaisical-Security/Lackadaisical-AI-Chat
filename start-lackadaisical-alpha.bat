@@ -1,144 +1,91 @@
 @echo off
-title Lackadaisical AI Chat - Alpha Test Startup
-color 0A
+title Lackadaisical AI Chat - Alpha/Dev Quick Start
+color 0B
 
 echo.
-echo  ===============================================
-echo   🚀 Lackadaisical AI Chat - Alpha Test 🚀
-echo   Starting Companion AI System...
-echo   Build Date: July 27, 2025
-echo  ===============================================
+echo  ═══════════════════════════════════════════════════════════════════════════
+echo   🚀 Lackadaisical AI Chat v2.0.0-rc1 - Quick Dev Start
+echo   Build Date: April 21, 2026
+echo   By Lackadaisical Security - https://lackadaisical-security.com
+echo  ═══════════════════════════════════════════════════════════════════════════
 echo.
 
-:: Check if Node.js is installed
+:: Ensure we're in the right directory
+cd /d "%~dp0"
+
+if not exist "package.json" (
+    echo ❌ ERROR: package.json not found. Run from the project root.
+    pause
+    exit /b 1
+)
+
+:: Quick prerequisite check
 where node >nul 2>nul
 if %errorlevel% neq 0 (
-    echo ❌ ERROR: Node.js is not installed or not in PATH
-    echo Please install Node.js from https://nodejs.org/
+    echo ❌ Node.js not found. Install from https://nodejs.org/
     pause
     exit /b 1
 )
 
-:: Check if npm is installed
-where npm >nul 2>nul
-if %errorlevel% neq 0 (
-    echo ❌ ERROR: npm is not installed or not in PATH
-    echo Please install npm (usually comes with Node.js)
-    pause
-    exit /b 1
-)
-
-:: Check if we're in the right directory
-if not exist "package.json" (
-    echo ❌ ERROR: package.json not found
-    echo Please run this script from the Lackadaisical AI Chat directory
-    pause
-    exit /b 1
-)
-
-:: Check if Ollama is running
-echo 🔍 Checking Ollama connection...
+:: Check Ollama
+echo 🔍 Checking Ollama...
 curl -s http://localhost:11434/api/tags >nul 2>nul
 if %errorlevel% neq 0 (
-    echo ⚠️  WARNING: Ollama doesn't seem to be running on localhost:11434
-    echo Please make sure Ollama is installed and running.
-    echo You can download it from: https://ollama.ai/
-    echo.
-    echo Starting anyway - you can connect to external AI providers...
-    timeout /t 3 >nul
+    echo ⚠️  Ollama not running. Trying to auto-start...
+    where ollama >nul 2>nul
+    if %errorlevel% equ 0 (
+        start "Ollama AI Engine" /min ollama serve
+        timeout /t 5 /nobreak >nul
+        echo ✅ Ollama start command issued
+    ) else (
+        echo ⚠️  Ollama not found. Download from https://ollama.ai/
+        echo    Continuing without Ollama - external AI providers can still be used.
+    )
+) else (
+    echo ✅ Ollama is running
 )
 
 echo.
-echo 📦 Installing dependencies...
-echo.
+echo 📦 Checking dependencies...
 
-:: Install root dependencies
-npm install
-if %errorlevel% neq 0 (
-    echo ❌ Failed to install root dependencies
-    pause
-    exit /b 1
-)
+:: Only install if missing
+if not exist "node_modules" call npm install --loglevel=error
+if not exist "backend\node_modules" ( cd backend && call npm install --loglevel=error && cd .. )
+if not exist "frontend\node_modules" ( cd frontend && call npm install --loglevel=error && cd .. )
 
-:: Install backend dependencies
-echo 🔧 Installing backend dependencies...
-cd backend
-npm install
-if %errorlevel% neq 0 (
-    echo ❌ Failed to install backend dependencies
-    pause
-    exit /b 1
-)
-cd ..
-
-:: Install frontend dependencies
-echo 🎨 Installing frontend dependencies...
-cd frontend
-npm install
-if %errorlevel% neq 0 (
-    echo ❌ Failed to install frontend dependencies
-    pause
-    exit /b 1
-)
-cd ..
+:: Ensure database
+if not exist "database" mkdir database
+if not exist "database\chat.db" call npm run init:db 2>nul
 
 echo.
-echo ✅ Dependencies installed successfully!
+echo ✅ Dependencies ready!
 echo.
-echo 🚀 Starting Lackadaisical AI Chat servers...
+echo 🚀 Starting development servers...
 echo.
-echo   📍 Backend will start on: http://localhost:3001
-echo   📍 Frontend will start on: http://localhost:3000
+echo   📍 Frontend: http://localhost:3000
+echo   📍 Backend:  http://localhost:3001
+echo   📍 API Docs: http://localhost:3001/api
 echo.
-echo ⚡ Available Companion Commands:
-echo   /help      - Show all companion commands
-echo   /checkin   - Daily emotional check-in
-echo   /journal   - Reflective journaling
-echo   /reflect   - Guided reflection
-echo   /memory    - View conversation memories
-echo   /mood      - Track your mood
-echo   /gratitude - Practice gratitude
-echo   /goals     - Set and track goals
+echo ⚡ Features: Chat, Sessions, IDE, Emulator, Journal, Plugins, Web Search
+echo 🤖 Commands: /help /checkin /journal /reflect /memory /mood /gratitude /goals
 echo.
 
-:: Start backend in new window
-echo 🔥 Starting backend server...
+:: Start services
 start "Lackadaisical AI Backend" cmd /k "cd /d %~dp0backend && npm run dev"
-
-:: Wait a moment for backend to start
-timeout /t 5 >nul
-
-:: Start frontend in new window
-echo 🎨 Starting frontend server...
+timeout /t 4 /nobreak >nul
 start "Lackadaisical AI Frontend" cmd /k "cd /d %~dp0frontend && npm run dev"
 
-echo.
-echo ✅ Both servers are starting!
-echo.
-echo 🌐 Your AI companion will be available at:
-echo    👉 http://localhost:3000
-echo.
-echo 📝 Alpha Test Notes:
-echo    • All 8 companion commands are working
-echo    • Real-time streaming with Ollama
-echo    • Persistent memory and personality
-echo    • SQLite database for local storage
-echo.
-echo 🛑 To stop the servers, close the terminal windows or press Ctrl+C
-echo.
-echo 💤 Have a great night! The AI will remember our conversation tomorrow 😊
-echo.
+echo ⏳ Waiting for services...
+timeout /t 6 /nobreak >nul
 
-:: Wait for user acknowledgment
-echo Press any key to open the web interface...
+echo.
+echo Press any key to open http://localhost:3000 in your browser...
 pause >nul
 
-:: Open the web interface
 start http://localhost:3000
 
 echo.
-echo 🎉 Lackadaisical AI Chat Alpha is now running!
-echo    Frontend: http://localhost:3000
-echo    Backend:  http://localhost:3001
+echo 🎉 Lackadaisical AI Chat is running!
+echo 📝 To stop: run stop-lackadaisical-ai.bat or close terminal windows.
 echo.
-echo Happy chatting with your new AI companion! 🤖💙
+pause

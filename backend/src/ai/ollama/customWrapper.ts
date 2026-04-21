@@ -15,6 +15,7 @@ interface OllamaGenerateRequest {
   format?: string | Record<string, unknown>;  // 'json' or JSON schema for structured outputs
   keep_alive?: string | number;  // e.g. '5m', '0' to unload
   images?: string[];  // base64 images for multimodal models
+  audio?: string[];   // base64 audio for audio-capable models (e.g. Gemma 4)
   // Experimental image generation params
   width?: number;
   height?: number;
@@ -82,6 +83,7 @@ interface OllamaChatMessage {
   content: string;
   thinking?: string;  // For thinking models — the model's thinking process
   images?: string[]; // base64 encoded images for vision models
+  audio?: string[];  // base64 encoded audio for audio-capable models (e.g. Gemma 4)
   tool_calls?: OllamaToolCall[];
   tool_name?: string;  // Name of the tool that was executed (for role: 'tool')
 }
@@ -155,6 +157,7 @@ export class OllamaWrapper {
   private defaultModel: string;
   private uncensoredModel: string;
   private visionModel: string;
+  private audioModel: string;
   private availableModels: string[];
   private isAvailable: boolean = false;
   private contextWindow: number;
@@ -164,7 +167,8 @@ export class OllamaWrapper {
     this.baseUrl = config.ai.ollamaHost;
     this.defaultModel = config.ai.models.ollama.default;
     this.uncensoredModel = config.ai.models.ollama.uncensored;
-    this.visionModel = (config.ai.models.ollama as any).vision || 'gemma4:e4b';
+    this.visionModel = config.ai.models.ollama.vision || 'gemma4:e4b';
+    this.audioModel = config.ai.models.ollama.audio || 'gemma4:e4b'; // Gemma 4 supports audio/voice
     this.availableModels = config.ai.models.ollama.available;
     this.contextWindow = (config.ai as any).contextWindow || 262144;
     this.extendedThinking = (config.ai as any).extendedThinking !== false;
@@ -309,11 +313,26 @@ export class OllamaWrapper {
   }
 
   /**
+   * Get the audio/voice model (Gemma 4 supports audio input/output)
+   */
+  getAudioModel(): string {
+    return this.audioModel;
+  }
+
+  /**
    * Select appropriate model based on context or user preference
    */
-  selectModel(useUncensored: boolean = false, customModel?: string, hasVisionContent: boolean = false): string {
+  selectModel(
+    useUncensored: boolean = false,
+    customModel?: string,
+    hasVisionContent: boolean = false,
+    hasAudioContent: boolean = false
+  ): string {
     if (customModel && this.availableModels.includes(customModel)) {
       return customModel;
+    }
+    if (hasAudioContent) {
+      return this.audioModel;
     }
     if (hasVisionContent) {
       return this.visionModel;
@@ -381,6 +400,7 @@ CORE PRINCIPLES:
     systemPrompt += 'You can search the web for current information, analyze uploaded files, execute tools, and provide code in properly formatted code blocks. ';
     systemPrompt += 'When providing code, always use markdown code blocks with the language specified (e.g., ```python). ';
     systemPrompt += 'For complex topics, use extended thinking to reason through problems step by step. ';
+    systemPrompt += 'When using Gemma 4 or other audio-capable models, you can process audio/voice input and provide contextually aware responses. ';
 
     // Dynamic personality based on current state
     if (personalityState) {
@@ -757,6 +777,7 @@ COMMUNICATION STYLE:
       tools?: OllamaToolDefinition[];
       format?: string | Record<string, unknown>;
       images?: string[];
+      audio?: string[];    // base64 audio input for Gemma 4 and other audio-capable models
       stream?: boolean;
       think?: boolean;  // Enable model thinking (for thinking-capable models)
       keepAlive?: string | number;
@@ -816,6 +837,7 @@ COMMUNICATION STYLE:
         messageCount: messages.length,
         hasTools: !!(options.tools && options.tools.length > 0),
         hasFormat: !!options.format,
+        hasAudio: !!(options.audio && options.audio.length > 0),
         stream: options.stream,
       });
 
