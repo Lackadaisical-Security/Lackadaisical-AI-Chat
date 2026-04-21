@@ -360,6 +360,14 @@ class LackadaisicalAIServer {
           models: {
             'GET /api/models': 'List available AI models',
           },
+          security: {
+            'GET /api/v1/security/anomalies': 'List detected anomalies (filterable by type, severity, since)',
+            'GET /api/v1/security/anomalies/summary': 'Get anomaly summary with system health metrics',
+            'POST /api/v1/security/anomalies/:id/resolve': 'Resolve a specific anomaly',
+            'GET /api/v1/security/audit': 'Query security audit trail',
+            'GET /api/v1/security/audit/integrity': 'Verify audit trail hash chain integrity',
+            'GET /api/v1/security/health': 'System health with security metrics',
+          },
         },
         features: {
           streaming: config.ai.streamMode !== 'off',
@@ -370,6 +378,8 @@ class LackadaisicalAIServer {
           codeBlocks: true,
           extendedThinking: true,
           imageGeneration: true,
+          anomalyDetection: true,
+          securityAudit: true,
           encryption: config.features.encryption,
           plugins: config.plugins.enabled.length > 0,
         },
@@ -457,15 +467,26 @@ class LackadaisicalAIServer {
 
       const responseTimeMs = Date.now() - startTime;
 
+      // Include anomaly monitoring summary
+      const activeAnomalies = anomalyDetectionService.getActiveAnomalies();
+      const systemCheck = anomalyDetectionService.checkSystemHealth();
+
       const healthStatus = {
         health: {
-          status: databaseStatus === 'up' ? 'healthy' : 'unhealthy',
+          status: databaseStatus === 'up' && systemCheck.healthy ? 'healthy' : 'unhealthy',
           timestamp: new Date().toISOString(),
           services: {
             database: databaseStatus,
             ai_providers: {
               ollama: ollamaStatus
             }
+          },
+          monitoring: {
+            activeAnomalies: activeAnomalies.length,
+            criticalAnomalies: activeAnomalies.filter(a => a.severity === 'critical').length,
+            systemHealthy: systemCheck.healthy,
+            heapUsagePercent: systemCheck.metrics.heapPercent,
+            uptimeSeconds: systemCheck.metrics.uptimeSeconds,
           },
           version: '2.0.0-rc1'
         },
