@@ -147,6 +147,10 @@ Switch between AI providers on the fly without restarting:
 |:-:|:-:|:-:|
 | ![Sessions](docs/screenshots/03-sessions.png) | ![IDE](docs/screenshots/04-ide-workspace.png) | ![Emulator](docs/screenshots/05-emulator.png) |
 
+| Journal | Plugins | Settings |
+|:-:|:-:|:-:|
+| ![Journal](docs/screenshots/06-journal.png) | ![Plugins](docs/screenshots/07-plugins.png) | ![Settings](docs/screenshots/08-settings.png) |
+
 ## 🚀 Super Simple Setup
 
 ### Windows (Easiest)

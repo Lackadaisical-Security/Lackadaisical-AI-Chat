@@ -395,9 +395,12 @@ class LackadaisicalAIServer {
     const { Router } = require('express');
     const router = Router();
     const { asyncHandler } = require('./middleware/errorHandler');
+    const axios = require('axios');
     
     // Simple health check that uses the initialized database
     router.get('/', asyncHandler(async (req: Request, res: Response) => {
+      const startTime = Date.now();
+
       let databaseStatus = 'down';
       try {
         // Try to use the database - if it works, it's initialized
@@ -408,6 +411,20 @@ class LackadaisicalAIServer {
         databaseStatus = 'down';
       }
 
+      // Actually check Ollama availability
+      let ollamaStatus = 'down';
+      try {
+        const ollamaHost = config.ai.ollamaHost || 'http://localhost:11434';
+        const ollamaResp = await axios.get(`${ollamaHost}/api/tags`, { timeout: 3000 });
+        if (ollamaResp.status === 200) {
+          ollamaStatus = 'up';
+        }
+      } catch {
+        ollamaStatus = 'down';
+      }
+
+      const responseTimeMs = Date.now() - startTime;
+
       const healthStatus = {
         health: {
           status: databaseStatus === 'up' ? 'healthy' : 'unhealthy',
@@ -415,12 +432,12 @@ class LackadaisicalAIServer {
           services: {
             database: databaseStatus,
             ai_providers: {
-              ollama: 'up'
+              ollama: ollamaStatus
             }
           },
           version: '2.0.0-rc1'
         },
-        response_time_ms: Date.now() % 100
+        response_time_ms: responseTimeMs
       };
       res.json(healthStatus);
     }));
