@@ -339,7 +339,7 @@ export class AIService {
           break;
 
         default:
-          throw new Error(`Provider ${providerInfo.provider} not yet implemented`);
+          throw new Error(`Unsupported AI provider: ${providerInfo.provider}. Supported providers: ollama, openai, anthropic, google, xai`);
       }
 
       const totalTime = Date.now() - startTime;
@@ -478,9 +478,9 @@ export class AIService {
         default:
           onChunk({ 
             type: 'error', 
-            error: `Provider ${providerInfo.provider} not yet implemented` 
+            error: `Unsupported AI provider: ${providerInfo.provider}. Supported providers: ollama, openai, anthropic, google, xai` 
           });
-          throw new Error(`Provider ${providerInfo.provider} not yet implemented`);
+          throw new Error(`Unsupported AI provider: ${providerInfo.provider}. Supported providers: ollama, openai, anthropic, google, xai`);
       }
 
       const totalTime = Date.now() - startTime;

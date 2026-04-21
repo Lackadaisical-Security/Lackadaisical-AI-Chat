@@ -322,6 +322,39 @@ INSERT OR IGNORE INTO sessions (id, name, description) VALUES
 ('default', 'Default Session', 'The main conversation session');
 
 -- =============================================================================
+-- USERS TABLE
+-- Stores registered user accounts for authentication
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    role TEXT DEFAULT 'user', -- user, admin
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_login DATETIME
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+-- =============================================================================
+-- REFRESH TOKENS TABLE
+-- Stores active refresh tokens for JWT auth
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    token TEXT UNIQUE NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
+
+-- =============================================================================
 -- CLEANUP AND MAINTENANCE PROCEDURES
 -- =============================================================================
 

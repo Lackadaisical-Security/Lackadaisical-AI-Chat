@@ -31,7 +31,7 @@ import companionRoutes, { createCompanionRoutes } from './routes/companion';
 import createChatRoutes from './routes/chat';
 import sessionRoutes, { createSessionRoutes } from './routes/sessions';
 import contextRoutes, { createContextRoutes } from './routes/context';
-import authRoutes from './routes/auth';
+import authRoutes, { createAuthRoutes } from './routes/auth';
 import modelRoutes from './routes/models';
 import fileRoutes from './routes/files';
 import searchRoutes from './routes/search';
@@ -145,12 +145,13 @@ class LackadaisicalAIServer {
     const chatRoutesWithDeps = this.createChatRoutes();
     const contextRoutesWithDeps = createContextRoutes(this.database);
     const companionRoutesWithDeps = createCompanionRoutes(this.database);
+    const authRoutesWithDeps = createAuthRoutes(this.database);
 
     // Health check (outside API versioning for monitoring)
     this.app.use('/health', healthRoutesWithDeps);
 
     // Main API routes with versioning
-    this.app.use(`${apiBase}/auth`, authRoutes);
+    this.app.use(`${apiBase}/auth`, authRoutesWithDeps);
     this.app.use(`${apiBase}/chat`, chatRoutesWithDeps);
     this.app.use(`${apiBase}/journal`, createJournalRoutes(this.database));
     this.app.use(`${apiBase}/personality`, personalityRoutes);
@@ -160,7 +161,7 @@ class LackadaisicalAIServer {
     this.app.use(`${apiBase}`, contextRoutesWithDeps);
 
     // Direct API routes for frontend compatibility
-    this.app.use('/api/auth', authRoutes);
+    this.app.use('/api/auth', authRoutesWithDeps);
     this.app.use('/api/chat', chatRoutesWithDeps);
     this.app.use('/api/journal', createJournalRoutes(this.database));
     this.app.use('/api/personality', personalityRoutes);
@@ -215,19 +216,100 @@ class LackadaisicalAIServer {
     // API documentation
     this.app.get('/api', (req: Request, res: Response) => {
       res.json({
-        api_version: '2.0.0-alpha',
-        documentation: 'API documentation would be available here',
-        endpoints: [
-          'GET /health - Health check',
-          'POST /api/v1/chat - Send chat message',
-          'GET /api/v1/chat/stream - Streaming chat endpoint',
-          'POST /api/v1/journal - Create journal entry',
-          'GET /api/v1/journal - Get journal entries',
-          'GET /api/v1/personality - Get personality state',
-          'PUT /api/v1/personality - Update personality',
-          'GET /api/v1/plugins - List plugins',
-          'GET /api/v1/sessions - List sessions',
-        ],
+        api_version: '2.0.0-rc1',
+        documentation_url: '/api',
+        endpoints: {
+          health: {
+            'GET /health': 'Service health check with database and AI provider status'
+          },
+          auth: {
+            'POST /api/v1/auth/register': 'Register a new user account',
+            'POST /api/v1/auth/login': 'Authenticate and get access/refresh tokens',
+            'POST /api/v1/auth/refresh': 'Refresh access token using refresh token',
+            'POST /api/v1/auth/logout': 'Revoke all refresh tokens (requires auth)',
+            'GET /api/v1/auth/me': 'Get current authenticated user info',
+            'POST /api/v1/auth/change-password': 'Change user password (requires auth)',
+          },
+          chat: {
+            'POST /api/v1/chat': 'Send a chat message and get AI response',
+            'GET /api/v1/chat/stream': 'SSE streaming chat endpoint',
+            'GET /api/v1/chat/preferences': 'Get memory preferences',
+            'PUT /api/v1/chat/preferences': 'Update memory preferences',
+            'POST /api/v1/chat/preferences/toggle-cross-session': 'Toggle cross-session memory',
+            'GET /api/v1/chat/sessions/summaries': 'Get session summaries',
+            'GET /api/v1/chat/sessions/active': 'Get active sessions',
+            'GET /api/v1/chat/search/all': 'Search across all sessions',
+            'GET /api/v1/chat/context/full/:sessionId': 'Get enhanced context window',
+            'GET /api/v1/chat/analytics/:sessionId': 'Get session analytics',
+            'GET /api/v1/chat/analytics/global': 'Get global analytics',
+            'DELETE /api/v1/chat/history/:sessionId': 'Delete conversation history',
+          },
+          sessions: {
+            'GET /api/v1/sessions': 'List all sessions',
+            'POST /api/v1/sessions': 'Create a new session',
+            'PUT /api/v1/sessions/:id': 'Update session details',
+            'DELETE /api/v1/sessions/:id': 'Delete a session',
+            'GET /api/v1/sessions/:id/messages': 'Get conversation history for session',
+            'GET /api/v1/sessions/:id/context': 'Get session context',
+            'POST /api/v1/sessions/:id/context': 'Update session context',
+            'DELETE /api/v1/sessions/:id/context': 'Clear session context',
+          },
+          journal: {
+            'GET /api/v1/journal': 'List journal entries with optional filters',
+            'POST /api/v1/journal': 'Create a new journal entry',
+            'GET /api/v1/journal/:id': 'Get a specific journal entry',
+            'PUT /api/v1/journal/:id': 'Update a journal entry',
+            'DELETE /api/v1/journal/:id': 'Delete a journal entry',
+            'GET /api/v1/journal/export/:format': 'Export journal (json/csv/txt/markdown)',
+            'GET /api/v1/journal/analytics': 'Get journal analytics',
+          },
+          files: {
+            'POST /api/v1/files/upload': 'Upload a file (multipart/form-data)',
+            'GET /api/v1/files/download/:fileId': 'Download a file by ID',
+            'GET /api/v1/files/:fileId': 'Get file metadata and extracted text',
+            'GET /api/v1/files/session/:sessionId': 'Get all files for a session',
+            'DELETE /api/v1/files/:fileId': 'Delete an uploaded file',
+            'POST /api/v1/files/serve-code': 'Create a downloadable code file from content',
+          },
+          search: {
+            'POST /api/v1/search': 'Web search with optional result count and time range',
+            'POST /api/v1/search/deep-research': 'Deep research with multi-source synthesis',
+            'GET /api/v1/search/tools': 'List available tools',
+            'POST /api/v1/search/tool': 'Execute a specific tool',
+          },
+          personality: {
+            'GET /api/v1/personality': 'Get current personality state',
+            'PUT /api/v1/personality': 'Update personality traits',
+            'POST /api/v1/personality/reset': 'Reset personality to defaults',
+          },
+          plugins: {
+            'GET /api/v1/plugins': 'List all plugins',
+            'GET /api/v1/plugins/:name': 'Get plugin details',
+            'POST /api/v1/plugins/:name/enable': 'Enable a plugin',
+            'POST /api/v1/plugins/:name/disable': 'Disable a plugin',
+            'PUT /api/v1/plugins/:name/config': 'Update plugin configuration',
+            'POST /api/v1/plugins/:name/execute': 'Execute a plugin',
+            'POST /api/v1/plugins/reload': 'Reload all plugins',
+          },
+          logs: {
+            'GET /api/v1/logs/session/:sessionId': 'Get message logs for a session',
+            'GET /api/v1/logs/stats': 'Get log statistics',
+          },
+          models: {
+            'GET /api/models': 'List available AI models',
+          },
+        },
+        features: {
+          streaming: config.ai.streamMode !== 'off',
+          journaling: config.features.journaling,
+          webSearch: config.features.webSearch,
+          fileUpload: true,
+          toolUse: true,
+          codeBlocks: true,
+          extendedThinking: true,
+          encryption: config.features.encryption,
+          plugins: config.plugins.enabled.length > 0,
+        },
       });
     });
 

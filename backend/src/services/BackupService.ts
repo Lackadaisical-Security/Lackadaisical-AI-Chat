@@ -350,44 +350,164 @@ export class BackupService {
 
   /**
    * Export database (PostgreSQL/MySQL)
-   * 
-   * NOTE: For PostgreSQL/MySQL, this requires pg_dump or mysqldump to be installed
-   * on the system. This is not implemented for automated backups currently.
-   * 
-   * For production PostgreSQL/MySQL backups, use native database backup tools:
-   * - PostgreSQL: pg_dump, pg_basebackup
-   * - MySQL: mysqldump, mysqlpump, xtrabackup
-   * 
-   * This method is reserved for future implementation or can be overridden.
+   * Uses native database tools (pg_dump/mysqldump) via child_process.
    */
   private async exportDatabase(outputPath: string, compress: boolean): Promise<void> {
     const dbType = config.database.type;
-    logger.warn(`Automated backup for ${dbType} requires native database tools (pg_dump/mysqldump)`);
-    throw new Error(
-      `Automated database export for ${dbType} is not yet implemented. ` +
-      `Please use native backup tools: ` +
-      `PostgreSQL: pg_dump | MySQL: mysqldump`
-    );
+    const { execFile } = await import('child_process');
+    const { promisify } = await import('util');
+    const execFileAsync = promisify(execFile);
+
+    if (dbType === 'postgresql') {
+      const host = config.database.host || 'localhost';
+      const port = String(config.database.port || 5432);
+      const dbName = config.database.name || 'lackadaisical_chat';
+      const args = ['-h', host, '-p', port, '-d', dbName, '-F', 'c', '-f', outputPath];
+      if (config.database.username) {
+        args.push('-U', config.database.username);
+      }
+
+      const env: Record<string, string> = { ...process.env as Record<string, string> };
+      if (config.database.password) {
+        env['PGPASSWORD'] = config.database.password;
+      }
+
+      try {
+        await execFileAsync('pg_dump', args, { env, timeout: 300000 });
+        logger.info('PostgreSQL backup completed', { outputPath });
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        logger.error('PostgreSQL backup failed:', error);
+        throw new Error(
+          `PostgreSQL backup failed: ${msg}. ` +
+          `Ensure pg_dump is installed and accessible in PATH.`
+        );
+      }
+    } else if (dbType === 'mysql') {
+      const host = config.database.host || 'localhost';
+      const port = String(config.database.port || 3306);
+      const dbName = config.database.name || 'lackadaisical_chat';
+      const args = ['-h', host, '-P', port, '--databases', dbName, '--result-file', outputPath];
+      if (config.database.username) {
+        args.push('-u', config.database.username);
+      }
+      if (config.database.password) {
+        args.push(`-p${config.database.password}`);
+      }
+
+      try {
+        await execFileAsync('mysqldump', args, { timeout: 300000 });
+        logger.info('MySQL backup completed', { outputPath });
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        logger.error('MySQL backup failed:', error);
+        throw new Error(
+          `MySQL backup failed: ${msg}. ` +
+          `Ensure mysqldump is installed and accessible in PATH.`
+        );
+      }
+    } else {
+      throw new Error(`Database export not supported for type: ${dbType}`);
+    }
+
+    // Compress if requested
+    if (compress) {
+      const zlib = await import('zlib');
+      const fsp = await import('fs/promises');
+      const input = await fsp.readFile(outputPath);
+      const compressed = zlib.gzipSync(input);
+      const compressedPath = outputPath + '.gz';
+      await fsp.writeFile(compressedPath, compressed);
+      await fsp.unlink(outputPath);
+      logger.info('Backup compressed', { compressedPath });
+    }
   }
 
   /**
    * Import database (PostgreSQL/MySQL)
-   * 
-   * NOTE: For PostgreSQL/MySQL, this requires psql or mysql client to be installed.
-   * This is not implemented for automated restores currently.
-   * 
-   * For production PostgreSQL/MySQL restores, use native database restore tools:
-   * - PostgreSQL: psql, pg_restore
-   * - MySQL: mysql client
+   * Uses native database tools (psql/mysql) via child_process.
    */
   private async importDatabase(inputPath: string, compressed: boolean): Promise<void> {
     const dbType = config.database.type;
-    logger.warn(`Automated restore for ${dbType} requires native database tools (psql/mysql)`);
-    throw new Error(
-      `Automated database import for ${dbType} is not yet implemented. ` +
-      `Please use native restore tools: ` +
-      `PostgreSQL: psql/pg_restore | MySQL: mysql`
-    );
+    const { execFile } = await import('child_process');
+    const { promisify } = await import('util');
+    const execFileAsync = promisify(execFile);
+
+    let actualPath = inputPath;
+
+    // Decompress if needed
+    if (compressed) {
+      const zlib = await import('zlib');
+      const fsp = await import('fs/promises');
+      const compressedData = await fsp.readFile(inputPath);
+      const decompressed = zlib.gunzipSync(compressedData);
+      actualPath = inputPath.replace(/\.gz$/, '');
+      await fsp.writeFile(actualPath, decompressed);
+    }
+
+    if (dbType === 'postgresql') {
+      const host = config.database.host || 'localhost';
+      const port = String(config.database.port || 5432);
+      const dbName = config.database.name || 'lackadaisical_chat';
+      const args = ['-h', host, '-p', port, '-d', dbName, '-c', actualPath];
+      if (config.database.username) {
+        args.push('-U', config.database.username);
+      }
+
+      const env: Record<string, string> = { ...process.env as Record<string, string> };
+      if (config.database.password) {
+        env['PGPASSWORD'] = config.database.password;
+      }
+
+      try {
+        await execFileAsync('pg_restore', args, { env, timeout: 300000 });
+        logger.info('PostgreSQL restore completed', { inputPath });
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        logger.error('PostgreSQL restore failed:', error);
+        throw new Error(
+          `PostgreSQL restore failed: ${msg}. ` +
+          `Ensure pg_restore is installed and accessible in PATH.`
+        );
+      }
+    } else if (dbType === 'mysql') {
+      const host = config.database.host || 'localhost';
+      const port = String(config.database.port || 3306);
+      const dbName = config.database.name || 'lackadaisical_chat';
+      const args = ['-h', host, '-P', port, dbName];
+      if (config.database.username) {
+        args.push('-u', config.database.username);
+      }
+      if (config.database.password) {
+        args.push(`-p${config.database.password}`);
+      }
+
+      try {
+        const fsp = await import('fs/promises');
+        const sqlData = await fsp.readFile(actualPath, 'utf-8');
+        await execFileAsync('mysql', args, { input: sqlData, timeout: 300000 });
+        logger.info('MySQL restore completed', { inputPath });
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        logger.error('MySQL restore failed:', error);
+        throw new Error(
+          `MySQL restore failed: ${msg}. ` +
+          `Ensure mysql client is installed and accessible in PATH.`
+        );
+      }
+    } else {
+      throw new Error(`Database import not supported for type: ${dbType}`);
+    }
+
+    // Clean up decompressed temp file
+    if (compressed && actualPath !== inputPath) {
+      try {
+        const fsp = await import('fs/promises');
+        await fsp.unlink(actualPath);
+      } catch {
+        // Non-critical cleanup failure
+      }
+    }
   }
 
   /**
