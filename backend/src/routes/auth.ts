@@ -24,6 +24,22 @@ export function createAuthRoutes(db: DatabaseService): Router {
   const router = Router();
   const authRateLimiter = endpointRateLimiter('auth');
 
+  /**
+   * Validate email format safely — avoids ReDoS by using indexOf-based checks
+   * instead of regex with unbounded quantifiers on user input.
+   */
+  function isValidEmail(email: string): boolean {
+    if (typeof email !== 'string') return false;
+    if (email.length > 254) return false; // RFC 5321 max length
+    const atIndex = email.indexOf('@');
+    if (atIndex < 1) return false; // must have local part
+    const dotIndex = email.lastIndexOf('.');
+    if (dotIndex <= atIndex + 1) return false; // must have domain with dot
+    if (dotIndex >= email.length - 1) return false; // must have TLD
+    if (email.includes(' ')) return false; // no spaces
+    return true;
+  }
+
   /** Ensure the users and refresh_tokens tables exist */
   async function ensureAuthTables(): Promise<void> {
     try {
@@ -70,7 +86,7 @@ export function createAuthRoutes(db: DatabaseService): Router {
   router.post('/register', authRateLimiter, asyncHandler(async (req: Request, res: Response) => {
     const { email, password, name } = req.body;
     if (!email || !password) throw new ApiError(400, 'Email and password are required');
-    if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!isValidEmail(email)) {
       throw new ApiError(400, 'Valid email address is required');
     }
     if (password.length < 8) throw new ApiError(400, 'Password must be at least 8 characters');
@@ -253,7 +269,7 @@ export function createAuthRoutes(db: DatabaseService): Router {
 
     // Validate email uniqueness if changing
     if (email !== undefined && email !== user.email) {
-      if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      if (!isValidEmail(email)) {
         throw new ApiError(400, 'Valid email address is required');
       }
       const existingEmail = firstRow(await db.executeQuery<{ id: string }>(
@@ -287,16 +303,18 @@ export function createAuthRoutes(db: DatabaseService): Router {
       id: string; email: string; name: string; role: string; created_at: string;
     }>('SELECT id, email, name, role, created_at FROM users WHERE id = ?', [userId]));
 
+    if (!updated) throw new ApiError(404, 'User not found after update');
+
     logger.info('User profile updated', { userId, updatedFields: Object.keys(req.body) });
     res.json({
       success: true,
       data: {
         user: {
-          id: updated!.id,
-          email: updated!.email,
-          name: updated!.name,
-          role: updated!.role,
-          createdAt: updated!.created_at
+          id: updated.id,
+          email: updated.email,
+          name: updated.name,
+          role: updated.role,
+          createdAt: updated.created_at
         }
       },
       message: 'Profile updated successfully'
