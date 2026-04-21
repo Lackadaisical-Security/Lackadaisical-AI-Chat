@@ -1,15 +1,15 @@
 # 🧠 Lackadaisical AI Chat - v2.0.0-rc1
 
 **Release Date:** April 21, 2026  
-**Version:** 2.0.0-rc1 - Release Candidate with IDE, Emulator, Image Gen & Enhanced Memory  
+**Version:** 2.0.0-rc1 - Release Candidate with IDE, Emulator, Image Gen, User Accounts & Enhanced Memory  
 **License:** MIT (Free Forever)  
 **Development Status:** 🏗️ Release Candidate 1 🏗️
 
-## 🎉 Alpha Stage: Your Personal AI Friend with Memory!
+## 🎉 Your Personal AI Friend with Memory!
 
-Welcome to **Lackadaisical AI Chat** - an open-source AI companion that runs entirely on your computer and now features a complete Memory Management System! Meet **Lacky**, your personal AI friend who remembers your conversations, understands your emotions, and grows with you over time.
+Welcome to **Lackadaisical AI Chat** - an enterprise-grade, open-source AI companion that runs entirely on your computer with a complete Memory Management System, Code IDE, Traffic Emulator, and more! Meet **Lacky**, your personal AI friend who remembers your conversations, understands your emotions, and grows with you over time.
 
-**⚠️ Alpha Stage Notice**: This project is in rapid alpha development. Features are being added daily, and some functionality may be incomplete or subject to change. Perfect for early adopters and developers who want to help shape the future of AI companions!
+**🚀 RC1 Status**: This release is feature-complete for the core experience. All major systems are functional and tested (93+ tests). User accounts, username management, and enhanced Gemma 4 multimodal support (vision + audio) are now included.
 
 Unlike cloud-based AI services, **everything stays private on your machine**. No data collection, no privacy concerns - just you and your AI companion with persistent memory.
 
@@ -65,7 +65,7 @@ Unlike cloud-based AI services, **everything stays private on your machine**. No
 
 ### 🔄 **Hot-Swappable AI Models**
 Switch between AI providers on the fly without restarting:
-- **Ollama (Local)** - Gemma 3/4, GPT-OSS 20B, Llama 3.3, Mistral, Phi-4, CodeLlama
+- **Ollama (Local)** - Gemma 3/4 (vision + audio), GPT-OSS 20B, Llama 3.3, Mistral, Phi-4, CodeLlama
 - **OpenAI** - GPT-5.4, GPT-5.4 Mini, GPT-4.1, O4-Mini, O3
 - **Anthropic** - Claude Opus 4.6, Claude Sonnet 4.6, Claude Haiku 4.5
 - **Google** - Gemini 3.1 Pro, Gemini 3.1 Flash, Gemini 2.5 Pro
@@ -99,6 +99,12 @@ Switch between AI providers on the fly without restarting:
 - **Configurable Retention** - By age (days) or by max messages
 - **Auto-Prune Scheduler** - Optional automatic cleanup interval
 - **Manual Per-Session** - Prune individual sessions on demand
+
+### 👤 **User Accounts (NEW in RC1!)**
+- **Optional Registration** - Create an account with username, email, and password
+- **Username Management** - Change your display name anytime from Settings
+- **JWT Authentication** - Secure token-based auth with refresh token rotation
+- **Profile Display** - Username shown in sidebar and throughout the app
 
 ### 🔍 **Web Search & Tool Use (NEW!)**
 - **Built-in Web Search** - DuckDuckGo-backed search with auto-trigger detection
@@ -148,10 +154,11 @@ Switch between AI providers on the fly without restarting:
 2. **Install Prerequisites:**
    - [Node.js](https://nodejs.org/) (v18 or newer)
    - [Ollama](https://ollama.ai/) (optional but recommended for best performance)
-3. **Double-click** `start-lackadaisical-ai.bat`
+3. **Double-click** `start-lackadaisical-ai.bat` (auto-starts Ollama if installed)
 4. **Wait** for automatic setup (first time takes 2-5 minutes)
 5. **Open** http://localhost:3000 when ready
 6. **Start chatting** with your new AI friend!
+7. **To stop**: Double-click `stop-lackadaisical-ai.bat`
 
 ### Mac/Linux
 1. **Download and extract** this project
@@ -223,6 +230,17 @@ GET  /api/models/current   - Check current active model
 - **Internet:** Only needed for initial setup and AI model downloads
 
 ### API Endpoints
+
+#### Auth & User Management
+```
+POST /api/v1/auth/register     - Create user account
+POST /api/v1/auth/login        - Sign in
+POST /api/v1/auth/logout       - Sign out (revoke tokens)
+GET  /api/v1/auth/me           - Get current user profile
+PUT  /api/v1/auth/profile      - Update username/email
+POST /api/v1/auth/change-password - Change password
+POST /api/v1/auth/refresh      - Refresh access token
+```
 
 #### Chat & Messages
 ```
@@ -349,7 +367,7 @@ Your AI friend should be **yours** - running on **your** computer, with **your**
 This project is free, but development takes time and effort. If you find value in having your own AI companion, consider:
 
 - **⭐ Star the repository** on GitHub
-- **🐛 Report bugs** and suggest improvements
+- **🐛 Report bugs** at [GitHub Issues](https://github.com/Lackadaisical-Security/Lackadaisical-AI-Chat/issues)
 - **📢 Share with friends** who might enjoy their own AI companion
 - **💝 Donate** to support continued development (completely optional)
 - **🤝 Contribute code** to make it even better

@@ -56,6 +56,7 @@ describe('App', () => {
 
   it('shows AI connection status', () => {
     render(<App />);
-    expect(screen.getByText('AI Connected')).toBeInTheDocument();
+    // Initial state shows "Disconnected" until health check completes
+    expect(screen.getByText('Disconnected')).toBeInTheDocument();
   });
 });

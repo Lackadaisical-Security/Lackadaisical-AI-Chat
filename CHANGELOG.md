@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🚀 New Features
 
+#### User Account System
+- **Optional registration** — Create an account with username, email, and password
+- **Username management** — Change display name anytime via Settings → Account
+- **Profile display** — Username shown in sidebar and throughout the app
+- **JWT authentication** — Secure token-based auth with refresh token rotation
+- **PUT /auth/profile** — New endpoint for updating user name and email
+
 #### Code IDE Workspace
 - **Full Monaco-based IDE** — Multi-tab code editor with syntax highlighting for 40+ languages
 - **File Explorer** — Create, rename, delete, open files in a virtual filesystem
@@ -56,6 +63,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Extended file types** — ZIP, tar, gz, docx, xlsx, pptx, and more now accepted
 
 ### 🔧 Improvements
+
+#### Gemma 4 Multimodal (Vision + Audio)
+- **Audio/voice support** — Gemma 4 audio model field in config, wrapper, and UI
+- **Audio field** — Added to `OllamaChatMessage` and `OllamaGenerateRequest` interfaces
+- **Model selection** — `selectModel()` now handles audio content routing to Gemma 4
+- **Config schema** — `vision` and `audio` model fields with env var support (`OLLAMA_AUDIO_MODEL`)
+
+#### Enterprise Hardening
+- **ErrorBoundary component** — React error boundary wraps all routes for crash recovery
+- **Connection health monitor** — `useConnectionHealth` hook for live backend/Ollama status
+- **Live sidebar status** — Shows backend connection, Ollama availability, and latency
+- **Per-route error isolation** — Each route wrapped in its own error boundary
+- **Stop script** — New `stop-lackadaisical-ai.bat` for graceful shutdown of all services
+
+#### Startup Scripts
+- **Auto-Ollama start** — `start-lackadaisical-ai.bat` now auto-detects and starts Ollama
+- **Database auto-init** — Creates database directory and initializes schema on first run
+- **7-step startup** — Requirements check, Ollama, models, deps, DB, services, health
+- **Quick dev start** — Updated `start-lackadaisical-alpha.bat` for fast development
 
 #### Ollama/Gemma 4 Integration
 - **Chat API support** — New `/api/chat` endpoint in OllamaWrapper with tool calling and structured outputs
@@ -114,7 +140,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🧪 Testing
 - **30 new security middleware tests** — Full coverage for sanitizer, headers, depth limiter, encryption
 - **3 new companion name tests** — Default name, update name, preserve name on partial settings update
-- **93 total tests passing** — 64 backend + 29 frontend
+- **93+ total tests passing** — 64 backend + 29 frontend
 
 ## [2.0.0-alpha.2] - 2026-04-02
 
@@ -260,7 +286,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| 2.0.0-rc1 | 2026-04-21 | IDE, Emulator, Image Gen, Security Hardening, Companion Name, 93 tests |
+| 2.0.0-rc1 | 2026-04-21 | IDE, Emulator, Image Gen, User Accounts, Gemma 4 Audio, Security Hardening, 93+ tests |
 | 2.0.0-alpha.2 | 2026-04-02 | Web search, file upload, extended thinking, model registry |
 | 2.0.0-alpha | 2026-02-21 | Hot-swap models, web fetching, emotional intelligence |
 | 1.0.0-alpha.2 | 2025-07-31 | Memory management system |
