@@ -303,7 +303,10 @@ export function createAuthRoutes(db: DatabaseService): Router {
       id: string; email: string; name: string; role: string; created_at: string;
     }>('SELECT id, email, name, role, created_at FROM users WHERE id = ?', [userId]));
 
-    if (!updated) throw new ApiError(404, 'User not found after update');
+    if (!updated) {
+      logger.error('Critical: User disappeared after UPDATE — possible race condition', { userId });
+      throw new ApiError(404, 'User not found after update');
+    }
 
     logger.info('User profile updated', { userId, updatedFields: Object.keys(req.body) });
     res.json({
