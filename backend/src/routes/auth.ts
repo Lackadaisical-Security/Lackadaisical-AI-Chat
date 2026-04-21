@@ -15,6 +15,8 @@ import { ApiError } from '../utils/ApiError';
 import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/settings';
+import { securityAuditService } from '../services/SecurityAuditService';
+import { anomalyDetectionService } from '../services/AnomalyDetectionService';
 
 /**
  * Create auth routes with database-backed user storage.
@@ -125,15 +127,41 @@ export function createAuthRoutes(db: DatabaseService): Router {
   // POST /auth/login
   router.post('/login', authRateLimiter, asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
+    const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
     if (!email || !password) throw new ApiError(400, 'Email and password are required');
 
     const user = firstRow(await db.executeQuery<{
       id: string; email: string; name: string; password_hash: string; role: string;
     }>('SELECT id, email, name, password_hash, role FROM users WHERE email = ?', [email]));
 
-    if (!user) throw new ApiError(401, 'Invalid email or password');
+    if (!user) {
+      // Audit failed login attempt
+      securityAuditService.log({
+        event_type: 'auth.failed_login',
+        actor_ip: clientIp,
+        resource: 'auth',
+        action: 'login',
+        outcome: 'failure',
+        details: { reason: 'user_not_found' },
+      });
+      anomalyDetectionService.trackAuthFailure(clientIp, email);
+      throw new ApiError(401, 'Invalid email or password');
+    }
     const valid = await comparePassword(password, user.password_hash);
-    if (!valid) throw new ApiError(401, 'Invalid email or password');
+    if (!valid) {
+      // Audit failed login attempt
+      securityAuditService.log({
+        event_type: 'auth.failed_login',
+        actor_ip: clientIp,
+        actor_user_id: user.id,
+        resource: 'auth',
+        action: 'login',
+        outcome: 'failure',
+        details: { reason: 'invalid_password' },
+      });
+      anomalyDetectionService.trackAuthFailure(clientIp, email);
+      throw new ApiError(401, 'Invalid email or password');
+    }
 
     const accessToken = generateToken(user.id, email, user.role as 'user' | 'admin');
     const refreshToken = generateRefreshToken(user.id);
@@ -143,6 +171,16 @@ export function createAuthRoutes(db: DatabaseService): Router {
       [user.id, refreshToken, expiresAt]
     );
     await db.executeStatement('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?', [user.id]);
+
+    // Audit successful login
+    securityAuditService.log({
+      event_type: 'auth.login',
+      actor_ip: clientIp,
+      actor_user_id: user.id,
+      resource: 'auth',
+      action: 'login',
+      outcome: 'success',
+    });
 
     logger.info('User logged in', { userId: user.id, email });
     res.json({

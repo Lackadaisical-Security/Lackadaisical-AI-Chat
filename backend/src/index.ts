@@ -42,6 +42,8 @@ import AIService from './services/AIService';
 
 // Import new services
 import { messageLogService } from './services/MessageLogService';
+import { anomalyDetectionService } from './services/AnomalyDetectionService';
+import { securityAuditService } from './services/SecurityAuditService';
 
 import { requestSanitizer, securityHeaders, requestDepthLimiter } from './middleware/security';
 
@@ -135,6 +137,31 @@ class LackadaisicalAIServer {
     // Rate limiting
     this.app.use(rateLimiter);
 
+    // Anomaly detection — track every request for pattern analysis
+    this.app.use((req: Request, res: Response, next: NextFunction) => {
+      const startTime = Date.now();
+      const ip = req.ip || req.socket.remoteAddress || 'unknown';
+
+      // Scan URL params + body for injection/XSS patterns
+      const urlToScan = req.originalUrl || req.url;
+      anomalyDetectionService.scanInput(ip, urlToScan, urlToScan);
+      if (req.body && typeof req.body === 'object') {
+        const bodyStr = JSON.stringify(req.body);
+        if (bodyStr.length < 50000) { // Only scan reasonable-size bodies
+          anomalyDetectionService.scanInput(ip, urlToScan, bodyStr);
+        }
+      }
+
+      // Track request completion for latency/error monitoring
+      res.on('finish', () => {
+        const duration = Date.now() - startTime;
+        const bodySize = req.headers['content-length'] ? parseInt(req.headers['content-length'], 10) : 0;
+        anomalyDetectionService.trackRequest(ip, urlToScan, req.method, res.statusCode, duration, bodySize);
+      });
+
+      next();
+    });
+
     // API info middleware
     this.app.use((req: Request, res: Response, next: NextFunction) => {
       res.setHeader('X-API-Version', '2.0.0-rc1');
@@ -194,6 +221,11 @@ class LackadaisicalAIServer {
     this.app.use('/api/emulator', emulatorRoutes);
     this.app.use('/api/image', imageGenerationRoutes);
     this.app.use('/api/logs', messageLogRoutes);
+
+    // Security & monitoring routes
+    const securityRouter = this.createSecurityRoutes();
+    this.app.use(`${apiBase}/security`, securityRouter);
+    this.app.use('/api/security', securityRouter);
 
     // Root endpoint
     this.app.get('/', (req: Request, res: Response) => {
@@ -454,6 +486,86 @@ class LackadaisicalAIServer {
   }
 
   /**
+   * Create security monitoring and anomaly detection API routes
+   */
+  private createSecurityRoutes() {
+    const { Router } = require('express');
+    const router = Router();
+    const { asyncHandler } = require('./middleware/errorHandler');
+
+    // GET /security/anomalies — List detected anomalies
+    router.get('/anomalies', asyncHandler(async (req: Request, res: Response) => {
+      const { type, severity, since, limit } = req.query;
+      const anomalies = anomalyDetectionService.getAnomalies({
+        type: type as string | undefined,
+        severity: severity as string | undefined,
+        since: since as string | undefined,
+        limit: limit ? parseInt(limit as string, 10) : 50,
+      });
+      res.json({ success: true, data: { anomalies, count: anomalies.length } });
+    }));
+
+    // GET /security/anomalies/summary — Anomaly summary with system health
+    router.get('/anomalies/summary', asyncHandler(async (_req: Request, res: Response) => {
+      const summary = anomalyDetectionService.getSummary();
+      res.json({ success: true, data: summary });
+    }));
+
+    // POST /security/anomalies/:id/resolve — Resolve an anomaly
+    router.post('/anomalies/:id/resolve', asyncHandler(async (req: Request, res: Response) => {
+      const resolved = anomalyDetectionService.resolveAnomaly(req.params.id);
+      if (!resolved) {
+        return res.status(404).json({ success: false, error: 'Anomaly not found' });
+      }
+      res.json({ success: true, message: 'Anomaly resolved' });
+    }));
+
+    // GET /security/audit — Query audit trail
+    router.get('/audit', asyncHandler(async (req: Request, res: Response) => {
+      const { event_type, actor_ip, outcome, since, limit } = req.query;
+      const entries = securityAuditService.query({
+        event_type: event_type as string | undefined,
+        actor_ip: actor_ip as string | undefined,
+        outcome: outcome as string | undefined,
+        since: since as string | undefined,
+        limit: limit ? parseInt(limit as string, 10) : 50,
+      });
+      res.json({ success: true, data: { entries, count: entries.length } });
+    }));
+
+    // GET /security/audit/integrity — Verify audit trail integrity
+    router.get('/audit/integrity', asyncHandler(async (_req: Request, res: Response) => {
+      const result = securityAuditService.verifyIntegrity();
+      res.json({ success: true, data: result });
+    }));
+
+    // GET /security/health — System health with security metrics
+    router.get('/health', asyncHandler(async (_req: Request, res: Response) => {
+      const systemHealth = anomalyDetectionService.checkSystemHealth();
+      const auditIntegrity = securityAuditService.verifyIntegrity();
+      const activeAnomalies = anomalyDetectionService.getActiveAnomalies();
+
+      res.json({
+        success: true,
+        data: {
+          system: systemHealth,
+          auditTrail: {
+            integrityValid: auditIntegrity.valid,
+            totalEntries: auditIntegrity.entries,
+          },
+          activeAnomalies: {
+            count: activeAnomalies.length,
+            critical: activeAnomalies.filter(a => a.severity === 'critical').length,
+            high: activeAnomalies.filter(a => a.severity === 'high').length,
+          },
+        },
+      });
+    }));
+
+    return router;
+  }
+
+  /**
    * Initialize database and dependent services
    */
   private async initializeDatabase(): Promise<void> {
@@ -480,6 +592,14 @@ class LackadaisicalAIServer {
       // Initialize the message log service (separate WAL-mode SQLite DB)
       await messageLogService.initialize();
       logger.info('Message log service initialized (WAL mode)');
+
+      // Initialize security audit service (separate DB for isolation)
+      await securityAuditService.initialize();
+      logger.info('Security audit service initialized');
+
+      // Start periodic cleanup of expired refresh tokens
+      securityAuditService.startTokenCleanup(this.database);
+      logger.info('Expired token cleanup scheduled');
 
       logger.info('Dependent services initialized successfully');
 
@@ -584,6 +704,22 @@ class LackadaisicalAIServer {
       logger.info('Message log database closed');
     } catch (error) {
       logger.error('Error closing message log database:', error);
+    }
+
+    // Close security audit service
+    try {
+      securityAuditService.close();
+      logger.info('Security audit service closed');
+    } catch (error) {
+      logger.error('Error closing security audit service:', error);
+    }
+
+    // Shutdown anomaly detection
+    try {
+      anomalyDetectionService.shutdown();
+      logger.info('Anomaly detection service shut down');
+    } catch (error) {
+      logger.error('Error shutting down anomaly detection:', error);
     }
 
     logger.info('Graceful shutdown completed');
