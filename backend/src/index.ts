@@ -35,6 +35,7 @@ import authRoutes, { createAuthRoutes } from './routes/auth';
 import modelRoutes from './routes/models';
 import fileRoutes from './routes/files';
 import searchRoutes from './routes/search';
+import emulatorRoutes from './routes/emulator';
 import messageLogRoutes from './routes/messageLogs';
 import AIService from './services/AIService';
 
@@ -174,9 +175,11 @@ class LackadaisicalAIServer {
     // New feature routes
     this.app.use(`${apiBase}/files`, fileRoutes);
     this.app.use(`${apiBase}/search`, searchRoutes);
+    this.app.use(`${apiBase}/emulator`, emulatorRoutes);
     this.app.use(`${apiBase}/logs`, messageLogRoutes);
     this.app.use('/api/files', fileRoutes);
     this.app.use('/api/search', searchRoutes);
+    this.app.use('/api/emulator', emulatorRoutes);
     this.app.use('/api/logs', messageLogRoutes);
 
     // Root endpoint

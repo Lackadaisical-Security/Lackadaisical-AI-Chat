@@ -1,11 +1,12 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { QuickThemeToggle } from '../ui/ThemeSwitcher';
-import { Settings, Code2 } from 'lucide-react';
+import { Settings, Code2, Globe } from 'lucide-react';
 
 const navLinks = [
   { to: '/chat', label: 'Chat', icon: '💬' },
   { to: '/ide', label: 'IDE', icon: <Code2 className="w-5 h-5" /> },
+  { to: '/emulator', label: 'Emulator', icon: <Globe className="w-5 h-5" /> },
   { to: '/journal', label: 'Journal', icon: '📔' },
   { to: '/plugins', label: 'Plugins', icon: '🧩' },
   { to: '/settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> },
