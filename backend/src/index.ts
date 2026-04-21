@@ -244,6 +244,7 @@ class LackadaisicalAIServer {
             'POST /api/v1/auth/logout': 'Revoke all refresh tokens (requires auth)',
             'GET /api/v1/auth/me': 'Get current authenticated user info',
             'POST /api/v1/auth/change-password': 'Change user password (requires auth)',
+            'PUT /api/v1/auth/profile': 'Update user profile — name and/or email (requires auth)',
           },
           chat: {
             'POST /api/v1/chat': 'Send a chat message and get AI response',

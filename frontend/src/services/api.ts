@@ -401,6 +401,42 @@ class ApiService {
     return response.data;
   }
 
+  // Auth endpoints
+  async register(email: string, password: string, name?: string): Promise<ApiResponse<any>> {
+    const response = await this.api.post('/api/v1/auth/register', { email, password, name });
+    return response.data;
+  }
+
+  async login(email: string, password: string): Promise<ApiResponse<any>> {
+    const response = await this.api.post('/api/v1/auth/login', { email, password });
+    return response.data;
+  }
+
+  async logout(): Promise<ApiResponse<any>> {
+    const response = await this.api.post('/api/v1/auth/logout');
+    return response.data;
+  }
+
+  async getProfile(): Promise<ApiResponse<any>> {
+    const response = await this.api.get('/api/v1/auth/me');
+    return response.data;
+  }
+
+  async updateProfile(updates: { name?: string; email?: string }): Promise<ApiResponse<any>> {
+    const response = await this.api.put('/api/v1/auth/profile', updates);
+    return response.data;
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<ApiResponse<any>> {
+    const response = await this.api.post('/api/v1/auth/change-password', { currentPassword, newPassword });
+    return response.data;
+  }
+
+  async refreshToken(refreshToken: string): Promise<ApiResponse<any>> {
+    const response = await this.api.post('/api/v1/auth/refresh', { refreshToken });
+    return response.data;
+  }
+
   // WebSocket connection
   getWebSocketURL(): string {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';

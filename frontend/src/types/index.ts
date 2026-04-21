@@ -173,6 +173,15 @@ export interface UserSettings {
   companionName: string;  // Customizable AI companion name (default: 'Lacky')
 }
 
+// User profile types
+export interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  createdAt: string;
+}
+
 // WebSocket types
 export interface WebSocketMessage {
   type: 'chat' | 'stream_chunk' | 'mood_update' | 'session_update' | 'error';

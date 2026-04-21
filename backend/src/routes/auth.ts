@@ -225,6 +225,81 @@ export function createAuthRoutes(db: DatabaseService): Router {
     res.json({ success: true, message: 'Password changed successfully. Please log in again.' });
   }));
 
+  // PUT /auth/profile — Update user profile (name, email)
+  router.put('/profile', authRateLimiter, requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user?.userId;
+    if (!userId) throw new ApiError(401, 'Not authenticated');
+
+    const { name, email } = req.body;
+    if (!name && !email) throw new ApiError(400, 'At least one of name or email is required');
+
+    const user = firstRow(await db.executeQuery<{ id: string; email: string; name: string; role: string }>(
+      'SELECT id, email, name, role FROM users WHERE id = ?', [userId]
+    ));
+    if (!user) throw new ApiError(404, 'User not found');
+
+    // Validate name
+    if (name !== undefined) {
+      if (typeof name !== 'string' || name.trim().length === 0) {
+        throw new ApiError(400, 'Name must be a non-empty string');
+      }
+      if (name.trim().length > 50) {
+        throw new ApiError(400, 'Name must be 50 characters or fewer');
+      }
+    }
+
+    // Validate email uniqueness if changing
+    if (email !== undefined && email !== user.email) {
+      if (typeof email !== 'string' || !email.includes('@')) {
+        throw new ApiError(400, 'Valid email address is required');
+      }
+      const existingEmail = firstRow(await db.executeQuery<{ id: string }>(
+        'SELECT id FROM users WHERE email = ? AND id != ?', [email, userId]
+      ));
+      if (existingEmail) throw new ApiError(409, 'Email is already in use by another account');
+    }
+
+    // Build update query dynamically
+    const updates: string[] = [];
+    const params: any[] = [];
+
+    if (name !== undefined) {
+      updates.push('name = ?');
+      params.push(name.trim());
+    }
+    if (email !== undefined) {
+      updates.push('email = ?');
+      params.push(email.trim());
+    }
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+    params.push(userId);
+
+    await db.executeStatement(
+      `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
+      params
+    );
+
+    // Return updated profile
+    const updated = firstRow(await db.executeQuery<{
+      id: string; email: string; name: string; role: string; created_at: string;
+    }>('SELECT id, email, name, role, created_at FROM users WHERE id = ?', [userId]));
+
+    logger.info('User profile updated', { userId, updatedFields: Object.keys(req.body) });
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: updated!.id,
+          email: updated!.email,
+          name: updated!.name,
+          role: updated!.role,
+          createdAt: updated!.created_at
+        }
+      },
+      message: 'Profile updated successfully'
+    });
+  }));
+
   return router;
 }
 
