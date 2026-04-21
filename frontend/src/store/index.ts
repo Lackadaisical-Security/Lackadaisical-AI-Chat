@@ -132,6 +132,7 @@ const initialState: AppState & {
     fontSize: 'medium',
     compactMode: false,
     language: 'en',
+    companionName: 'Lacky',
   },
   
   // Connection

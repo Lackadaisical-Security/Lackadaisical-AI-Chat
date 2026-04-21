@@ -36,9 +36,14 @@ const ConfigSchema = z.object({
     streamMode: z.enum(['sse', 'ws', 'off']).default('sse'),
     models: z.object({
       ollama: z.object({
-        default: z.string().default('lackadaisical-uncensored:latest'),
+        default: z.string().default('gemma3:4b'),
         uncensored: z.string().default('lackadaisical-uncensored:latest'),
-        available: z.array(z.string()).default(['lackadaisical-assistant:latest', 'lackadaisical-uncensored:latest']),
+        available: z.array(z.string()).default([
+          'gemma3:4b', 'gemma4:e4b',
+          'lackadaisical-assistant:latest', 'lackadaisical-uncensored:latest',
+          'llama3.2:latest', 'llama3.1:latest',
+          'mistral:latest', 'codellama:latest',
+        ]),
       }),
       openai: z.string().default('gpt-4'),
       anthropic: z.string().default('claude-3-sonnet-20240229'),
@@ -141,9 +146,14 @@ function parseConfig(): AppConfig {
       streamMode: process.env.STREAM_MODE || 'sse',
       models: {
         ollama: {
-          default: process.env.OLLAMA_DEFAULT_MODEL || 'lackadaisical-uncensored:latest',
+          default: process.env.OLLAMA_DEFAULT_MODEL || 'gemma3:4b',
           uncensored: process.env.OLLAMA_UNCENSORED_MODEL || 'lackadaisical-uncensored:latest',
-          available: (process.env.OLLAMA_AVAILABLE_MODELS?.split(',') || ['lackadaisical-assistant:latest', 'lackadaisical-uncensored:latest']),
+          available: (process.env.OLLAMA_AVAILABLE_MODELS?.split(',') || [
+            'gemma3:4b', 'gemma4:e4b',
+            'lackadaisical-assistant:latest', 'lackadaisical-uncensored:latest',
+            'llama3.2:latest', 'llama3.1:latest',
+            'mistral:latest', 'codellama:latest',
+          ]),
         },
         openai: process.env.OPENAI_MODEL || 'gpt-4',
         anthropic: process.env.ANTHROPIC_MODEL || 'claude-3-sonnet-20240229',

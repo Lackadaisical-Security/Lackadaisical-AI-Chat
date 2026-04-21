@@ -389,16 +389,84 @@ export class LoggingService {
   }
 
   /**
-   * Archive logs
+   * Archive logs into a compressed tar.gz file
    */
   async archiveLogs(archiveName?: string): Promise<string> {
     const archiveFileName = archiveName || `logs_archive_${Date.now()}.tar.gz`;
     const archivePath = path.join(this.logDir, archiveFileName);
 
-    // This would require additional libraries like tar or archiver
-    // For now, just log the intent
-    this.info('Log archiving requested', { archivePath });
-    throw new Error('Log archiving not yet implemented - requires tar/archiver library');
+    const zlib = await import('zlib');
+    const fsp = await import('fs/promises');
+    const fsSync = await import('fs');
+
+    // Collect all .log files in the log directory
+    const entries = await fsp.readdir(this.logDir);
+    const logFiles = entries.filter(f => f.endsWith('.log'));
+
+    if (logFiles.length === 0) {
+      this.info('No log files to archive');
+      return archivePath;
+    }
+
+    // Build a simple tar-like concatenation: for each file, write a header + content
+    // We use gzip compression on the combined output
+    const chunks: Buffer[] = [];
+
+    for (const logFile of logFiles) {
+      const filePath = path.join(this.logDir, logFile);
+      const stat = await fsp.stat(filePath);
+      const content = await fsp.readFile(filePath);
+
+      // Simple tar header (512 bytes) — filename + size in octal
+      const header = Buffer.alloc(512, 0);
+      // Name field (0-99)
+      header.write(logFile, 0, Math.min(logFile.length, 100), 'utf-8');
+      // Mode (100-107)
+      header.write('0000644\0', 100, 8, 'utf-8');
+      // Size in octal (124-135)
+      header.write(stat.size.toString(8).padStart(11, '0') + '\0', 124, 12, 'utf-8');
+      // Mtime in octal (136-147)
+      header.write(Math.floor(stat.mtimeMs / 1000).toString(8).padStart(11, '0') + '\0', 136, 12, 'utf-8');
+      // Type flag (156) — regular file
+      header.write('0', 156, 1, 'utf-8');
+      // Magic (257-262)
+      header.write('ustar\0', 257, 6, 'utf-8');
+      // Version (263-264)
+      header.write('00', 263, 2, 'utf-8');
+
+      // Calculate checksum
+      let checksum = 0;
+      // Fill checksum field with spaces for calculation
+      header.write('        ', 148, 8, 'utf-8');
+      for (let i = 0; i < 512; i++) {
+        checksum += header[i];
+      }
+      header.write(checksum.toString(8).padStart(6, '0') + '\0 ', 148, 8, 'utf-8');
+
+      chunks.push(header);
+      chunks.push(content);
+
+      // Pad to 512-byte boundary
+      const remainder = content.length % 512;
+      if (remainder > 0) {
+        chunks.push(Buffer.alloc(512 - remainder, 0));
+      }
+    }
+
+    // End-of-archive marker (two 512-byte blocks of zeros)
+    chunks.push(Buffer.alloc(1024, 0));
+
+    const tarData = Buffer.concat(chunks);
+    const compressed = zlib.gzipSync(tarData);
+    await fsp.writeFile(archivePath, compressed);
+
+    this.info('Logs archived successfully', {
+      archivePath,
+      filesArchived: logFiles.length,
+      compressedSize: compressed.length,
+    });
+
+    return archivePath;
   }
 
   /**

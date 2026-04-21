@@ -1,6 +1,6 @@
 # 📡 API Documentation - Lackadaisical AI Chat
 
-**Version**: 2.0.0-alpha  
+**Version**: 2.0.0-rc1  
 **Base URL**: `http://localhost:3001/api`  
 **Content Type**: `application/json`
 
@@ -929,7 +929,7 @@ v2-alpha returns detailed health for all services.
   "success": true,
   "data": {
     "status": "healthy",
-    "version": "2.0.0-alpha",
+    "version": "2.0.0-rc1",
     "uptime": 86400,
     "services": {
       "database": { "status": "healthy", "latency": 5 },
@@ -1033,5 +1033,5 @@ We welcome contributions to improve the API:
 ---
 
 **Last Updated**: February 2026  
-**API Version**: 2.0.0-alpha  
+**API Version**: 2.0.0-rc1  
 **Documentation Version**: 2.0.0

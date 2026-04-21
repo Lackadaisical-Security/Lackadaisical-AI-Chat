@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 
 export interface StreamChunk {
-  type: 'start' | 'content' | 'end' | 'error' | 'metadata';
+  type: 'start' | 'content' | 'end' | 'error' | 'metadata' | 'thinking_start' | 'thinking_content' | 'thinking_end';
   content?: string;
   error?: string;
   conversationId?: number;
@@ -10,17 +10,24 @@ export interface StreamChunk {
   model?: string;
   sentiment?: any;
   mood?: any;
+  thinking?: string;
+  thinkingDurationMs?: number;
 }
 
 export interface UseStreamingResponseOptions {
   onChunkReceived?: (chunk: StreamChunk) => void;
   onComplete?: (fullResponse: string, metadata: any) => void;
   onError?: (error: string) => void;
+  onThinkingStart?: () => void;
+  onThinkingContent?: (content: string) => void;
+  onThinkingEnd?: (fullThinking: string, durationMs?: number) => void;
 }
 
 export function useStreamingResponse(options: UseStreamingResponseOptions = {}) {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamContent, setStreamContent] = useState('');
+  const [thinkingContent, setThinkingContent] = useState('');
+  const [isThinking, setIsThinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -82,6 +89,7 @@ export function useStreamingResponse(options: UseStreamingResponseOptions = {}) 
       const decoder = new TextDecoder();
       let buffer = '';
       let fullResponse = '';
+      let fullThinking = '';
       let metadata: any = {};
 
       try {
@@ -105,6 +113,29 @@ export function useStreamingResponse(options: UseStreamingResponseOptions = {}) 
                     options.onChunkReceived?.(chunk);
                     break;
 
+                  case 'thinking_start':
+                    setIsThinking(true);
+                    setThinkingContent('');
+                    fullThinking = '';
+                    options.onThinkingStart?.();
+                    options.onChunkReceived?.(chunk);
+                    break;
+
+                  case 'thinking_content':
+                    if (chunk.content) {
+                      fullThinking += chunk.content;
+                      setThinkingContent(fullThinking);
+                      options.onThinkingContent?.(chunk.content);
+                    }
+                    options.onChunkReceived?.(chunk);
+                    break;
+
+                  case 'thinking_end':
+                    setIsThinking(false);
+                    options.onThinkingEnd?.(fullThinking, chunk.thinkingDurationMs);
+                    options.onChunkReceived?.(chunk);
+                    break;
+
                   case 'content':
                     if (chunk.content) {
                       fullResponse += chunk.content;
@@ -121,12 +152,15 @@ export function useStreamingResponse(options: UseStreamingResponseOptions = {}) 
                       model: chunk.model,
                       sentiment: chunk.sentiment,
                       mood: chunk.mood,
+                      thinking: chunk.thinking || fullThinking || undefined,
+                      thinkingDurationMs: chunk.thinkingDurationMs,
                     };
                     options.onChunkReceived?.(chunk);
                     break;
 
                   case 'end':
                     setIsStreaming(false);
+                    setIsThinking(false);
                     options.onComplete?.(fullResponse, metadata);
                     options.onChunkReceived?.(chunk);
                     return { content: fullResponse, metadata };
@@ -135,6 +169,7 @@ export function useStreamingResponse(options: UseStreamingResponseOptions = {}) 
                     const errorMsg = chunk.error || 'Stream error occurred';
                     setError(errorMsg);
                     setIsStreaming(false);
+                    setIsThinking(false);
                     options.onError?.(errorMsg);
                     throw new Error(errorMsg);
                 }
@@ -185,6 +220,8 @@ export function useStreamingResponse(options: UseStreamingResponseOptions = {}) 
   return {
     isStreaming,
     streamContent,
+    thinkingContent,
+    isThinking,
     error,
     startStreaming,
     stopStreaming,

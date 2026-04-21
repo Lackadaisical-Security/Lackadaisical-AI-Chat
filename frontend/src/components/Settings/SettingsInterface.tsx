@@ -20,7 +20,8 @@ import {
   CheckCircle,
   AlertCircle,
   Brain,
-  History
+  History,
+  Sparkles
 } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { UserSettings, UserMemoryPreferences } from '../../types';
@@ -130,6 +131,15 @@ const SettingsInterface: React.FC = () => {
       // Save API keys
       localStorage.setItem('api-keys', JSON.stringify(apiKeys));
       
+      // Sync companion name to the backend personality state
+      if (localSettings.companionName) {
+        try {
+          await api.updatePersonality({ name: localSettings.companionName } as any);
+        } catch (err) {
+          console.warn('Failed to sync companion name to backend:', err);
+        }
+      }
+      
       // Only save memory preferences if they were explicitly changed and loaded
       if (memoryPrefsChanged && localMemoryPrefs && memoryPrefsLoaded) {
         await updateMemoryPreferences(localMemoryPrefs);
@@ -156,6 +166,7 @@ const SettingsInterface: React.FC = () => {
       fontSize: 'medium',
       compactMode: false,
       language: 'en',
+      companionName: 'Lacky',
     };
     setLocalSettings(defaultSettings);
     setTheme('light');
@@ -299,6 +310,30 @@ const SettingsInterface: React.FC = () => {
                 <h2 className="text-xl font-semibold">General Settings</h2>
                 
                 <div className="space-y-4">
+                  {/* Companion Name Customization */}
+                  <div className="p-4 bg-base-200 rounded-lg">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <Sparkles className="w-5 h-5 text-primary" />
+                      <div>
+                        <h3 className="font-medium">Companion Name</h3>
+                        <p className="text-sm text-base-content/60">
+                          Choose a name for your AI companion (default: Lacky)
+                        </p>
+                      </div>
+                    </div>
+                    <input
+                      type="text"
+                      value={localSettings.companionName || 'Lacky'}
+                      onChange={(e) => setLocalSettings(prev => ({ ...prev, companionName: e.target.value || 'Lacky' }))}
+                      placeholder="Lacky"
+                      maxLength={30}
+                      className="w-full max-w-xs px-3 py-2 bg-base-100 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                    />
+                    <p className="text-xs text-base-content/40 mt-1">
+                      This name will be used in system prompts and the AI's self-reference.
+                    </p>
+                  </div>
+
                   <div className="flex items-center justify-between p-4 bg-base-200 rounded-lg">
                     <div className="flex items-center space-x-3">
                       <Bell className="w-5 h-5 text-primary" />

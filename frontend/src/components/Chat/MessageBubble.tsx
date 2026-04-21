@@ -61,16 +61,40 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
         {/* Message Content */}
         <div className={`relative group ${isUser ? 'text-right' : 'text-left'}`}>
-          {/* Attachments (for user messages) */}
+          {/* Attachments (for user messages) — images shown inline, others as chips */}
           {message.attachments && message.attachments.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-2">
-              {message.attachments.map((att) => (
-                <div key={att.id} className="flex items-center gap-1 px-2 py-1 bg-base-300 rounded-lg text-xs">
-                  <FileText className="w-3 h-3" />
-                  <span>{att.name}</span>
-                  <span className="text-base-content/50">({Math.round(att.size / 1024)}KB)</span>
-                </div>
-              ))}
+              {message.attachments.map((att) => {
+                const isImage = att.category === 'image' || /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(att.name);
+                if (isImage) {
+                  return (
+                    <div key={att.id} className="relative group/img">
+                      <img
+                        src={`/api/v1/files/download/${att.id}`}
+                        alt={att.name}
+                        className="max-w-xs max-h-48 rounded-lg border border-base-300 cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => window.open(`/api/v1/files/download/${att.id}`, '_blank')}
+                      />
+                      <div className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 text-white rounded text-xs opacity-0 group-hover/img:opacity-100 transition-opacity">
+                        {att.name} ({Math.round(att.size / 1024)}KB)
+                      </div>
+                    </div>
+                  );
+                }
+                return (
+                  <a
+                    key={att.id}
+                    href={`/api/v1/files/download/${att.id}`}
+                    download={att.name}
+                    className="flex items-center gap-1 px-2 py-1 bg-base-300 rounded-lg text-xs hover:bg-base-300/80 transition-colors"
+                  >
+                    <FileText className="w-3 h-3" />
+                    <span>{att.name}</span>
+                    <span className="text-base-content/50">({Math.round(att.size / 1024)}KB)</span>
+                    <Download className="w-3 h-3 ml-1" />
+                  </a>
+                );
+              })}
             </div>
           )}
 

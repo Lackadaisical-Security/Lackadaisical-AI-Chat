@@ -332,5 +332,5 @@ Thank you for using Lackadaisical AI Chat! This documentation is created with ‚ù
 **Questions?** Don't hesitate to reach out - we're here to help! ü§ó
 
 **Last Updated**: February 2026  
-**Documentation Version**: 2.0.0-alpha  
+**Documentation Version**: 2.0.0-rc1  
 **Next Review**: March 2026

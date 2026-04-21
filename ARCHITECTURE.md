@@ -937,4 +937,4 @@ This architecture documentation is a living document that evolves with the syste
 
 **Last Updated**: February 2026  
 **Architecture Version**: 2.0-alpha  
-**System Version**: 2.0.0-alpha
+**System Version**: 2.0.0-rc1

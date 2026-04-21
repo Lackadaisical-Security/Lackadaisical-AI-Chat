@@ -1,10 +1,13 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { QuickThemeToggle } from '../ui/ThemeSwitcher';
-import { Settings } from 'lucide-react';
+import { Settings, Code2, Globe, History } from 'lucide-react';
 
 const navLinks = [
   { to: '/chat', label: 'Chat', icon: '💬' },
+  { to: '/sessions', label: 'Sessions', icon: <History className="w-5 h-5" /> },
+  { to: '/ide', label: 'IDE', icon: <Code2 className="w-5 h-5" /> },
+  { to: '/emulator', label: 'Emulator', icon: <Globe className="w-5 h-5" /> },
   { to: '/journal', label: 'Journal', icon: '📔' },
   { to: '/plugins', label: 'Plugins', icon: '🧩' },
   { to: '/settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> },
@@ -65,7 +68,7 @@ const Layout: React.FC = () => {
               <div className="w-2 h-2 bg-green-500 rounded-full inline-block mr-2"></div>
               AI Connected
             </div>
-            <div>v2.0.0-alpha</div>
+            <div>v2.0.0-rc1</div>
           </div>
         </div>
       </aside>

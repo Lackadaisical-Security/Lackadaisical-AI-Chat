@@ -19,6 +19,7 @@ import { fileUploadService } from '../services/FileUploadService';
 import { codeBlockService } from '../services/CodeBlockService';
 import { extendedThinkingService } from '../services/ExtendedThinkingService';
 import { messageLogService } from '../services/MessageLogService';
+import { HistoryPruningService } from '../services/HistoryPruningService';
 
 // Export a function that creates the router with dependencies
 export default function createChatRoutes(db: DatabaseService, aiService: AIService): Router {
@@ -29,6 +30,7 @@ export default function createChatRoutes(db: DatabaseService, aiService: AIServi
   const sentimentAnalyzer = SentimentAnalyzer.getInstance(db);
   const resourceOptimizer = ResourceOptimizer.getInstance();
   const enhancedMemory = new EnhancedMemoryService(db);
+  const historyPruning = new HistoryPruningService(db, enhancedMemory);
 
   // Apply rate limiting to chat endpoints
   router.use(endpointRateLimiter('chat'));
@@ -436,18 +438,46 @@ router.post('/', sentimentMiddlewareWithDB, asyncHandler(async (req: Request, re
 
       let aiResponse = '';
       let responseMetadata: any = {};
+      const thinkingParser = extendedThinkingService.createStreamingThinkingParser();
+      let thinkingEmitted = false;
 
       try {
-        // Generate AI response with streaming
+        // Generate AI response with streaming, parsing thinking in real-time
         const result = await generateAIResponse(
           chatRequest.message,
           chatRequest.session_id!,
           conversationContext,
           personalityState,
           (chunk: StreamChunk) => {
-            res.write(`data: ${JSON.stringify(chunk)}\n\n`);
             if (chunk.type === 'content' && chunk.content) {
-              aiResponse += chunk.content;
+              // Parse thinking blocks from the stream in real-time
+              const parsed = thinkingParser.processChunk(chunk.content);
+
+              if (parsed.isThinking) {
+                // We're inside a thinking block
+                if (!thinkingEmitted) {
+                  // First thinking chunk — emit thinking_start
+                  res.write(`data: ${JSON.stringify({ type: 'thinking_start' })}\n\n`);
+                  thinkingEmitted = true;
+                }
+                if (parsed.thinking) {
+                  res.write(`data: ${JSON.stringify({ type: 'thinking_content', content: parsed.thinking })}\n\n`);
+                }
+              } else {
+                // We're outside thinking
+                if (thinkingEmitted && parsed.content !== undefined) {
+                  // Thinking just ended — emit thinking_end
+                  res.write(`data: ${JSON.stringify({ type: 'thinking_end' })}\n\n`);
+                  thinkingEmitted = false;
+                }
+                if (parsed.content) {
+                  aiResponse += parsed.content;
+                  res.write(`data: ${JSON.stringify({ type: 'content', content: parsed.content })}\n\n`);
+                }
+              }
+            } else {
+              // Pass through non-content chunks (start, end, error)
+              res.write(`data: ${JSON.stringify(chunk)}\n\n`);
             }
           },
           chatRequest.useUncensored,
@@ -455,6 +485,17 @@ router.post('/', sentimentMiddlewareWithDB, asyncHandler(async (req: Request, re
         );
 
         responseMetadata = result;
+
+        // Finalize thinking parser
+        const finalThinking = thinkingParser.finalize();
+        if (thinkingEmitted) {
+          res.write(`data: ${JSON.stringify({ type: 'thinking_end' })}\n\n`);
+        }
+        // If there's remaining content from the parser finalization
+        if (finalThinking.content && !aiResponse.includes(finalThinking.content)) {
+          aiResponse += finalThinking.content;
+          res.write(`data: ${JSON.stringify({ type: 'content', content: finalThinking.content })}\n\n`);
+        }
 
         // Save conversation to database with full context tracking
         const conversationId = await saveConversation(
@@ -483,7 +524,8 @@ router.post('/', sentimentMiddlewareWithDB, asyncHandler(async (req: Request, re
           responseTime: result.responseTime,
           model: result.model,
           sentiment: sentimentAnalysis,
-          mood: updatedMood
+          mood: updatedMood,
+          thinking: finalThinking.thinking || result.thinking || undefined,
         };
         
         res.write(`data: ${JSON.stringify(finalData)}\n\n`);
@@ -982,7 +1024,13 @@ router.put('/preferences', asyncHandler(async (req: Request, res: Response) => {
     maxContextMessages,
     autoSummarize,
     privacyLevel,
-    summaryThreshold
+    summaryThreshold,
+    // History pruning settings
+    historyPruningEnabled,
+    historyRetentionDays,
+    historyMaxMessages,
+    historyPruneArchived,
+    historyPruneIntervalHours,
   } = req.body;
 
   const updatedPrefs = await enhancedMemory.setUserPreferences(userId, {
@@ -992,10 +1040,20 @@ router.put('/preferences', asyncHandler(async (req: Request, res: Response) => {
     maxContextMessages,
     autoSummarize,
     privacyLevel,
-    summaryThreshold
+    summaryThreshold,
+    historyPruningEnabled,
+    historyRetentionDays,
+    historyMaxMessages,
+    historyPruneArchived,
+    historyPruneIntervalHours,
   });
 
-  apiLogger.info('User preferences updated', { userId, crossSessionEnabled });
+  // Update auto-prune schedule if pruning settings changed
+  if (historyPruningEnabled !== undefined || historyPruneIntervalHours !== undefined) {
+    await historyPruning.startAutoSchedule(userId);
+  }
+
+  apiLogger.info('User preferences updated', { userId, crossSessionEnabled, historyPruningEnabled });
 
   res.json({
     success: true,
@@ -1107,6 +1165,67 @@ router.post('/preferences/toggle-cross-session', asyncHandler(async (req: Reques
       crossSessionEnabled: updatedPrefs.crossSessionEnabled
     },
     message: `Cross-session memory access ${enabled ? 'enabled' : 'disabled'}`,
+    timestamp: new Date().toISOString()
+  });
+}));
+
+/**
+ * POST /chat/history/prune - Manually trigger history pruning
+ */
+router.post('/history/prune', asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req.body.userId as string) || 'default';
+  const summary = await historyPruning.pruneHistory(userId);
+
+  res.json({
+    success: true,
+    data: summary,
+    message: summary.totalMessagesDeleted > 0
+      ? `Pruned ${summary.totalMessagesDeleted} messages from ${summary.totalSessionsPruned} sessions`
+      : 'No messages needed pruning',
+    timestamp: new Date().toISOString()
+  });
+}));
+
+/**
+ * POST /chat/history/prune/:sessionId - Manually prune a specific session
+ */
+router.post('/history/prune/:sessionId', asyncHandler(async (req: Request, res: Response) => {
+  const { sessionId } = req.params;
+  const { olderThanDays, keepNewest } = req.body;
+
+  if (!olderThanDays && !keepNewest) {
+    res.status(400).json({
+      success: false,
+      error: 'Specify olderThanDays or keepNewest',
+    });
+    return;
+  }
+
+  const result = await historyPruning.pruneSession(sessionId, {
+    olderThanDays: olderThanDays ? Number(olderThanDays) : undefined,
+    keepNewest: keepNewest ? Number(keepNewest) : undefined,
+  });
+
+  res.json({
+    success: true,
+    data: result,
+    message: result.messagesDeleted > 0
+      ? `Pruned ${result.messagesDeleted} messages from session ${sessionId}`
+      : 'No messages needed pruning',
+    timestamp: new Date().toISOString()
+  });
+}));
+
+/**
+ * GET /chat/history/prune/stats - Get pruning statistics
+ */
+router.get('/history/prune/stats', asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req.query.userId as string) || 'default';
+  const stats = await historyPruning.getPruneStats(userId);
+
+  res.json({
+    success: true,
+    data: stats,
     timestamp: new Date().toISOString()
   });
 }));

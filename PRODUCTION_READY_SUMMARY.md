@@ -395,6 +395,6 @@ For production deployment assistance:
 
 **Made with 💙 by Lackadaisical Security**
 
-**Version:** 2.0.0-alpha  
+**Version:** 2.0.0-rc1  
 **Status:** Production-Ready  
 **License:** MIT

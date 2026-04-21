@@ -102,7 +102,7 @@ export const themes: Record<string, Theme> = {
     name: 'Light Mode',
     description: 'Clean and minimal light theme',
     author: 'Lackadaisical Security',
-    version: '2.0.0-alpha',
+    version: '2.0.0-rc1',
     colors: {
       background: '#ffffff',
       backgroundSecondary: '#f8fafc',
@@ -183,7 +183,7 @@ export const themes: Record<string, Theme> = {
     name: 'Dark Mode',
     description: 'Sleek dark theme for night owls',
     author: 'Lackadaisical Security',
-    version: '2.0.0-alpha',
+    version: '2.0.0-rc1',
     colors: {
       background: '#0f172a',
       backgroundSecondary: '#1e293b',
@@ -264,7 +264,7 @@ export const themes: Record<string, Theme> = {
     name: '80s Retro Cyberspace',
     description: 'Neon-soaked cyberpunk vibes from the 80s',
     author: 'Lackadaisical Security',
-    version: '2.0.0-alpha',
+    version: '2.0.0-rc1',
     colors: {
       background: '#0a0a0a',
       backgroundSecondary: '#1a0a1a',
@@ -347,7 +347,7 @@ export const themes: Record<string, Theme> = {
     name: '90s Terminal',
     description: 'Classic green-on-black terminal aesthetic',
     author: 'Lackadaisical Security',
-    version: '2.0.0-alpha',
+    version: '2.0.0-rc1',
     colors: {
       background: '#000000',
       backgroundSecondary: '#001100',
@@ -429,7 +429,7 @@ export const themes: Record<string, Theme> = {
     name: 'Matrix',
     description: 'Enter the Matrix with this iconic green rain theme',
     author: 'Lackadaisical Security',
-    version: '2.0.0-alpha',
+    version: '2.0.0-rc1',
     colors: {
       background: '#000000',
       backgroundSecondary: '#0d1117',

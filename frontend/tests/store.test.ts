@@ -243,6 +243,36 @@ describe('Zustand Store - Unit Tests', () => {
       expect(result.current.settings.notifications).toBe(false);
       expect(result.current.settings.soundEnabled).toBe(true);
     });
+
+    it('should have Lacky as default companion name', () => {
+      const { result } = renderHook(() => useAppStore());
+      expect(result.current.settings.companionName).toBe('Lacky');
+    });
+
+    it('should update companion name', () => {
+      const { result } = renderHook(() => useAppStore());
+      
+      act(() => {
+        result.current.updateSettings({ companionName: 'Aria' });
+      });
+      
+      expect(result.current.settings.companionName).toBe('Aria');
+    });
+
+    it('should preserve companion name when updating other settings', () => {
+      const { result } = renderHook(() => useAppStore());
+      
+      act(() => {
+        result.current.updateSettings({ companionName: 'Nova' });
+      });
+      
+      act(() => {
+        result.current.updateSettings({ soundEnabled: true });
+      });
+      
+      expect(result.current.settings.companionName).toBe('Nova');
+      expect(result.current.settings.soundEnabled).toBe(true);
+    });
   });
 
   describe('Clear All', () => {

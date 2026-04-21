@@ -82,7 +82,8 @@ describe('ChatInterface', () => {
 
   it('renders the chat input placeholder', () => {
     renderWithRouter(<ChatInterface />);
-    expect(screen.getByPlaceholderText('Type your message...')).toBeInTheDocument();
+    // The placeholder includes feature hints
+    expect(screen.getByPlaceholderText(/Type your message/)).toBeInTheDocument();
   });
 
   it('renders the New Chat button', () => {
@@ -105,7 +106,7 @@ describe('ChatInterface', () => {
 
   it('allows typing in the input field', () => {
     renderWithRouter(<ChatInterface />);
-    const input = screen.getByPlaceholderText('Type your message...') as HTMLTextAreaElement;
+    const input = screen.getByPlaceholderText(/Type your message/) as HTMLTextAreaElement;
     fireEvent.change(input, { target: { value: 'Test message' } });
     expect(input.value).toBe('Test message');
   });

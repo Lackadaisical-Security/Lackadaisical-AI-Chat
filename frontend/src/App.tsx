@@ -8,6 +8,9 @@ import JournalInterface from './components/Journal/JournalInterface';
 import PluginInterface from './components/Plugins/PluginInterface';
 import SettingsInterface from './components/Settings/SettingsInterface';
 import CompanionInterface from './components/Companion/CompanionInterface';
+import IDEWorkspace from './components/IDE/IDEWorkspace';
+import EmulatorPanel from './components/Emulator/EmulatorPanel';
+import SessionsInterface from './components/Sessions/SessionsInterface';
 import Layout from './components/Layout/Layout';
 import './index.css';
 
@@ -32,6 +35,9 @@ const App: React.FC = () => {
                 <Route index element={<CompanionInterface />} />
                 <Route path="companion" element={<CompanionInterface />} />
                 <Route path="chat" element={<ChatInterface />} />
+                <Route path="sessions" element={<SessionsInterface />} />
+                <Route path="ide" element={<IDEWorkspace />} />
+                <Route path="emulator" element={<EmulatorPanel />} />
                 <Route path="journal" element={<JournalInterface />} />
                 <Route path="plugins" element={<PluginInterface />} />
                 <Route path="settings" element={<SettingsInterface />} />

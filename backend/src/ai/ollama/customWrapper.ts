@@ -6,17 +6,37 @@ import { AIResponse, StreamChunk, Conversation, PersonalityState } from '../../t
 interface OllamaGenerateRequest {
   model: string;
   prompt: string;
+  suffix?: string;
   system?: string;
   stream?: boolean;
+  raw?: boolean;
+  think?: boolean;  // For thinking models — should the model think before responding
   context?: number[];
+  format?: string | Record<string, unknown>;  // 'json' or JSON schema for structured outputs
+  keep_alive?: string | number;  // e.g. '5m', '0' to unload
+  images?: string[];  // base64 images for multimodal models
+  // Experimental image generation params
+  width?: number;
+  height?: number;
+  steps?: number;
   options?: {
     temperature?: number;
     top_p?: number;
     top_k?: number;
+    min_p?: number;
+    typical_p?: number;
     repeat_penalty?: number;
+    presence_penalty?: number;
+    frequency_penalty?: number;
     num_predict?: number;
     num_ctx?: number;
+    num_keep?: number;
+    num_batch?: number;
+    num_gpu?: number;
+    num_thread?: number;
+    seed?: number;
     stop?: string[];
+    penalize_newline?: boolean;
   };
 }
 
@@ -25,6 +45,7 @@ interface OllamaGenerateResponse {
   created_at: string;
   response: string;
   done: boolean;
+  done_reason?: 'stop' | 'load' | 'unload' | string;
   context?: number[];
   total_duration?: number;
   load_duration?: number;
@@ -36,20 +57,96 @@ interface OllamaGenerateResponse {
 
 interface OllamaModel {
   name: string;
+  model?: string;
   modified_at: string;
   size: number;
   digest: string;
   details: {
+    parent_model?: string;
     format: string;
     family: string;
     families?: string[];
     parameter_size: string;
     quantization_level: string;
   };
+  capabilities?: string[];  // e.g. ['completion', 'vision', 'tools']
 }
 
 interface OllamaModelsResponse {
   models: OllamaModel[];
+}
+
+// Ollama Chat API interfaces (newer /api/chat endpoint)
+interface OllamaChatMessage {
+  role: 'system' | 'user' | 'assistant' | 'tool';
+  content: string;
+  thinking?: string;  // For thinking models — the model's thinking process
+  images?: string[]; // base64 encoded images for vision models
+  tool_calls?: OllamaToolCall[];
+  tool_name?: string;  // Name of the tool that was executed (for role: 'tool')
+}
+
+interface OllamaToolCall {
+  function: {
+    name: string;
+    arguments: Record<string, unknown>;
+  };
+}
+
+interface OllamaToolDefinition {
+  type: 'function';
+  function: {
+    name: string;
+    description: string;
+    parameters: {
+      type: 'object';
+      required?: string[];
+      properties: Record<string, { type: string; description: string; enum?: string[] }>;
+    };
+  };
+}
+
+interface OllamaChatRequest {
+  model: string;
+  messages: OllamaChatMessage[];
+  stream?: boolean;
+  think?: boolean;  // For thinking models — should the model think before responding
+  format?: string | Record<string, unknown>; // 'json' or JSON Schema for structured outputs
+  tools?: OllamaToolDefinition[];
+  keep_alive?: string | number;  // e.g. '5m', '0' to unload
+  options?: {
+    temperature?: number;
+    top_p?: number;
+    top_k?: number;
+    min_p?: number;
+    typical_p?: number;
+    repeat_penalty?: number;
+    presence_penalty?: number;
+    frequency_penalty?: number;
+    num_predict?: number;
+    num_ctx?: number;
+    num_keep?: number;
+    num_batch?: number;
+    num_gpu?: number;
+    num_thread?: number;
+    seed?: number;
+    stop?: string[];
+    penalize_newline?: boolean;
+  };
+}
+
+interface OllamaChatResponse {
+  model: string;
+  created_at: string;
+  message: OllamaChatMessage;
+  done: boolean;
+  done_reason?: 'stop' | 'load' | 'unload' | string;
+  total_duration?: number;
+  load_duration?: number;
+  prompt_eval_count?: number;
+  prompt_eval_duration?: number;
+  eval_count?: number;
+  eval_duration?: number;
 }
 
 export class OllamaWrapper {
@@ -602,31 +699,272 @@ COMMUNICATION STYLE:
   }
 
   /**
-   * Get service status
+   * Get service status with version and model capabilities
    */
   async getStatus(): Promise<{
     available: boolean;
-    models: string[];
+    models: Array<{ name: string; size: number; family: string; capabilities?: string[] }>;
     version?: string;
   }> {
     try {
-      const [available, models] = await Promise.all([
+      const [available, models, versionInfo] = await Promise.all([
         this.checkAvailability(),
-        this.getModels().catch(() => [])
+        this.getModels().catch(() => []),
+        this.client.get('/api/version', { timeout: 5000 }).catch(() => null),
       ]);
 
       return {
         available,
-        models: models.map(m => m.name),
-        version: 'ollama' // Could fetch actual version from /api/version if available
+        models: models.map(m => ({
+          name: m.name,
+          size: m.size,
+          family: m.details?.family || 'unknown',
+          capabilities: m.capabilities,
+        })),
+        version: versionInfo?.data?.version || 'unknown',
       };
     } catch (error) {
       return {
         available: false,
-        models: []
+        models: [],
       };
     }
   }
+
+  /**
+   * Show detailed model information including capabilities, template, and parameters
+   */
+  async showModelInfo(modelName: string): Promise<Record<string, unknown>> {
+    try {
+      const response = await this.client.post('/api/show', { model: modelName });
+      return response.data;
+    } catch (error) {
+      aiLogger.error('Failed to show model info:', { model: modelName, error });
+      throw new Error(`Failed to get model info for ${modelName}`);
+    }
+  }
+
+  /**
+   * Generate response using the /api/chat endpoint (supports tools, vision, structured output, thinking)
+   * This is the newer Ollama API that supports advanced features like tool calling.
+   */
+  async generateChatResponse(
+    messages: OllamaChatMessage[],
+    options: {
+      model?: string;
+      temperature?: number;
+      maxTokens?: number;
+      tools?: OllamaToolDefinition[];
+      format?: string | Record<string, unknown>;
+      images?: string[];
+      stream?: boolean;
+      think?: boolean;  // Enable model thinking (for thinking-capable models)
+      keepAlive?: string | number;
+      seed?: number;
+      onChunk?: (chunk: StreamChunk) => void;
+    } = {}
+  ): Promise<AIResponse & { toolCalls?: OllamaToolCall[]; thinking?: string; doneReason?: string }> {
+    const startTime = Date.now();
+
+    try {
+      if (!this.isAvailable) {
+        await this.checkAvailability();
+        if (!this.isAvailable) {
+          throw new Error('Ollama service is not available');
+        }
+      }
+
+      const model = options.model || this.defaultModel;
+
+      const requestData: OllamaChatRequest = {
+        model,
+        messages,
+        stream: options.stream ?? false,
+        options: {
+          temperature: options.temperature || 0.7,
+          num_predict: options.maxTokens || 4096,
+          num_ctx: Math.min(this.contextWindow, 262144),
+          repeat_penalty: 1.1,
+          top_p: 0.9,
+          top_k: 40,
+          seed: options.seed,
+        },
+      };
+
+      // Enable thinking for capable models
+      if (options.think !== undefined) {
+        requestData.think = options.think;
+      }
+
+      // Set keep_alive if specified
+      if (options.keepAlive !== undefined) {
+        requestData.keep_alive = options.keepAlive;
+      }
+
+      // Add tools if provided
+      if (options.tools && options.tools.length > 0) {
+        requestData.tools = options.tools;
+      }
+
+      // Add format for structured outputs
+      if (options.format) {
+        requestData.format = options.format;
+      }
+
+      aiLogger.info('Generating Ollama chat response:', {
+        model,
+        messageCount: messages.length,
+        hasTools: !!(options.tools && options.tools.length > 0),
+        hasFormat: !!options.format,
+        stream: options.stream,
+      });
+
+      if (options.stream && options.onChunk) {
+        // Streaming chat response
+        return await this.streamChatResponse(requestData, options.onChunk, startTime);
+      }
+
+      // Non-streaming chat response
+      const response: AxiosResponse<OllamaChatResponse> = await this.client.post('/api/chat', requestData);
+
+      if (!response.data.done) {
+        throw new Error('Ollama chat response incomplete');
+      }
+
+      const responseTime = Date.now() - startTime;
+      const tokensUsed = (response.data.prompt_eval_count || 0) + (response.data.eval_count || 0);
+
+      const aiResponse: AIResponse & { toolCalls?: OllamaToolCall[]; thinking?: string; doneReason?: string } = {
+        content: response.data.message.content.trim(),
+        model: response.data.model,
+        tokens_used: tokensUsed,
+        response_time_ms: responseTime,
+        metadata: {
+          total_duration: response.data.total_duration,
+          load_duration: response.data.load_duration,
+          prompt_eval_count: response.data.prompt_eval_count,
+          prompt_eval_duration: response.data.prompt_eval_duration,
+          eval_count: response.data.eval_count,
+          eval_duration: response.data.eval_duration,
+          done_reason: response.data.done_reason,
+        },
+      };
+
+      // Extract tool calls if present
+      if (response.data.message.tool_calls) {
+        aiResponse.toolCalls = response.data.message.tool_calls;
+      }
+
+      // Extract thinking content if present (from thinking models)
+      if (response.data.message.thinking) {
+        aiResponse.thinking = response.data.message.thinking;
+      }
+
+      // Extract done_reason
+      if (response.data.done_reason) {
+        aiResponse.doneReason = response.data.done_reason;
+      }
+
+      aiLogger.info('Ollama chat response generated:', {
+        model: aiResponse.model,
+        responseLength: aiResponse.content.length,
+        tokensUsed: aiResponse.tokens_used,
+        hasToolCalls: !!aiResponse.toolCalls?.length,
+      });
+
+      return aiResponse;
+    } catch (error) {
+      const responseTime = Date.now() - startTime;
+      aiLogger.error('Ollama chat generation failed:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        responseTime,
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Stream a chat response
+   */
+  private async streamChatResponse(
+    requestData: OllamaChatRequest,
+    onChunk: (chunk: StreamChunk) => void,
+    startTime: number,
+  ): Promise<AIResponse> {
+    onChunk({ type: 'start' });
+
+    let fullResponse = '';
+    let tokensUsed = 0;
+
+    const response = await this.client.post('/api/chat', { ...requestData, stream: true }, {
+      responseType: 'stream',
+    });
+
+    return new Promise((resolve, reject) => {
+      let buffer = '';
+
+      response.data.on('data', (chunk: Buffer) => {
+        buffer += chunk.toString();
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine) continue;
+
+          try {
+            const data: OllamaChatResponse = JSON.parse(trimmedLine);
+
+            if (data.message?.content) {
+              fullResponse += data.message.content;
+              onChunk({ type: 'content', content: data.message.content });
+            }
+
+            if (data.done) {
+              const responseTime = Date.now() - startTime;
+              tokensUsed = (data.prompt_eval_count || 0) + (data.eval_count || 0);
+
+              const aiResponse: AIResponse = {
+                content: fullResponse.trim(),
+                model: data.model,
+                tokens_used: tokensUsed,
+                response_time_ms: responseTime,
+                metadata: {
+                  total_duration: data.total_duration,
+                  load_duration: data.load_duration,
+                  prompt_eval_count: data.prompt_eval_count,
+                  prompt_eval_duration: data.prompt_eval_duration,
+                  eval_count: data.eval_count,
+                  eval_duration: data.eval_duration,
+                },
+              };
+
+              onChunk({ type: 'end' });
+              resolve(aiResponse);
+            }
+          } catch (parseError) {
+            const errorMessage = parseError instanceof Error ? parseError.message : String(parseError);
+            if (!errorMessage.includes('Unexpected token') && !errorMessage.includes('Expected')) {
+              aiLogger.warn('Failed to parse chat stream chunk:', errorMessage);
+            }
+          }
+        }
+      });
+
+      response.data.on('error', (error: Error) => {
+        onChunk({ type: 'error', error: error.message });
+        reject(error);
+      });
+
+      response.data.on('end', () => {
+        if (!fullResponse) {
+          const error = new Error('Chat stream ended without complete response');
+          onChunk({ type: 'error', error: error.message });
+          reject(error);
+        }
+      });
+    });
+  }
 }
 
-export default OllamaWrapper; 
+export default OllamaWrapper;

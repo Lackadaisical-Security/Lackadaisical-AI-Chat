@@ -1,9 +1,9 @@
-# 🧠 Lackadaisical AI Chat - v2-Alpha Release
+# 🧠 Lackadaisical AI Chat - v2.0.0-rc1
 
-**Release Date:** February 21, 2026  
-**Version:** 2.0.0-alpha - Enhanced AI Companion with Multi-Provider Support  
+**Release Date:** April 21, 2026  
+**Version:** 2.0.0-rc1 - Release Candidate with IDE, Emulator, Image Gen & Enhanced Memory  
 **License:** MIT (Free Forever)  
-**Development Status:** 🚧 Active Alpha Development 🚧
+**Development Status:** 🏗️ Release Candidate 1 🏗️
 
 ## 🎉 Alpha Stage: Your Personal AI Friend with Memory!
 
@@ -63,13 +63,42 @@ Unlike cloud-based AI services, **everything stays private on your machine**. No
 - **Mood Tracking** - Emotional state awareness and support
 - **Learning Adaptation** - Improves responses based on your preferences
 
-### 🔄 **Hot-Swappable AI Models (NEW in v2-Alpha!)**
+### 🔄 **Hot-Swappable AI Models**
 Switch between AI providers on the fly without restarting:
-- **Ollama (Local)** - GPT-OSS 20B, Gemma 4 E4B, Llama 3.3, Mistral, Phi-4, CodeLlama
+- **Ollama (Local)** - Gemma 3/4, GPT-OSS 20B, Llama 3.3, Mistral, Phi-4, CodeLlama
 - **OpenAI** - GPT-5.4, GPT-5.4 Mini, GPT-4.1, O4-Mini, O3
 - **Anthropic** - Claude Opus 4.6, Claude Sonnet 4.6, Claude Haiku 4.5
 - **Google** - Gemini 3.1 Pro, Gemini 3.1 Flash, Gemini 2.5 Pro
 - **xAI** - Grok 4.20 Beta, Grok 4.1 Fast Reasoning, Grok Code Fast
+
+### 💻 **Code IDE Workspace (NEW in RC1!)**
+- **Monaco Editor** - Full VS Code editing experience with 40+ language support
+- **File Explorer** - Create, rename, delete, navigate a virtual filesystem
+- **Integrated Terminal** - Execute commands with persistent output
+- **Multi-tab Editing** - Work on multiple files simultaneously
+- **Import/Export** - Save and load workspace state
+
+### 🌐 **Traffic Emulator (NEW in RC1!)**
+- **Stealth Browsing** - Puppeteer with anti-detection stealth plugin
+- **Fingerprint Randomization** - Unique UA, viewport, WebGL, timezone per session
+- **Proxy Support** - HTTP/HTTPS/SOCKS5 with authentication
+- **Human-like Behavior** - Natural mouse movement, typing delays, scrolling
+- **Multi-Engine Search** - Google, Bing, Yahoo, DuckDuckGo with content extraction
+
+### 🎨 **Image Generation via ComfyUI (NEW in RC1!)**
+- **Text-to-Image** - Generate images from prompts via Stable Diffusion
+- **Customizable** - Steps, CFG, sampler, seed, dimensions, model selection
+- **Auto-Download** - Generated images served via file download API
+
+### 📋 **Session Browser (NEW in RC1!)**
+- **Past Session Browsing** - Search, sort, rename, delete sessions
+- **Cross-Session Memory** - AI carries context from all past conversations
+- **Session Summaries** - Topics, message count, tokens, last activity
+
+### 🧹 **History Pruning (NEW in RC1!)**
+- **Configurable Retention** - By age (days) or by max messages
+- **Auto-Prune Scheduler** - Optional automatic cleanup interval
+- **Manual Per-Session** - Prune individual sessions on demand
 
 ### 🔍 **Web Search & Tool Use (NEW!)**
 - **Built-in Web Search** - DuckDuckGo-backed search with auto-trigger detection
@@ -104,13 +133,13 @@ Switch between AI providers on the fly without restarting:
 
 ## 📸 Screenshots
 
-| Dashboard | Chat Interface |
+| Companion Dashboard | Chat Interface |
 |:-:|:-:|
-| ![Dashboard](docs/screenshots/01-dashboard.png) | ![Chat](docs/screenshots/02-chat-interface.png) |
+| ![Dashboard](docs/screenshots/01-companion-dashboard.png) | ![Chat](docs/screenshots/02-chat-interface.png) |
 
-| Settings | Plugins | Journal |
+| Sessions Browser | Code IDE | Traffic Emulator |
 |:-:|:-:|:-:|
-| ![Settings](docs/screenshots/03-settings-panel.png) | ![Plugins](docs/screenshots/04-plugins-panel.png) | ![Journal](docs/screenshots/05-journal-panel.png) |
+| ![Sessions](docs/screenshots/03-sessions.png) | ![IDE](docs/screenshots/04-ide-workspace.png) | ![Emulator](docs/screenshots/05-emulator.png) |
 
 ## 🚀 Super Simple Setup
 

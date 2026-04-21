@@ -258,7 +258,7 @@ class PostgreSQLAdapter implements IDatabaseAdapter {
           last_interaction TIMESTAMP,
           mood_history JSONB DEFAULT '[]',
           learning_data JSONB DEFAULT '{}',
-          personality_version TEXT DEFAULT '2.0.0-alpha',
+          personality_version TEXT DEFAULT '2.0.0-rc1',
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           CHECK (id = 1)
@@ -447,7 +447,7 @@ class MySQLAdapter implements IDatabaseAdapter {
           last_interaction DATETIME,
           mood_history JSON,
           learning_data JSON,
-          personality_version VARCHAR(50) DEFAULT '2.0.0-alpha',
+          personality_version VARCHAR(50) DEFAULT '2.0.0-rc1',
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           last_updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
           CHECK (id = 1)

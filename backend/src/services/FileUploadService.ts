@@ -8,6 +8,7 @@ import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
+import AdmZip from 'adm-zip';
 import { aiLogger } from '../utils/logger';
 
 // Supported file types and their categories
@@ -137,6 +138,18 @@ export class FileUploadService {
         language = extraction.language;
       } catch (error) {
         aiLogger.warn(`Text extraction failed for ${originalName}:`, error);
+      }
+    }
+
+    // Handle ZIP archives — extract contents and aggregate text
+    if (category === 'archive' && ext === '.zip') {
+      try {
+        const zipResult = await this.extractZipContents(fileBuffer, sessionId);
+        extractedText = zipResult.aggregatedText;
+        lineCount = zipResult.totalLines;
+        wordCount = zipResult.totalWords;
+      } catch (error) {
+        aiLogger.warn(`ZIP extraction failed for ${originalName}:`, error);
       }
     }
 
@@ -390,6 +403,265 @@ export class FileUploadService {
    */
   getUploadDir(): string {
     return this.uploadDir;
+  }
+
+  /**
+   * Extract contents from a ZIP archive
+   * Processes each entry, extracting text from readable files
+   */
+  async extractZipContents(
+    zipBuffer: Buffer,
+    sessionId: string
+  ): Promise<{
+    entries: Array<{ name: string; size: number; isDir: boolean; extractedText?: string }>;
+    aggregatedText: string;
+    totalLines: number;
+    totalWords: number;
+  }> {
+    const zip = new AdmZip(zipBuffer);
+    const zipEntries = zip.getEntries();
+    const results: Array<{ name: string; size: number; isDir: boolean; extractedText?: string }> = [];
+    let aggregatedText = '';
+    let totalLines = 0;
+    let totalWords = 0;
+
+    for (const entry of zipEntries) {
+      if (entry.isDirectory) {
+        results.push({ name: entry.entryName, size: 0, isDir: true });
+        continue;
+      }
+
+      const entryExt = path.extname(entry.entryName).toLowerCase();
+      const entryCategory = this.getFileCategory(entryExt);
+      const entryResult: { name: string; size: number; isDir: boolean; extractedText?: string } = {
+        name: entry.entryName,
+        size: entry.header.size,
+        isDir: false,
+      };
+
+      // Extract text from readable files
+      if (entryCategory === 'text' || entryCategory === 'code' || entryCategory === 'data') {
+        try {
+          const entryBuffer = entry.getData();
+          if (entryBuffer.length <= MAX_TEXT_EXTRACTION_SIZE) {
+            const extraction = await this.extractTextContent(entryBuffer, entryExt);
+            entryResult.extractedText = extraction.text;
+            aggregatedText += `\n--- ${entry.entryName} ---\n${extraction.text}\n`;
+            totalLines += extraction.lineCount;
+            totalWords += extraction.wordCount;
+          }
+        } catch {
+          aiLogger.warn(`Failed to extract text from ZIP entry: ${entry.entryName}`);
+        }
+      }
+
+      results.push(entryResult);
+    }
+
+    aiLogger.info('ZIP extraction completed', {
+      entries: results.length,
+      readableEntries: results.filter(r => r.extractedText).length,
+      totalLines,
+      totalWords,
+    });
+
+    return { entries: results, aggregatedText, totalLines, totalWords };
+  }
+
+  /**
+   * Generate a document from content and return it as a downloadable file
+   * Supports: txt, md, json, csv, html, pdf
+   */
+  async generateDocument(
+    content: string,
+    filename: string,
+    format: 'txt' | 'md' | 'json' | 'csv' | 'html' | 'pdf',
+    sessionId: string
+  ): Promise<{
+    id: string;
+    filename: string;
+    downloadUrl: string;
+    size: number;
+    mimeType: string;
+  }> {
+    const fileId = crypto.randomUUID();
+    let fileContent: Buffer;
+    let mimeType: string;
+    let finalFilename = filename;
+
+    // Ensure correct extension
+    const ext = path.extname(filename).toLowerCase();
+    if (!ext || ext !== `.${format}`) {
+      finalFilename = `${path.basename(filename, ext)}.${format}`;
+    }
+
+    switch (format) {
+      case 'txt':
+        fileContent = Buffer.from(content, 'utf-8');
+        mimeType = 'text/plain';
+        break;
+
+      case 'md':
+        fileContent = Buffer.from(content, 'utf-8');
+        mimeType = 'text/markdown';
+        break;
+
+      case 'json':
+        // Try to parse and pretty-print if it's valid JSON
+        try {
+          const parsed = JSON.parse(content);
+          fileContent = Buffer.from(JSON.stringify(parsed, null, 2), 'utf-8');
+        } catch {
+          fileContent = Buffer.from(content, 'utf-8');
+        }
+        mimeType = 'application/json';
+        break;
+
+      case 'csv':
+        fileContent = Buffer.from(content, 'utf-8');
+        mimeType = 'text/csv';
+        break;
+
+      case 'html': {
+        const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${this.escapeHtml(filename)}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #333; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; }
+    code { background: #f4f4f4; padding: 0.2rem 0.4rem; border-radius: 2px; }
+  </style>
+</head>
+<body>
+${content}
+</body>
+</html>`;
+        fileContent = Buffer.from(htmlContent, 'utf-8');
+        mimeType = 'text/html';
+        break;
+      }
+
+      case 'pdf': {
+        fileContent = await this.generatePDF(content, filename);
+        mimeType = 'application/pdf';
+        break;
+      }
+
+      default:
+        fileContent = Buffer.from(content, 'utf-8');
+        mimeType = 'application/octet-stream';
+    }
+
+    const safeFilename = finalFilename.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const storedName = `${fileId}_${safeFilename}`;
+    const filePath = path.resolve(this.serveDir, storedName);
+
+    if (!filePath.startsWith(path.resolve(this.serveDir))) {
+      throw new Error('Invalid filename: path traversal detected');
+    }
+
+    await fsp.writeFile(filePath, fileContent);
+
+    const fileInfo: UploadedFile = {
+      id: fileId,
+      originalName: finalFilename,
+      storedName,
+      mimeType,
+      size: fileContent.length,
+      category: 'document',
+      extension: `.${format}`,
+      storagePath: filePath,
+      metadata: {
+        uploadedAt: new Date().toISOString(),
+        sessionId,
+        checksum: crypto.createHash('sha256').update(fileContent).digest('hex'),
+      },
+    };
+
+    this.fileRegistry.set(fileId, fileInfo);
+
+    aiLogger.info('Document generated', { id: fileId, filename: finalFilename, format, size: fileContent.length });
+
+    return {
+      id: fileId,
+      filename: finalFilename,
+      downloadUrl: `/api/v1/files/download/${fileId}`,
+      size: fileContent.length,
+      mimeType,
+    };
+  }
+
+  /**
+   * Generate a PDF from text content using PDFKit
+   */
+  private async generatePDF(content: string, title: string): Promise<Buffer> {
+    const PDFDocument = (await import('pdfkit')).default;
+
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ margin: 50 });
+      const chunks: Buffer[] = [];
+
+      doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      // Title
+      doc.fontSize(18).font('Helvetica-Bold').text(title, { align: 'center' });
+      doc.moveDown(0.5);
+      doc.fontSize(8).font('Helvetica').fillColor('#888')
+        .text(`Generated by Lackadaisical AI Chat — ${new Date().toLocaleString()}`, { align: 'center' });
+      doc.moveDown(1);
+
+      // Content
+      doc.fontSize(11).font('Helvetica').fillColor('#000');
+
+      const lines = content.split('\n');
+      for (const line of lines) {
+        // Handle code blocks
+        if (line.startsWith('```')) {
+          doc.font('Courier').fontSize(9);
+          continue;
+        }
+        // Handle headers
+        if (line.startsWith('# ')) {
+          doc.font('Helvetica-Bold').fontSize(16).text(line.replace(/^#+\s*/, ''));
+          doc.moveDown(0.3);
+          doc.font('Helvetica').fontSize(11);
+          continue;
+        }
+        if (line.startsWith('## ')) {
+          doc.font('Helvetica-Bold').fontSize(14).text(line.replace(/^#+\s*/, ''));
+          doc.moveDown(0.3);
+          doc.font('Helvetica').fontSize(11);
+          continue;
+        }
+        if (line.startsWith('### ')) {
+          doc.font('Helvetica-Bold').fontSize(12).text(line.replace(/^#+\s*/, ''));
+          doc.moveDown(0.2);
+          doc.font('Helvetica').fontSize(11);
+          continue;
+        }
+        // Normal text
+        doc.text(line || ' ');
+      }
+
+      doc.end();
+    });
+  }
+
+  /**
+   * Escape HTML special characters
+   */
+  private escapeHtml(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 }
 
