@@ -6,17 +6,37 @@ import { AIResponse, StreamChunk, Conversation, PersonalityState } from '../../t
 interface OllamaGenerateRequest {
   model: string;
   prompt: string;
+  suffix?: string;
   system?: string;
   stream?: boolean;
+  raw?: boolean;
+  think?: boolean;  // For thinking models — should the model think before responding
   context?: number[];
+  format?: string | Record<string, unknown>;  // 'json' or JSON schema for structured outputs
+  keep_alive?: string | number;  // e.g. '5m', '0' to unload
+  images?: string[];  // base64 images for multimodal models
+  // Experimental image generation params
+  width?: number;
+  height?: number;
+  steps?: number;
   options?: {
     temperature?: number;
     top_p?: number;
     top_k?: number;
+    min_p?: number;
+    typical_p?: number;
     repeat_penalty?: number;
+    presence_penalty?: number;
+    frequency_penalty?: number;
     num_predict?: number;
     num_ctx?: number;
+    num_keep?: number;
+    num_batch?: number;
+    num_gpu?: number;
+    num_thread?: number;
+    seed?: number;
     stop?: string[];
+    penalize_newline?: boolean;
   };
 }
 
@@ -25,6 +45,7 @@ interface OllamaGenerateResponse {
   created_at: string;
   response: string;
   done: boolean;
+  done_reason?: 'stop' | 'load' | 'unload' | string;
   context?: number[];
   total_duration?: number;
   load_duration?: number;
@@ -36,16 +57,19 @@ interface OllamaGenerateResponse {
 
 interface OllamaModel {
   name: string;
+  model?: string;
   modified_at: string;
   size: number;
   digest: string;
   details: {
+    parent_model?: string;
     format: string;
     family: string;
     families?: string[];
     parameter_size: string;
     quantization_level: string;
   };
+  capabilities?: string[];  // e.g. ['completion', 'vision', 'tools']
 }
 
 interface OllamaModelsResponse {
@@ -56,8 +80,10 @@ interface OllamaModelsResponse {
 interface OllamaChatMessage {
   role: 'system' | 'user' | 'assistant' | 'tool';
   content: string;
+  thinking?: string;  // For thinking models — the model's thinking process
   images?: string[]; // base64 encoded images for vision models
   tool_calls?: OllamaToolCall[];
+  tool_name?: string;  // Name of the tool that was executed (for role: 'tool')
 }
 
 interface OllamaToolCall {
@@ -84,16 +110,28 @@ interface OllamaChatRequest {
   model: string;
   messages: OllamaChatMessage[];
   stream?: boolean;
+  think?: boolean;  // For thinking models — should the model think before responding
   format?: string | Record<string, unknown>; // 'json' or JSON Schema for structured outputs
   tools?: OllamaToolDefinition[];
+  keep_alive?: string | number;  // e.g. '5m', '0' to unload
   options?: {
     temperature?: number;
     top_p?: number;
     top_k?: number;
+    min_p?: number;
+    typical_p?: number;
     repeat_penalty?: number;
+    presence_penalty?: number;
+    frequency_penalty?: number;
     num_predict?: number;
     num_ctx?: number;
+    num_keep?: number;
+    num_batch?: number;
+    num_gpu?: number;
+    num_thread?: number;
+    seed?: number;
     stop?: string[];
+    penalize_newline?: boolean;
   };
 }
 
@@ -102,6 +140,7 @@ interface OllamaChatResponse {
   created_at: string;
   message: OllamaChatMessage;
   done: boolean;
+  done_reason?: 'stop' | 'load' | 'unload' | string;
   total_duration?: number;
   load_duration?: number;
   prompt_eval_count?: number;
@@ -660,34 +699,53 @@ COMMUNICATION STYLE:
   }
 
   /**
-   * Get service status
+   * Get service status with version and model capabilities
    */
   async getStatus(): Promise<{
     available: boolean;
-    models: string[];
+    models: Array<{ name: string; size: number; family: string; capabilities?: string[] }>;
     version?: string;
   }> {
     try {
-      const [available, models] = await Promise.all([
+      const [available, models, versionInfo] = await Promise.all([
         this.checkAvailability(),
-        this.getModels().catch(() => [])
+        this.getModels().catch(() => []),
+        this.client.get('/api/version', { timeout: 5000 }).catch(() => null),
       ]);
 
       return {
         available,
-        models: models.map(m => m.name),
-        version: 'ollama' // Could fetch actual version from /api/version if available
+        models: models.map(m => ({
+          name: m.name,
+          size: m.size,
+          family: m.details?.family || 'unknown',
+          capabilities: m.capabilities,
+        })),
+        version: versionInfo?.data?.version || 'unknown',
       };
     } catch (error) {
       return {
         available: false,
-        models: []
+        models: [],
       };
     }
   }
 
   /**
-   * Generate response using the /api/chat endpoint (supports tools, vision, structured output)
+   * Show detailed model information including capabilities, template, and parameters
+   */
+  async showModelInfo(modelName: string): Promise<Record<string, unknown>> {
+    try {
+      const response = await this.client.post('/api/show', { model: modelName });
+      return response.data;
+    } catch (error) {
+      aiLogger.error('Failed to show model info:', { model: modelName, error });
+      throw new Error(`Failed to get model info for ${modelName}`);
+    }
+  }
+
+  /**
+   * Generate response using the /api/chat endpoint (supports tools, vision, structured output, thinking)
    * This is the newer Ollama API that supports advanced features like tool calling.
    */
   async generateChatResponse(
@@ -700,9 +758,12 @@ COMMUNICATION STYLE:
       format?: string | Record<string, unknown>;
       images?: string[];
       stream?: boolean;
+      think?: boolean;  // Enable model thinking (for thinking-capable models)
+      keepAlive?: string | number;
+      seed?: number;
       onChunk?: (chunk: StreamChunk) => void;
     } = {}
-  ): Promise<AIResponse & { toolCalls?: OllamaToolCall[] }> {
+  ): Promise<AIResponse & { toolCalls?: OllamaToolCall[]; thinking?: string; doneReason?: string }> {
     const startTime = Date.now();
 
     try {
@@ -726,8 +787,19 @@ COMMUNICATION STYLE:
           repeat_penalty: 1.1,
           top_p: 0.9,
           top_k: 40,
+          seed: options.seed,
         },
       };
+
+      // Enable thinking for capable models
+      if (options.think !== undefined) {
+        requestData.think = options.think;
+      }
+
+      // Set keep_alive if specified
+      if (options.keepAlive !== undefined) {
+        requestData.keep_alive = options.keepAlive;
+      }
 
       // Add tools if provided
       if (options.tools && options.tools.length > 0) {
@@ -762,7 +834,7 @@ COMMUNICATION STYLE:
       const responseTime = Date.now() - startTime;
       const tokensUsed = (response.data.prompt_eval_count || 0) + (response.data.eval_count || 0);
 
-      const aiResponse: AIResponse & { toolCalls?: OllamaToolCall[] } = {
+      const aiResponse: AIResponse & { toolCalls?: OllamaToolCall[]; thinking?: string; doneReason?: string } = {
         content: response.data.message.content.trim(),
         model: response.data.model,
         tokens_used: tokensUsed,
@@ -774,12 +846,23 @@ COMMUNICATION STYLE:
           prompt_eval_duration: response.data.prompt_eval_duration,
           eval_count: response.data.eval_count,
           eval_duration: response.data.eval_duration,
+          done_reason: response.data.done_reason,
         },
       };
 
       // Extract tool calls if present
       if (response.data.message.tool_calls) {
         aiResponse.toolCalls = response.data.message.tool_calls;
+      }
+
+      // Extract thinking content if present (from thinking models)
+      if (response.data.message.thinking) {
+        aiResponse.thinking = response.data.message.thinking;
+      }
+
+      // Extract done_reason
+      if (response.data.done_reason) {
+        aiResponse.doneReason = response.data.done_reason;
       }
 
       aiLogger.info('Ollama chat response generated:', {

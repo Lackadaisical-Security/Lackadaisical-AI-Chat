@@ -170,6 +170,7 @@ export interface UserSettings {
   fontSize: 'small' | 'medium' | 'large';
   compactMode: boolean;
   language: string;
+  companionName: string;  // Customizable AI companion name (default: 'Lacky')
 }
 
 // WebSocket types

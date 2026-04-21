@@ -43,6 +43,8 @@ import AIService from './services/AIService';
 // Import new services
 import { messageLogService } from './services/MessageLogService';
 
+import { requestSanitizer, securityHeaders, requestDepthLimiter } from './middleware/security';
+
 // Import WebSocket handler
 import WebSocketService from './services/WebSocketService';
 
@@ -90,8 +92,11 @@ class LackadaisicalAIServer {
       origin: config.server.corsOrigin,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cache-Control'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cache-Control', 'X-CSRF-Token'],
     }));
+
+    // Security headers (additional to helmet)
+    this.app.use(securityHeaders);
 
     // Compression
     this.app.use(compression());
@@ -115,6 +120,10 @@ class LackadaisicalAIServer {
     // Serve uploaded/generated files statically
     this.app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads/serve')));
 
+    // Request sanitization (XSS prevention) and depth limiting
+    this.app.use(requestSanitizer);
+    this.app.use(requestDepthLimiter(15));
+
     // Request logging
     this.app.use(requestLogger);
 
@@ -128,8 +137,9 @@ class LackadaisicalAIServer {
 
     // API info middleware
     this.app.use((req: Request, res: Response, next: NextFunction) => {
-      res.setHeader('X-API-Version', '1.0.0');
-      res.setHeader('X-Powered-By', 'Lackadaisical AI Chat');
+      res.setHeader('X-API-Version', '2.0.0-rc2');
+      // Don't expose server technology in headers (security best practice)
+      res.removeHeader('X-Powered-By');
       next();
     });
   }
