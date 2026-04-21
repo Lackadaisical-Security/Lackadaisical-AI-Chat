@@ -70,6 +70,9 @@ export function createAuthRoutes(db: DatabaseService): Router {
   router.post('/register', authRateLimiter, asyncHandler(async (req: Request, res: Response) => {
     const { email, password, name } = req.body;
     if (!email || !password) throw new ApiError(400, 'Email and password are required');
+    if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new ApiError(400, 'Valid email address is required');
+    }
     if (password.length < 8) throw new ApiError(400, 'Password must be at least 8 characters');
 
     const existing = firstRow(await db.executeQuery<{ id: string }>('SELECT id FROM users WHERE email = ?', [email]));
@@ -250,7 +253,7 @@ export function createAuthRoutes(db: DatabaseService): Router {
 
     // Validate email uniqueness if changing
     if (email !== undefined && email !== user.email) {
-      if (typeof email !== 'string' || !email.includes('@')) {
+      if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         throw new ApiError(400, 'Valid email address is required');
       }
       const existingEmail = firstRow(await db.executeQuery<{ id: string }>(

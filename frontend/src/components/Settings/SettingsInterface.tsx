@@ -162,7 +162,7 @@ const SettingsInterface: React.FC = () => {
       let response;
       if (authMode === 'register') {
         if (!authName.trim()) {
-          setAuthError('Username is required');
+          setAuthError('Display name is required for registration');
           setAuthLoading(false);
           return;
         }

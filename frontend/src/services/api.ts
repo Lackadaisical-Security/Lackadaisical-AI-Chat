@@ -49,6 +49,8 @@ class ApiService {
           // Clear auth tokens — accounts are optional so don't redirect
           localStorage.removeItem('auth_token');
           localStorage.removeItem('refresh_token');
+          // Notify other components (e.g. Layout sidebar) via storage event
+          window.dispatchEvent(new Event('storage'));
         }
         return Promise.reject(error);
       }
