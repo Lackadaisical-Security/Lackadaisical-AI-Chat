@@ -5,6 +5,87 @@ All notable changes to Lackadaisical AI Chat will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0-rc1] - 2026-04-21
+
+### 🚀 New Features
+
+#### Code IDE Workspace
+- **Full Monaco-based IDE** — Multi-tab code editor with syntax highlighting for 40+ languages
+- **File Explorer** — Create, rename, delete, open files in a virtual filesystem
+- **Integrated Terminal** — Command execution with persistent output history
+- **Editor Settings** — Theme switching, font size, word wrap, minimap toggle
+- **Import/Export** — Save and load workspace state as JSON
+
+#### Traffic Emulator
+- **Puppeteer-based headless browser automation** with stealth plugin for anti-detection
+- **Fingerprint randomization** — Unique UA, viewport, WebGL, canvas, timezone per session
+- **Proxy support** — HTTP/HTTPS/SOCKS5 with optional authentication
+- **Human-like behavior** — Bezier mouse movement, natural typing delays, random scrolling
+- **Multi-engine search** — Google, Bing, Yahoo, DuckDuckGo with content extraction
+- **Frontend control panel** — Session management, search, navigation, proxy config
+
+#### Image Generation (ComfyUI)
+- **ComfyUIService** — Integration with local ComfyUI for Stable Diffusion image generation
+- **Text-to-image** with customizable prompt, dimensions, steps, CFG, sampler, seed
+- **REST API endpoints** — Generate, list models/samplers, check status
+- **Auto-download** — Generated images saved locally and served via file download API
+
+#### Sessions Tab
+- **Dedicated Sessions page** — Browse, search, sort, rename, delete past sessions
+- **Session summaries** — Topics, message count, token usage, last activity
+- **Cross-session memory banner** — Visual indication that AI remembers across sessions
+- **Click-to-restore** — Load any past session directly into the chat interface
+
+#### History Pruning
+- **Configurable retention policies** — By age (days) or by max messages per session
+- **Auto-prune scheduler** — Configurable interval for automatic pruning
+- **Manual pruning** — Per-session or global, with flexible options
+- **Prune audit trail** — Summary of pruned content stored in session metadata
+- **REST API** — Prune endpoints, stats, per-session control
+
+#### Chain-of-Thought Streaming
+- **Real-time thinking display** — `thinking_start`, `thinking_content`, `thinking_end` SSE events
+- **Live thinking parser** — Splits `<think>` blocks from response content during streaming
+- **Frontend hook** — `isThinking`, `thinkingContent` state exposed from `useStreamingResponse`
+
+#### Enhanced File Handling
+- **ZIP file extraction** — Reads and extracts text from ZIP archives using adm-zip
+- **PDF document generation** — Create PDFs from chat content using pdfkit
+- **Document generation API** — Generate txt, md, json, csv, html, pdf from any content
+- **Inline image preview** — Images shown directly in chat bubbles with click-to-expand
+- **Extended file types** — ZIP, tar, gz, docx, xlsx, pptx, and more now accepted
+
+### 🔧 Improvements
+
+#### Ollama/Gemma 4 Integration
+- **Chat API support** — New `/api/chat` endpoint in OllamaWrapper with tool calling and structured outputs
+- **Vision support** — Base64 image inputs for multimodal models (Gemma 4)
+- **Updated model defaults** — `gemma3:4b` as default test model, expanded available models list
+- **Streaming chat** — Full streaming support via the chat endpoint
+
+#### Auth System
+- **Database-backed authentication** — Users, passwords, refresh tokens stored in SQLite
+- **JWT with refresh tokens** — 7-day access tokens, 30-day refresh tokens with rotation
+- **User management** — Register, login, logout, change password, get profile
+- **Schema migration** — Users and refresh_tokens tables added to schema.sql
+
+#### Backend Hardening
+- **BackupService** — Implemented pg_dump/mysqldump for PostgreSQL/MySQL export/import
+- **LoggingService** — Implemented tar.gz log archiving with proper tar headers
+- **AIService** — Replaced all "not yet implemented" messages with proper error handling
+- **API Documentation** — Full endpoint listing with features at `/api`
+
+### 🧹 Cleanup
+- Removed 26 redundant `.gitkeep` files from empty legacy directories
+- Cleaned root-level unused folders: css/, fonts/, journal/, webSearch/, backups/, enhanced-memory/
+- Cleaned backend stub directories: controllers/, database/, dist/, middlewear/, etc.
+
+### 📦 Dependencies Added
+- `@monaco-editor/react` — Monaco code editor for IDE workspace
+- `puppeteer-core`, `puppeteer-extra`, `puppeteer-extra-plugin-stealth` — Headless browser automation
+- `adm-zip` — ZIP file extraction
+- `pdfkit` — PDF document generation
+
 ## [2.0.0-alpha.2] - 2026-04-02
 
 ### 🚀 New Features

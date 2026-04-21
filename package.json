@@ -1,6 +1,6 @@
 {
   "name": "lackadaisical-ai-chat",
-  "version": "2.0.0-alpha",
+  "version": "2.0.0-rc1",
   "description": "A companion-oriented modular AI chatbot with persistent memory, personality engine, and privacy-first architecture",
   "author": "Lackadaisical Security 2025 <https://lackadaisical-security.com>",
   "license": "MIT",
