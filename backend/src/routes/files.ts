@@ -206,4 +206,45 @@ router.post('/serve-code', async (req: Request, res: Response, next: NextFunctio
   }
 });
 
+/**
+ * POST /files/generate-document — Generate a downloadable document from content
+ * Body: { content: string, filename: string, format: 'txt'|'md'|'json'|'csv'|'html'|'pdf', sessionId?: string }
+ */
+router.post('/generate-document', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { content, filename, format, sessionId } = req.body;
+
+    if (!content || !filename || !format) {
+      res.status(400).json({
+        success: false,
+        error: 'content, filename, and format are required',
+      });
+      return;
+    }
+
+    const validFormats = ['txt', 'md', 'json', 'csv', 'html', 'pdf'];
+    if (!validFormats.includes(format)) {
+      res.status(400).json({
+        success: false,
+        error: `Invalid format. Use: ${validFormats.join(', ')}`,
+      });
+      return;
+    }
+
+    const result = await fileUploadService.generateDocument(
+      content,
+      filename,
+      format,
+      sessionId || 'default'
+    );
+
+    res.status(201).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;
