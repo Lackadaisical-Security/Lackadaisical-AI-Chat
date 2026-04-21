@@ -46,9 +46,9 @@ class ApiService {
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
-          // Handle unauthorized
+          // Clear auth tokens — accounts are optional so don't redirect
           localStorage.removeItem('auth_token');
-          window.location.href = '/login';
+          localStorage.removeItem('refresh_token');
         }
         return Promise.reject(error);
       }
@@ -395,9 +395,9 @@ class ApiService {
     return response.data;
   }
 
-  // Health check
-  async healthCheck(): Promise<ApiResponse<any>> {
-    const response = await this.api.get('/api/health');
+  // Health check (mounted at /health, outside /api prefix)
+  async healthCheck(): Promise<any> {
+    const response = await this.api.get('/health');
     return response.data;
   }
 
