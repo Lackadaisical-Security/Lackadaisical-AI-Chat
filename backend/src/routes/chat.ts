@@ -438,18 +438,46 @@ router.post('/', sentimentMiddlewareWithDB, asyncHandler(async (req: Request, re
 
       let aiResponse = '';
       let responseMetadata: any = {};
+      const thinkingParser = extendedThinkingService.createStreamingThinkingParser();
+      let thinkingEmitted = false;
 
       try {
-        // Generate AI response with streaming
+        // Generate AI response with streaming, parsing thinking in real-time
         const result = await generateAIResponse(
           chatRequest.message,
           chatRequest.session_id!,
           conversationContext,
           personalityState,
           (chunk: StreamChunk) => {
-            res.write(`data: ${JSON.stringify(chunk)}\n\n`);
             if (chunk.type === 'content' && chunk.content) {
-              aiResponse += chunk.content;
+              // Parse thinking blocks from the stream in real-time
+              const parsed = thinkingParser.processChunk(chunk.content);
+
+              if (parsed.isThinking) {
+                // We're inside a thinking block
+                if (!thinkingEmitted) {
+                  // First thinking chunk — emit thinking_start
+                  res.write(`data: ${JSON.stringify({ type: 'thinking_start' })}\n\n`);
+                  thinkingEmitted = true;
+                }
+                if (parsed.thinking) {
+                  res.write(`data: ${JSON.stringify({ type: 'thinking_content', content: parsed.thinking })}\n\n`);
+                }
+              } else {
+                // We're outside thinking
+                if (thinkingEmitted && parsed.content !== undefined) {
+                  // Thinking just ended — emit thinking_end
+                  res.write(`data: ${JSON.stringify({ type: 'thinking_end' })}\n\n`);
+                  thinkingEmitted = false;
+                }
+                if (parsed.content) {
+                  aiResponse += parsed.content;
+                  res.write(`data: ${JSON.stringify({ type: 'content', content: parsed.content })}\n\n`);
+                }
+              }
+            } else {
+              // Pass through non-content chunks (start, end, error)
+              res.write(`data: ${JSON.stringify(chunk)}\n\n`);
             }
           },
           chatRequest.useUncensored,
@@ -457,6 +485,17 @@ router.post('/', sentimentMiddlewareWithDB, asyncHandler(async (req: Request, re
         );
 
         responseMetadata = result;
+
+        // Finalize thinking parser
+        const finalThinking = thinkingParser.finalize();
+        if (thinkingEmitted) {
+          res.write(`data: ${JSON.stringify({ type: 'thinking_end' })}\n\n`);
+        }
+        // If there's remaining content from the parser finalization
+        if (finalThinking.content && !aiResponse.includes(finalThinking.content)) {
+          aiResponse += finalThinking.content;
+          res.write(`data: ${JSON.stringify({ type: 'content', content: finalThinking.content })}\n\n`);
+        }
 
         // Save conversation to database with full context tracking
         const conversationId = await saveConversation(
@@ -485,7 +524,8 @@ router.post('/', sentimentMiddlewareWithDB, asyncHandler(async (req: Request, re
           responseTime: result.responseTime,
           model: result.model,
           sentiment: sentimentAnalysis,
-          mood: updatedMood
+          mood: updatedMood,
+          thinking: finalThinking.thinking || result.thinking || undefined,
         };
         
         res.write(`data: ${JSON.stringify(finalData)}\n\n`);
