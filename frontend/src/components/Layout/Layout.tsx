@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { QuickThemeToggle } from '../ui/ThemeSwitcher';
 import { Settings, Code2, Globe, History, User } from 'lucide-react';
 import api from '../../services/api';
+import useConnectionHealth from '../../hooks/useConnectionHealth';
 
 const navLinks = [
   { to: '/chat', label: 'Chat', icon: '💬' },
@@ -17,6 +18,7 @@ const navLinks = [
 const Layout: React.FC = () => {
   const location = useLocation();
   const [userName, setUserName] = useState<string | null>(null);
+  const connection = useConnectionHealth(30000);
 
   useEffect(() => {
     // Try to load user profile if authenticated
@@ -100,10 +102,23 @@ const Layout: React.FC = () => {
                 <span className="font-medium text-[var(--color-text)]">{userName}</span>
               </div>
             )}
-            <div className="mb-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full inline-block mr-2"></div>
-              AI Connected
+            <div className="mb-1">
+              <div className={`w-2 h-2 rounded-full inline-block mr-2 ${
+                connection.isConnected ? 'bg-green-500' : 'bg-red-500 animate-pulse'
+              }`}></div>
+              {connection.isConnected ? 'Backend Connected' : 'Disconnected'}
             </div>
+            {connection.isConnected && (
+              <div className="mb-1">
+                <div className={`w-2 h-2 rounded-full inline-block mr-2 ${
+                  connection.ollamaAvailable ? 'bg-green-500' : 'bg-yellow-500'
+                }`}></div>
+                {connection.ollamaAvailable ? 'Ollama Ready' : 'Ollama Offline'}
+              </div>
+            )}
+            {connection.latencyMs !== null && (
+              <div className="text-[10px] mb-1 opacity-60">{connection.latencyMs}ms</div>
+            )}
             <div>v2.0.0-rc1</div>
           </div>
         </div>
