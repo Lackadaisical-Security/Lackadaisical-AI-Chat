@@ -124,11 +124,11 @@ const WEBGL_RENDERERS = [
 // ─── Utility Functions ──────────────────────────────────────────────────────
 
 function randomChoice<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
+  return arr[crypto.randomInt(0, arr.length)];
 }
 
 function randomInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  return crypto.randomInt(min, max + 1);
 }
 
 function sleep(ms: number): Promise<void> {

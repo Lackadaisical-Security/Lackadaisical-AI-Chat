@@ -68,7 +68,7 @@ const Layout: React.FC = () => {
               <div className="w-2 h-2 bg-green-500 rounded-full inline-block mr-2"></div>
               AI Connected
             </div>
-            <div>v2.0.0-rc1</div>
+            <div>v2.0.0-rc2</div>
           </div>
         </div>
       </aside>

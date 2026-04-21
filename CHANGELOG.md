@@ -5,6 +5,38 @@ All notable changes to Lackadaisical AI Chat will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0-rc2] - 2026-04-21
+
+### 🔒 Security Hardening
+- **Request Sanitization** — XSS prevention middleware strips dangerous HTML entities from all input while preserving code/chat content fields
+- **Request Depth Limiter** — Prevents deeply nested JSON payloads that could cause stack overflow (max depth: 15)
+- **Security Headers** — HSTS, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy, no-cache for API routes
+- **CSRF Protection** — Double-submit cookie pattern with automatic token generation (production-enforced)
+- **AES-256-GCM Encryption** — Utilities for encrypting API keys at rest using PBKDF2-derived keys
+- **X-Powered-By removed** — No server technology disclosure in headers
+
+### 🤖 Ollama API Updates (Latest 2026 API)
+- **`think` parameter** — Enable model thinking for thinking-capable models (DeepSeek-R1, Gemma, etc.)
+- **`thinking` field** — Extract thinking process from model responses for chain-of-thought display
+- **`done_reason`** — Track why generation stopped ('stop', 'load', 'unload')
+- **`tool_name`** — Inform model of which tool produced a result in tool role messages
+- **`capabilities`** — Model info now exposes capabilities array (completion, vision, tools)
+- **`showModelInfo()`** — New method to query /api/show for detailed model parameters
+- **Actual version fetch** — Status now queries /api/version instead of hardcoded string
+- **Full option support** — min_p, typical_p, frequency_penalty, presence_penalty, seed, num_keep, num_batch, num_gpu, num_thread
+- **Image generation params** — width, height, steps for experimental image generation models
+- **keep_alive support** — Control model loading/unloading ('5m', '0' to unload)
+
+### 🎨 Companion Name Customization
+- **Customizable AI name** — Users can rename their companion from "Lacky" to anything via Settings → General
+- **Syncs to backend** — Name change persists to personality state and is used in all system prompts
+- **`companionName` field** — Added to UserSettings type with 'Lacky' default
+
+### 🧪 Testing
+- **30 new security middleware tests** — Full coverage for sanitizer, headers, depth limiter, encryption
+- **3 new companion name tests** — Default name, update name, preserve name on partial settings update
+- **93 total tests passing** — 64 backend + 29 frontend
+
 ## [2.0.0-rc1] - 2026-04-21
 
 ### 🚀 New Features

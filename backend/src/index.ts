@@ -232,7 +232,7 @@ class LackadaisicalAIServer {
     // API documentation
     this.app.get('/api', (req: Request, res: Response) => {
       res.json({
-        api_version: '2.0.0-rc1',
+        api_version: '2.0.0-rc2',
         documentation_url: '/api',
         endpoints: {
           health: {

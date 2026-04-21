@@ -1,71 +1,67 @@
 # Lackadaisical AI Chat — Implementation Guide
 
-**Version:** 2.0.0-rc1  
+**Version:** 2.0.0-rc2  
 **Updated:** 2026-04-21  
-**Status:** All major features implemented. Ready for integration testing.
+**Status:** All major features implemented. Security hardening complete. Ready for integration testing.
 
 ---
 
-## Completed Features (RC1)
+## Completed Features (RC2)
 
-### ✅ Phase 1: Repository Cleanup
+### ✅ Phase 1: Repository Cleanup (RC1)
 - Removed 26 redundant `.gitkeep` files and empty legacy directories
-- Files: root-level `css/`, `fonts/`, `journal/`, `webSearch/`, `backups/`, `enhanced-memory/`; backend stubs
 
-### ✅ Phase 2: Code IDE Workspace
+### ✅ Phase 2: Code IDE Workspace (RC1)
 - **Component:** `frontend/src/components/IDE/IDEWorkspace.tsx`
 - **Route:** `/ide`
 - **Features:** Monaco editor, file explorer, terminal, multi-tab, themes, settings
 - **Dependency:** `@monaco-editor/react`
 
-### ✅ Phase 3: Mock/Placeholder Code Eliminated
-- `BackupService` — pg_dump/mysqldump export/import implemented
-- `LoggingService` — tar.gz log archiving implemented
-- `AIService` — "not yet implemented" replaced with proper errors
-- `auth routes` — Rewritten with database-backed users (createAuthRoutes)
+### ✅ Phase 3: Mock/Placeholder Code Eliminated (RC1)
+- `BackupService` — pg_dump/mysqldump export/import
+- `LoggingService` — tar.gz log archiving
+- `AIService` — proper error handling
+- `auth routes` — Database-backed users (createAuthRoutes)
 - `API docs` — Full endpoint listing at `/api`
-- Database schema updated with `users` and `refresh_tokens` tables
 
-### ✅ Phase 4: History Pruning
+### ✅ Phase 4: History Pruning (RC1)
 - **Service:** `backend/src/services/HistoryPruningService.ts`
-- **Features:** retention days, max messages, auto-schedule, per-session manual prune
-- **REST:** `POST /chat/history/prune`, `POST /chat/history/prune/:sessionId`, `GET /chat/history/prune/stats`
-- **Settings:** Added to `UserPreferences` interface on both frontend and backend
+- Retention days, max messages, auto-schedule, per-session prune
 
-### ✅ Phase 5: Traffic Emulator
+### ✅ Phase 5: Traffic Emulator (RC1)
 - **Service:** `backend/src/services/TrafficEmulatorService.ts`
-- **Routes:** `backend/src/routes/emulator.ts`
-- **Frontend:** `frontend/src/components/Emulator/EmulatorPanel.tsx`
-- **Dependencies:** `puppeteer-core`, `puppeteer-extra`, `puppeteer-extra-plugin-stealth`
-- **Features:** Fingerprint randomization, proxy support, human-like behavior, multi-engine search
+- Fingerprint randomization, proxy support, human-like behavior, multi-engine search
 
-### ✅ Phase 6: Enhanced File Handling
-- **ZIP:** `adm-zip` extraction in FileUploadService
-- **PDF:** `pdfkit` document generation
-- **API:** `POST /files/generate-document` (txt, md, json, csv, html, pdf)
-- **Frontend:** Inline image preview in MessageBubble, extended file type acceptance
+### ✅ Phase 6: Enhanced File Handling (RC1)
+- ZIP extraction, PDF generation, inline image preview, document generation API
 
-### ✅ Phase 7: Chain-of-Thought Streaming
-- SSE events: `thinking_start`, `thinking_content`, `thinking_end`
-- Real-time thinking parser in streaming callback
-- `useStreamingResponse` hook: `isThinking`, `thinkingContent` state
+### ✅ Phase 7: Chain-of-Thought Streaming (RC1)
+- `thinking_start/content/end` SSE events, `useStreamingResponse` hook
 
-### ✅ Phase 7b: Sessions Tab
-- **Component:** `frontend/src/components/Sessions/SessionsInterface.tsx`
-- **Route:** `/sessions`
-- **Features:** Browse, search, sort, rename, delete sessions; summaries with topics
+### ✅ Phase 7b: Sessions Tab (RC1)
+- Browse, search, sort, rename, delete sessions with cross-session memory
 
-### ✅ Phase 8: Ollama/Gemma 4 + ComfyUI
-- **Ollama Chat API:** `/api/chat` endpoint with tool calling, structured outputs, vision
-- **ComfyUI Service:** `backend/src/services/ComfyUIService.ts`
-- **Image Routes:** `backend/src/routes/imageGeneration.ts`
-- **Models:** `gemma3:4b` default, `gemma4:e4b` vision, expanded available list
+### ✅ Phase 8: Ollama/Gemma 4 + ComfyUI (RC1 → RC2 enhanced)
+- Chat API with tool calling, structured outputs, vision
+- **RC2:** Added `think` parameter, `thinking` response field, `done_reason`,
+  `tool_name`, `capabilities`, `showModelInfo()`, `/api/version` fetch,
+  full option support (min_p, typical_p, frequency_penalty, seed, etc.),
+  image generation params (width, height, steps), `keep_alive`
 
-### ✅ Phase 9: Version Bump & Docs
-- All `package.json` → `2.0.0-rc1`
-- Layout footer → `v2.0.0-rc1`
-- CHANGELOG.md updated with RC1 entry
-- API docs at `/api` updated with all new endpoints
+### ✅ Phase 9: Companion Name Customization (RC2)
+- **Settings:** `companionName` field in UserSettings type
+- **UI:** Text input in Settings → General tab
+- **Backend sync:** Saves to personality state via PUT /api/personality
+- **Default:** 'Lacky'
+
+### ✅ Phase 10: Security Hardening (RC2)
+- **Middleware:** `backend/src/middleware/security.ts`
+- **Request Sanitizer:** HTML entity encoding for XSS prevention, null byte removal, safe-field exemption
+- **Depth Limiter:** Prevents deeply nested JSON (max depth: 15)
+- **Security Headers:** HSTS, X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy, no-cache for API
+- **CSRF Protection:** Double-submit cookie pattern (production-enforced)
+- **Encryption:** AES-256-GCM with PBKDF2 key derivation for API keys at rest
+- **Header hardening:** X-Powered-By removed, X-CSRF-Token in CORS allowed headers
 
 ---
 
@@ -111,9 +107,44 @@ backend/src/
 │   ├── imageGeneration.ts (NEW)
 │   ├── files.ts         (enhanced: document generation)
 │   └── ... (sessions, journal, search, personality, plugins, etc.)
-├── middleware/        — Auth, rate limiter, error handler, sentiment
+├── middleware/        — Auth, rate limiter, error handler, sentiment, security (RC2)
 ├── config/            — settings.ts (updated model defaults)
 └── types/             — Backend type definitions
+```
+
+---
+
+## Testing
+
+```
+Total Tests: 93
+├── Backend: 64
+│   ├── DatabaseService: 16 tests
+│   ├── SentimentAnalyzer: 18 tests
+│   └── SecurityMiddleware: 30 tests (RC2)
+│       ├── requestSanitizer: 9 tests
+│       ├── securityHeaders: 8 tests
+│       ├── requestDepthLimiter: 4 tests
+│       └── encryptValue/decryptValue: 9 tests
+└── Frontend: 29
+    ├── App: 4 tests
+    ├── ChatInterface: 5 tests
+    ├── Store: 20 tests
+    │   ├── Message Management: 3 tests
+    │   ├── Session Management: 4 tests
+    │   ├── UI State: 3 tests
+    │   ├── Memory Preferences: 1 test
+    │   ├── Toast Management: 1 test
+    │   ├── Settings: 4 tests (includes companion name RC2)
+    │   └── Clear All: 1 test
+    └── (3 new companion name tests)
+```
+
+Run all tests:
+```bash
+npm run test:backend   # 64 tests
+npm run test:frontend  # 29 tests
+npm test              # Both
 ```
 
 ---
@@ -136,11 +167,14 @@ DB_PATH=./database/chat.db
 # Security
 JWT_SECRET=your-32-char-min-secret-key-here...
 SESSION_SECRET=your-32-char-min-session-secret...
+
+# Companion
+PERSONALITY_NAME=Lacky
 ```
 
 ---
 
-## Future Work (Post-RC1)
+## Future Work (Post-RC2)
 
 - [ ] IDE: WebSocket terminal connected to backend shell execution
 - [ ] IDE: Git integration within workspace
