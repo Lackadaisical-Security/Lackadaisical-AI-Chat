@@ -330,30 +330,27 @@ export class TrafficEmulatorService extends EventEmitter {
       deviceScaleFactor: 1,
     });
 
-    // Override navigator properties
-    await page.evaluateOnNewDocument((fpData: Fingerprint) => {
-      // Platform
-      Object.defineProperty(navigator, 'platform', { get: () => fpData.platform });
-      // Languages
-      Object.defineProperty(navigator, 'languages', { get: () => fpData.languages });
-      Object.defineProperty(navigator, 'language', { get: () => fpData.language });
-      // Hardware
-      Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => fpData.hardwareConcurrency });
-      Object.defineProperty(navigator, 'deviceMemory', { get: () => fpData.deviceMemory });
-      Object.defineProperty(navigator, 'maxTouchPoints', { get: () => fpData.maxTouchPoints });
-      // Remove webdriver flag
-      Object.defineProperty(navigator, 'webdriver', { get: () => false });
-      // Screen
-      Object.defineProperty(screen, 'width', { get: () => fpData.screenResolution.width });
-      Object.defineProperty(screen, 'height', { get: () => fpData.screenResolution.height });
-      // WebGL
-      const getParameter = WebGLRenderingContext.prototype.getParameter;
-      WebGLRenderingContext.prototype.getParameter = function (parameter: number) {
-        if (parameter === 37445) return fpData.webglVendor;
-        if (parameter === 37446) return fpData.webglRenderer;
-        return getParameter.call(this, parameter);
-      };
-    }, fp);
+    // Override navigator properties via evaluateOnNewDocument
+    // This code executes in the browser context where navigator, screen, etc. are available
+    await page.evaluateOnNewDocument(`
+      (function(fpData) {
+        Object.defineProperty(navigator, 'platform', { get: function() { return fpData.platform; } });
+        Object.defineProperty(navigator, 'languages', { get: function() { return fpData.languages; } });
+        Object.defineProperty(navigator, 'language', { get: function() { return fpData.language; } });
+        Object.defineProperty(navigator, 'hardwareConcurrency', { get: function() { return fpData.hardwareConcurrency; } });
+        Object.defineProperty(navigator, 'deviceMemory', { get: function() { return fpData.deviceMemory; } });
+        Object.defineProperty(navigator, 'maxTouchPoints', { get: function() { return fpData.maxTouchPoints; } });
+        Object.defineProperty(navigator, 'webdriver', { get: function() { return false; } });
+        Object.defineProperty(screen, 'width', { get: function() { return fpData.screenResolution.width; } });
+        Object.defineProperty(screen, 'height', { get: function() { return fpData.screenResolution.height; } });
+        var getParameter = WebGLRenderingContext.prototype.getParameter;
+        WebGLRenderingContext.prototype.getParameter = function(parameter) {
+          if (parameter === 37445) return fpData.webglVendor;
+          if (parameter === 37446) return fpData.webglRenderer;
+          return getParameter.call(this, parameter);
+        };
+      })(${JSON.stringify(fp)})
+    `);
 
     // Set timezone
     await page.emulateTimezone(fp.timezone);
@@ -376,9 +373,7 @@ export class TrafficEmulatorService extends EventEmitter {
 
     // Random scrolling
     const scrollAmount = randomInt(100, 500);
-    await page.evaluate((amount: number) => {
-      window.scrollBy({ top: amount, behavior: 'smooth' });
-    }, scrollAmount);
+    await page.evaluate(`window.scrollBy({ top: ${scrollAmount}, behavior: 'smooth' })`);
     await sleep(randomInt(500, 1500));
 
     // Small random wait
@@ -421,10 +416,9 @@ export class TrafficEmulatorService extends EventEmitter {
       session.lastActivity = new Date().toISOString();
 
       // Extract page content
-      const content = await page.evaluate(() => {
-        const el = document.querySelector('body');
-        return el ? el.innerText.substring(0, 50000) : '';
-      });
+      const content = await page.evaluate(
+        `(function() { var el = document.querySelector('body'); return el ? el.innerText.substring(0, 50000) : ''; })()`
+      ) as string;
 
       return content;
     } catch (error) {
@@ -474,32 +468,33 @@ export class TrafficEmulatorService extends EventEmitter {
       session.status = 'extracting';
       const maxResults = request.maxResults || 10;
 
-      const results: SearchResultItem[] = await page.evaluate(
-        (sel, max) => {
-          const items: Array<{ title: string; url: string; snippet: string }> = [];
-          const elements = document.querySelectorAll(sel.resultSelector);
+      const selectors = JSON.stringify({
+        resultSelector: engine.resultSelector, titleSelector: engine.titleSelector,
+        linkSelector: engine.linkSelector, snippetSelector: engine.snippetSelector,
+      });
 
-          for (let i = 0; i < Math.min(elements.length, max); i++) {
-            const el = elements[i];
-            const titleEl = el.querySelector(sel.titleSelector);
-            const linkEl = el.querySelector(sel.linkSelector);
-            const snippetEl = el.querySelector(sel.snippetSelector);
-
+      const results: SearchResultItem[] = await page.evaluate(`
+        (function() {
+          var sel = ${selectors};
+          var max = ${maxResults};
+          var items = [];
+          var elements = document.querySelectorAll(sel.resultSelector);
+          for (var i = 0; i < Math.min(elements.length, max); i++) {
+            var el = elements[i];
+            var titleEl = el.querySelector(sel.titleSelector);
+            var linkEl = el.querySelector(sel.linkSelector);
+            var snippetEl = el.querySelector(sel.snippetSelector);
             if (titleEl && linkEl) {
               items.push({
                 title: (titleEl.textContent || '').trim(),
-                url: (linkEl as HTMLAnchorElement).href || '',
-                snippet: (snippetEl?.textContent || '').trim(),
+                url: linkEl.href || '',
+                snippet: (snippetEl ? snippetEl.textContent || '' : '').trim()
               });
             }
           }
-
           return items;
-        },
-        { resultSelector: engine.resultSelector, titleSelector: engine.titleSelector,
-          linkSelector: engine.linkSelector, snippetSelector: engine.snippetSelector },
-        maxResults
-      );
+        })()
+      `) as SearchResultItem[];
 
       session.pagesVisited++;
       session.status = 'idle';

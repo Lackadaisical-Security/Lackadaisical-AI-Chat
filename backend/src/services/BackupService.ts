@@ -484,8 +484,22 @@ export class BackupService {
 
       try {
         const fsp = await import('fs/promises');
+        const { spawn } = await import('child_process');
         const sqlData = await fsp.readFile(actualPath, 'utf-8');
-        await execFileAsync('mysql', args, { input: sqlData, timeout: 300000 });
+
+        // Use spawn to pipe SQL data to mysql's stdin safely
+        await new Promise<void>((resolve, reject) => {
+          const child = spawn('mysql', args, { timeout: 300000, stdio: ['pipe', 'pipe', 'pipe'] });
+          let stderr = '';
+          child.stderr.on('data', (data: Buffer) => { stderr += data.toString(); });
+          child.on('close', (code: number) => {
+            if (code === 0) resolve();
+            else reject(new Error(`mysql exited with code ${code}: ${stderr}`));
+          });
+          child.on('error', reject);
+          child.stdin.write(sqlData);
+          child.stdin.end();
+        });
         logger.info('MySQL restore completed', { inputPath });
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
