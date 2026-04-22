@@ -1,11 +1,11 @@
 # 🎮 Lackadaisical Code of Conduct
 
 ## tl;dr
-Don't be a dick. We're all here to build cool sh*t together.
+Don't be a dick. We're all here to build cool shit together.
 
 ## The Vibe
 
-Welcome to the underground, fr34k. This ain't your corporate tech playground with endless HR speak. We're hackers, builders, dreamers, and misfits who believe AI should be for everyone - not just Big Tech™.
+Welcome to the underground, nerd. This ain't your corporate tech playground with endless HR speak. We're hackers, builders, dreamers, and misfits who believe AI should be for everyone - not just Big Tech™.
 
 **The golden rule:** Treat others how you wanna be treated. Simple as.
 
@@ -19,12 +19,15 @@ Welcome to the underground, fr34k. This ain't your corporate tech playground wit
 - **Keep it 💯** - Honest feedback > fake praise. But don't be brutal about it.
 - **Celebrate wins** - Someone shipped something sick? Hype them up!
 - **Ask questions** - There's no such thing as a dumb question, only dumb gatekeeping.
+- **Dont fake your face** - Don't change how you speak to please others, howwever, keep others in mind when speaking. There is a balance.
+- **Non-technical banter** - Understand the context and what youre saying, use common sense
 
 ### 🚫 **Not Cool, Bro**
-- **Being a toxic a-hole** - Harassment, trolling, personal attacks = instant L
+- **Appealing to emotion/prestiege** - We literally do not care, not a single % - Don't mistake hospitality with control
+- **Non Constructive Criticism without Receipts** - If youre gonna make a claim, you need the receipts and capability to back up what you say, don't just say "Its not working" Provide specifics otherwise expect to be ignored.
 - **Gatekeeping** - "Well ACTUALLY..." energy is cringe
 - **Doxxing** - Someone's personal info stays personal. Period.
-- **Discrimination** - Racism, sexism, homophobia, etc. gets you yeeted immediately
+- **Discrimination** - *Actual* Racism, homophobia, etc. gets you yeeted immediately
 - **Spam** - Nobody wants your crypto scam
 - **Stealing credit** - Give props where props are due
 
@@ -39,7 +42,7 @@ Hit up the mods:
 ### ⚖️ **Rule Break: What Happens**
 
 **Strike 1 - The Talk** 🗣️
-You said something whack. We'll let you know privately. Learn from it, move on.
+You fucked up a little. We'll let you know privately. Learn from it, move on.
 
 **Strike 2 - The Warning** ⚠️
 Repeated offenses = official warning. Cooldown period. Touch grass.
@@ -112,9 +115,9 @@ Don't f*ck it up by being toxic. Be the community member you wish you'd met when
 
 ---
 
-*"In a world of corporate AI overlords, be the open-source rebel."*
+*"In a world of corporate AI overlords, be the open-source rebel. Never conform to average, always stay looking ahead."* - The Operator, probably.
 
-**Last Updated**: February 2026
+**Last Updated**: April 2026
 **Vibes**: Immaculate
 
 Questions? Concerns? Memes? Hit us up.
