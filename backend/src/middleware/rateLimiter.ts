@@ -85,8 +85,6 @@ function getRateLimiter(req: Request): RateLimiterMemory {
 
   if (path.includes('/chat')) {
     return rateLimiters.chat;
-  } else if (path.includes('/auth') || path.includes('/login') || path.includes('/register')) {
-    return rateLimiters.auth;
   } else if (path.includes('/journal')) {
     return rateLimiters.journal;
   } else if (path.includes('/settings') || path.includes('/config') || path.includes('/personality')) {
@@ -94,6 +92,8 @@ function getRateLimiter(req: Request): RateLimiterMemory {
   } else if (path.includes('/upload')) {
     return rateLimiters.upload;
   }
+  // Note: /auth routes use the general limiter at the global level.
+  // Strict auth rate limiting (login/register) is applied per-route via endpointRateLimiter('auth').
 
   return rateLimiters.general;
 }

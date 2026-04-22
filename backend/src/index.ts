@@ -25,7 +25,7 @@ import { requestLogger } from './middleware/requestLogger';
 
 // Import routes
 import { createJournalRoutes } from './routes/journal';
-import personalityRoutes from './routes/personality';
+import { createPersonalityRoutes } from './routes/personality';
 import pluginRoutes from './routes/plugins';
 import companionRoutes, { createCompanionRoutes } from './routes/companion';
 import createChatRoutes from './routes/chat';
@@ -190,10 +190,11 @@ class LackadaisicalAIServer {
     this.app.use('/health', healthRoutesWithDeps);
 
     // Main API routes with versioning
+    const personalityRoutesWithDeps = createPersonalityRoutes(this.database);
     this.app.use(`${apiBase}/auth`, authRoutesWithDeps);
     this.app.use(`${apiBase}/chat`, chatRoutesWithDeps);
     this.app.use(`${apiBase}/journal`, createJournalRoutes(this.database));
-    this.app.use(`${apiBase}/personality`, personalityRoutes);
+    this.app.use(`${apiBase}/personality`, personalityRoutesWithDeps);
     this.app.use(`${apiBase}/plugins`, pluginRoutes);
     this.app.use(`${apiBase}/companion`, companionRoutesWithDeps);
     this.app.use(`${apiBase}/sessions`, sessionRoutesWithDeps);
@@ -203,7 +204,7 @@ class LackadaisicalAIServer {
     this.app.use('/api/auth', authRoutesWithDeps);
     this.app.use('/api/chat', chatRoutesWithDeps);
     this.app.use('/api/journal', createJournalRoutes(this.database));
-    this.app.use('/api/personality', personalityRoutes);
+    this.app.use('/api/personality', personalityRoutesWithDeps);
     this.app.use('/api/plugins', pluginRoutes);
     this.app.use('/api/companion', companionRoutesWithDeps);
     this.app.use('/api/sessions', sessionRoutesWithDeps);

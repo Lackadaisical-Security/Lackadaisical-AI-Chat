@@ -24,7 +24,8 @@ import { anomalyDetectionService } from '../services/AnomalyDetectionService';
  */
 export function createAuthRoutes(db: DatabaseService): Router {
   const router = Router();
-  const authRateLimiter = endpointRateLimiter('auth');
+  const authRateLimiter = endpointRateLimiter('auth');      // Strict: 5 per 15min (login/register)
+  const settingsRateLimiter = endpointRateLimiter('settings'); // Moderate: 10 per 5min (profile ops)
 
   /**
    * Validate email format safely — avoids ReDoS by using indexOf-based checks
@@ -43,7 +44,9 @@ export function createAuthRoutes(db: DatabaseService): Router {
   }
 
   /** Ensure the users and refresh_tokens tables exist */
+  let authTablesReady = false;
   async function ensureAuthTables(): Promise<void> {
+    if (authTablesReady) return;
     try {
       await db.executeStatement(`
         CREATE TABLE IF NOT EXISTS users (
@@ -70,12 +73,18 @@ export function createAuthRoutes(db: DatabaseService): Router {
       await db.executeStatement(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
       await db.executeStatement(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id)`);
       await db.executeStatement(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token)`);
+      authTablesReady = true;
     } catch (error) {
       logger.error('Failed to ensure auth tables:', error);
     }
   }
 
-  ensureAuthTables();
+  // Middleware to lazily ensure auth tables exist on first request
+  // (database may not be initialized when routes are created)
+  router.use(asyncHandler(async (req: Request, res: Response, next: Function) => {
+    await ensureAuthTables();
+    next();
+  }));
 
   /** Helper to extract first row from query result */
   function firstRow<T>(result: { data: T | T[] | null | undefined }): T | undefined {
@@ -194,7 +203,7 @@ export function createAuthRoutes(db: DatabaseService): Router {
   }));
 
   // POST /auth/refresh
-  router.post('/refresh', authRateLimiter, asyncHandler(async (req: Request, res: Response) => {
+  router.post('/refresh', settingsRateLimiter, asyncHandler(async (req: Request, res: Response) => {
     const { refreshToken } = req.body;
     if (!refreshToken) throw new ApiError(400, 'Refresh token is required');
 
@@ -239,7 +248,7 @@ export function createAuthRoutes(db: DatabaseService): Router {
   }));
 
   // POST /auth/logout
-  router.post('/logout', authRateLimiter, requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  router.post('/logout', settingsRateLimiter, requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user?.userId;
     if (userId) await db.executeStatement('DELETE FROM refresh_tokens WHERE user_id = ?', [userId]);
     logger.info('User logged out', { userId });
@@ -247,7 +256,7 @@ export function createAuthRoutes(db: DatabaseService): Router {
   }));
 
   // GET /auth/me
-  router.get('/me', authRateLimiter, requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  router.get('/me', settingsRateLimiter, requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user?.userId;
     if (!userId) throw new ApiError(401, 'Not authenticated');
 
@@ -260,7 +269,7 @@ export function createAuthRoutes(db: DatabaseService): Router {
   }));
 
   // POST /auth/change-password
-  router.post('/change-password', authRateLimiter, requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  router.post('/change-password', settingsRateLimiter, requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { currentPassword, newPassword } = req.body;
     const userId = req.user?.userId;
     if (!currentPassword || !newPassword) throw new ApiError(400, 'Current password and new password are required');
@@ -283,7 +292,7 @@ export function createAuthRoutes(db: DatabaseService): Router {
   }));
 
   // PUT /auth/profile — Update user profile (name, email)
-  router.put('/profile', authRateLimiter, requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  router.put('/profile', settingsRateLimiter, requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user?.userId;
     if (!userId) throw new ApiError(401, 'Not authenticated');
 

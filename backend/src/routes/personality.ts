@@ -1,14 +1,16 @@
 import { Router, Request, Response } from 'express';
-import { DatabaseService, databaseService } from '../services/DatabaseService';
+import { DatabaseService } from '../services/DatabaseService';
 import { asyncHandler, createValidationError } from '../middleware/errorHandler';
 import { PersonalityState, MoodState } from '../types';
 import { apiLogger } from '../utils/logger';
 import { config } from '../config/settings';
 
+/**
+ * Create personality routes with dependency injection.
+ * Falls back to singleton export for backward compatibility.
+ */
+export function createPersonalityRoutes(db: DatabaseService): Router {
 const router = Router();
-
-// Use the singleton database service instead of creating duplicate instances
-const db = databaseService;
 
 /**
  * GET /personality - Get current personality state
@@ -454,4 +456,10 @@ router.get('/stats', asyncHandler(async (req: Request, res: Response) => {
   }
 }));
 
-export default router; 
+return router;
+}
+
+// Default export for backward compatibility (uses late-binding singleton)
+import { databaseService } from '../services/DatabaseService';
+const defaultRouter = createPersonalityRoutes(databaseService);
+export default defaultRouter;
