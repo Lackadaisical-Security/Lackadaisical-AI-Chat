@@ -138,9 +138,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`companionName` field** — Added to UserSettings type with 'Lacky' default
 
 ### 🧪 Testing
-- **30 new security middleware tests** — Full coverage for sanitizer, headers, depth limiter, encryption
-- **3 new companion name tests** — Default name, update name, preserve name on partial settings update
-- **93+ total tests passing** — 64 backend + 29 frontend
+- **47 new tests** — AnomalyDetectionService (25), SecurityAuditService (13), Validation helpers (9)
+- **140 total tests passing** — 111 backend + 29 frontend
+- **Live system testing** — All API routes verified via curl against running server
+
+### 🐛 Bug Fixes (RC1 Hardening)
+- **Auth tables race condition** — `ensureAuthTables()` now lazy-initializes on first request instead of at route creation time (before DB is ready)
+- **Refresh token UNIQUE constraint collision** — Added `crypto.randomBytes` jti (JWT ID) to refresh tokens to prevent identical tokens when issued within the same second
+- **Journal schema mismatch** — `initDatabase.ts` created old schema (`entry_text`, `mood_snapshot`) while `DatabaseService` expected new schema (`title`, `content`, `privacy_level`). Fixed table creation and added migration for existing databases
+- **Personality routes uninitialized DB** — Converted from static singleton to factory function with dependency injection, matching the pattern used by all other routes
+- **Rate limiter double-counting** — Global middleware auto-routed `/auth/*` paths to strict auth limiter (5/15min), causing `/me`, `/profile`, `/logout` to be blocked. Now only login/register use strict limiter; other auth endpoints use settings limiter
+- **Env variable name mismatches** — 9 variables in `env.example` used different names than `settings.ts` read (e.g., `AI_STREAM_MODE` vs `STREAM_MODE`, `AI_MODEL_OPENAI` vs `OPENAI_MODEL`). Settings now accepts both names for backward compatibility
 
 ## [2.0.0-alpha.2] - 2026-04-02
 

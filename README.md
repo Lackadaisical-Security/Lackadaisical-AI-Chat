@@ -9,7 +9,7 @@
 
 Welcome to **Lackadaisical AI Chat** - an enterprise-grade, open-source AI companion that runs entirely on your computer with a complete Memory Management System, Code IDE, Traffic Emulator, and more! Meet **Lacky**, your personal AI friend who remembers your conversations, understands your emotions, and grows with you over time.
 
-**🚀 RC1 Status**: This release is feature-complete for the core experience. All major systems are functional and tested (93+ tests). User accounts, username management, and enhanced Gemma 4 multimodal support (vision + audio) are now included.
+**🚀 RC1 Status**: This release is feature-complete for the core experience. All major systems are functional and tested (140 tests passing — 111 backend + 29 frontend). User accounts, username management, and enhanced Gemma 4 multimodal support (vision + audio) are now included.
 
 Unlike cloud-based AI services, **everything stays private on your machine**. No data collection, no privacy concerns - just you and your AI companion with persistent memory.
 

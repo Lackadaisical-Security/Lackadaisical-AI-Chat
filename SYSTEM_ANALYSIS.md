@@ -3,7 +3,7 @@
 **Date:** April 2026  
 **Version Analyzed:** 2.0.0-rc1  
 **Codebase:** ~37,000 lines (27K backend + 10K frontend) across 98 source files  
-**Tests:** 93 passing (64 backend + 29 frontend)
+**Tests:** 140 passing (111 backend + 29 frontend)
 
 ---
 
@@ -26,20 +26,29 @@
 
 ---
 
-## ✅ Bugs Found & Fixed in This Session
+## ✅ Bugs Found & Fixed
+
+### Live System Testing Session (April 22, 2026)
 
 | # | Severity | File | Issue | Fix |
 |---|----------|------|-------|-----|
-| 1 | **High** | `backend/src/index.ts` | Health endpoint hardcoded Ollama as `'up'` without checking | Now actually pings `GET /api/tags` with 3s timeout |
-| 2 | **Medium** | `backend/src/index.ts` | `response_time_ms` used `Date.now() % 100` (random number, not latency) | Now measures actual request processing time |
-| 3 | **Medium** | `frontend/src/components/Chat/ChatInterface.tsx` | Error toast used `alert()` — blocking the entire UI | Now uses `react-hot-toast` (already a dependency) |
+| 1 | **Critical** | `backend/src/routes/auth.ts` | Auth tables (`users`, `refresh_tokens`) created before DB initialized — race condition | Lazy initialization via middleware on first auth request |
+| 2 | **Critical** | `backend/src/middleware/auth.ts` | `generateRefreshToken()` produced identical JWTs within same second → UNIQUE constraint violation | Added `crypto.randomBytes(16)` jti to each token |
+| 3 | **Critical** | `backend/src/utils/initDatabase.ts` | Journal table schema had old columns (`entry_text`, `mood_snapshot`) but code expected new columns (`title`, `content`, `privacy_level`) | Updated CREATE TABLE + added migration for existing DBs |
+| 4 | **High** | `backend/src/routes/personality.ts` | Used uninitialized `databaseService` singleton — all personality endpoints returned 500 | Converted to factory function with dependency injection |
+| 5 | **High** | `backend/src/middleware/rateLimiter.ts` | Global rate limiter auto-routed `/auth/*` to strict 5/15min limiter, blocking `/me`, `/profile`, `/logout` after login | Removed `/auth` from global auto-routing; strict limiter only applied per-route to login/register |
+| 6 | **Medium** | `backend/src/config/settings.ts` | 9 env variable names in `env.example` didn't match what `settings.ts` read (e.g., `AI_STREAM_MODE` vs `STREAM_MODE`) | Settings now reads both naming conventions |
 
-### Bugs Fixed in Previous Session
-| # | Severity | File | Issue |
-|---|----------|------|-------|
-| 4 | **High** | `frontend/src/services/api.ts` | `healthCheck()` hit `/api/health` (404) instead of `/health` |
-| 5 | **Medium** | `frontend/src/services/api.ts` | 401 interceptor redirected to `/login` (no such route) |
-| 6 | **Low** | `backend/src/routes/auth.ts` | Email validation used `includes('@')` — accepted `"@"` as valid |
+### Previous Sessions
+
+| # | Severity | File | Issue | Fix |
+|---|----------|------|-------|-----|
+| 7 | **High** | `backend/src/index.ts` | Health endpoint hardcoded Ollama as `'up'` without checking | Now actually pings `GET /api/tags` with 3s timeout |
+| 8 | **Medium** | `backend/src/index.ts` | `response_time_ms` used `Date.now() % 100` (random number, not latency) | Now measures actual request processing time |
+| 9 | **Medium** | `frontend/src/components/Chat/ChatInterface.tsx` | Error toast used `alert()` — blocking the entire UI | Now uses `react-hot-toast` (already a dependency) |
+| 10 | **High** | `frontend/src/services/api.ts` | `healthCheck()` hit `/api/health` (404) instead of `/health` | Fixed to `/health` |
+| 11 | **Medium** | `frontend/src/services/api.ts` | 401 interceptor redirected to `/login` (no such route) | Clears tokens without redirect |
+| 12 | **Low** | `backend/src/routes/auth.ts` | Email validation used `includes('@')` — accepted `"@"` as valid | indexOf-based validation with domain/TLD checks |
 
 ---
 
