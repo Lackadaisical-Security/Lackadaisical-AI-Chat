@@ -55,6 +55,11 @@ cd Lackadaisical-AI-Chat
 
 ### 2. Install Dependencies
 ```bash
+# Option A: Use the setup script (recommended — handles everything)
+chmod +x setup-lackadaisical-ai.sh
+./setup-lackadaisical-ai.sh
+
+# Option B: Install manually
 # Install root dependencies
 npm install
 

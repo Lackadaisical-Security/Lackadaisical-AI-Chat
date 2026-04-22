@@ -6,6 +6,15 @@ process.env.MODE = 'test';
 process.env.DEV = 'false';
 process.env.PROD = 'false';
 
+// Ensure pending timers/promises don't leak between tests
+afterEach(() => {
+  jest.clearAllTimers();
+});
+
+afterAll(() => {
+  jest.restoreAllMocks();
+});
+
 // Mock window.matchMedia for tests
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

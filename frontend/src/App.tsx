@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './components/ui/ThemeProvider';
+import ErrorBoundary from './components/ui/ErrorBoundary';
 import ChatInterface from './components/Chat/ChatInterface';
 import JournalInterface from './components/Journal/JournalInterface';
 import PluginInterface from './components/Plugins/PluginInterface';
@@ -26,23 +27,24 @@ const queryClient = new QueryClient({
 
 const App: React.FC = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <Router>
-          <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)]">
-            <Routes>
-              <Route path="/" element={<Layout />}>
-                <Route index element={<CompanionInterface />} />
-                <Route path="companion" element={<CompanionInterface />} />
-                <Route path="chat" element={<ChatInterface />} />
-                <Route path="sessions" element={<SessionsInterface />} />
-                <Route path="ide" element={<IDEWorkspace />} />
-                <Route path="emulator" element={<EmulatorPanel />} />
-                <Route path="journal" element={<JournalInterface />} />
-                <Route path="plugins" element={<PluginInterface />} />
-                <Route path="settings" element={<SettingsInterface />} />
-              </Route>
-            </Routes>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <Router>
+            <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)]">
+              <Routes>
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<CompanionInterface />} />
+                  <Route path="companion" element={<CompanionInterface />} />
+                  <Route path="chat" element={<ErrorBoundary><ChatInterface /></ErrorBoundary>} />
+                  <Route path="sessions" element={<ErrorBoundary><SessionsInterface /></ErrorBoundary>} />
+                  <Route path="ide" element={<ErrorBoundary><IDEWorkspace /></ErrorBoundary>} />
+                  <Route path="emulator" element={<ErrorBoundary><EmulatorPanel /></ErrorBoundary>} />
+                  <Route path="journal" element={<ErrorBoundary><JournalInterface /></ErrorBoundary>} />
+                  <Route path="plugins" element={<ErrorBoundary><PluginInterface /></ErrorBoundary>} />
+                  <Route path="settings" element={<ErrorBoundary><SettingsInterface /></ErrorBoundary>} />
+                </Route>
+              </Routes>
             
             {/* Toast notifications */}
             <Toaster
@@ -73,6 +75,7 @@ const App: React.FC = () => {
         </Router>
       </ThemeProvider>
     </QueryClientProvider>
+  </ErrorBoundary>
   );
 };
 

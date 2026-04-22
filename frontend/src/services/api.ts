@@ -46,9 +46,11 @@ class ApiService {
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
-          // Handle unauthorized
+          // Clear auth tokens — accounts are optional so don't redirect
           localStorage.removeItem('auth_token');
-          window.location.href = '/login';
+          localStorage.removeItem('refresh_token');
+          // Notify other components (e.g. Layout sidebar) via storage event
+          window.dispatchEvent(new Event('storage'));
         }
         return Promise.reject(error);
       }
@@ -395,9 +397,45 @@ class ApiService {
     return response.data;
   }
 
-  // Health check
-  async healthCheck(): Promise<ApiResponse<any>> {
-    const response = await this.api.get('/api/health');
+  // Health check (mounted at /health, outside /api prefix)
+  async healthCheck(): Promise<any> {
+    const response = await this.api.get('/health');
+    return response.data;
+  }
+
+  // Auth endpoints
+  async register(email: string, password: string, name?: string): Promise<ApiResponse<any>> {
+    const response = await this.api.post('/api/v1/auth/register', { email, password, name });
+    return response.data;
+  }
+
+  async login(email: string, password: string): Promise<ApiResponse<any>> {
+    const response = await this.api.post('/api/v1/auth/login', { email, password });
+    return response.data;
+  }
+
+  async logout(): Promise<ApiResponse<any>> {
+    const response = await this.api.post('/api/v1/auth/logout');
+    return response.data;
+  }
+
+  async getProfile(): Promise<ApiResponse<any>> {
+    const response = await this.api.get('/api/v1/auth/me');
+    return response.data;
+  }
+
+  async updateProfile(updates: { name?: string; email?: string }): Promise<ApiResponse<any>> {
+    const response = await this.api.put('/api/v1/auth/profile', updates);
+    return response.data;
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<ApiResponse<any>> {
+    const response = await this.api.post('/api/v1/auth/change-password', { currentPassword, newPassword });
+    return response.data;
+  }
+
+  async refreshToken(refreshToken: string): Promise<ApiResponse<any>> {
+    const response = await this.api.post('/api/v1/auth/refresh', { refreshToken });
     return response.data;
   }
 

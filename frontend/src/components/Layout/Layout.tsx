@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { QuickThemeToggle } from '../ui/ThemeSwitcher';
-import { Settings, Code2, Globe, History } from 'lucide-react';
+import { Settings, Code2, Globe, History, User } from 'lucide-react';
+import api from '../../services/api';
+import useConnectionHealth from '../../hooks/useConnectionHealth';
 
 const navLinks = [
   { to: '/chat', label: 'Chat', icon: '💬' },
@@ -15,6 +17,36 @@ const navLinks = [
 
 const Layout: React.FC = () => {
   const location = useLocation();
+  const [userName, setUserName] = useState<string | null>(null);
+  const connection = useConnectionHealth(30000);
+
+  useEffect(() => {
+    // Try to load user profile if authenticated
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      api.getProfile().then(res => {
+        if (res.success && res.data?.user) {
+          setUserName(res.data.user.name);
+        }
+      }).catch(() => { /* not logged in */ });
+    }
+
+    // Listen for storage changes (login/logout from other components)
+    const handleStorage = () => {
+      const t = localStorage.getItem('auth_token');
+      if (!t) {
+        setUserName(null);
+      } else {
+        api.getProfile().then(res => {
+          if (res.success && res.data?.user) {
+            setUserName(res.data.user.name);
+          }
+        }).catch(() => setUserName(null));
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
   
   return (
     <div className="flex min-h-screen bg-[var(--color-background)] text-[var(--color-text)]">
@@ -64,10 +96,29 @@ const Layout: React.FC = () => {
         {/* Footer */}
         <div className="p-4 border-t border-[var(--color-border)]">
           <div className="text-xs text-[var(--color-textMuted)] text-center">
-            <div className="mb-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full inline-block mr-2"></div>
-              AI Connected
+            {userName && (
+              <div className="mb-2 flex items-center justify-center gap-1.5">
+                <User className="w-3 h-3" />
+                <span className="font-medium text-[var(--color-text)]">{userName}</span>
+              </div>
+            )}
+            <div className="mb-1">
+              <div className={`w-2 h-2 rounded-full inline-block mr-2 ${
+                connection.isConnected ? 'bg-green-500' : 'bg-red-500 animate-pulse'
+              }`}></div>
+              {connection.isConnected ? 'Backend Connected' : 'Disconnected'}
             </div>
+            {connection.isConnected && (
+              <div className="mb-1">
+                <div className={`w-2 h-2 rounded-full inline-block mr-2 ${
+                  connection.ollamaAvailable ? 'bg-green-500' : 'bg-yellow-500'
+                }`}></div>
+                {connection.ollamaAvailable ? 'Ollama Ready' : 'Ollama Offline'}
+              </div>
+            )}
+            {connection.latencyMs !== null && (
+              <div className="text-[10px] mb-1 opacity-60">{connection.latencyMs}ms</div>
+            )}
             <div>v2.0.0-rc1</div>
           </div>
         </div>

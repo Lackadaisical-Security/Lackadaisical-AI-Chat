@@ -38,6 +38,8 @@ const ConfigSchema = z.object({
       ollama: z.object({
         default: z.string().default('gemma3:4b'),
         uncensored: z.string().default('lackadaisical-uncensored:latest'),
+        vision: z.string().default('gemma4:e4b'),
+        audio: z.string().default('gemma4:e4b'),  // Gemma 4 supports audio/voice input
         available: z.array(z.string()).default([
           'gemma3:4b', 'gemma4:e4b',
           'lackadaisical-assistant:latest', 'lackadaisical-uncensored:latest',
@@ -143,11 +145,13 @@ function parseConfig(): AppConfig {
     
     ai: {
       primaryProvider: process.env.AI_PRIMARY_PROVIDER || 'ollama',
-      streamMode: process.env.STREAM_MODE || 'sse',
+      streamMode: process.env.AI_STREAM_MODE || process.env.STREAM_MODE || 'sse',
       models: {
         ollama: {
           default: process.env.OLLAMA_DEFAULT_MODEL || 'gemma3:4b',
           uncensored: process.env.OLLAMA_UNCENSORED_MODEL || 'lackadaisical-uncensored:latest',
+          vision: process.env.OLLAMA_VISION_MODEL || 'gemma4:e4b',
+          audio: process.env.OLLAMA_AUDIO_MODEL || 'gemma4:e4b',
           available: (process.env.OLLAMA_AVAILABLE_MODELS?.split(',') || [
             'gemma3:4b', 'gemma4:e4b',
             'lackadaisical-assistant:latest', 'lackadaisical-uncensored:latest',
@@ -155,10 +159,10 @@ function parseConfig(): AppConfig {
             'mistral:latest', 'codellama:latest',
           ]),
         },
-        openai: process.env.OPENAI_MODEL || 'gpt-4',
-        anthropic: process.env.ANTHROPIC_MODEL || 'claude-3-sonnet-20240229',
-        google: process.env.GOOGLE_MODEL || 'gemini-pro',
-        xai: process.env.XAI_MODEL || 'grok-beta',
+        openai: process.env.AI_MODEL_OPENAI || process.env.OPENAI_MODEL || 'gpt-4',
+        anthropic: process.env.AI_MODEL_ANTHROPIC || process.env.ANTHROPIC_MODEL || 'claude-3-sonnet-20240229',
+        google: process.env.AI_MODEL_GOOGLE || process.env.GOOGLE_MODEL || 'gemini-pro',
+        xai: process.env.AI_MODEL_XAI || process.env.XAI_MODEL || 'grok-beta',
       },
       apiKeys: {
         openai: process.env.OPENAI_API_KEY,
@@ -178,8 +182,8 @@ function parseConfig(): AppConfig {
     personality: {
       name: process.env.PERSONALITY_NAME || 'Lacky',
       baseTraits: process.env.PERSONALITY_BASE_TRAITS?.split(',') || ['friendly', 'curious', 'helpful', 'witty'],
-      moodVolatility: parseFloat(process.env.MOOD_VOLATILITY || '0.3'),
-      empathyThreshold: parseFloat(process.env.EMPATHY_THRESHOLD || '0.7'),
+      moodVolatility: parseFloat(process.env.PERSONALITY_MOOD_VOLATILITY || process.env.MOOD_VOLATILITY || '0.3'),
+      empathyThreshold: parseFloat(process.env.PERSONALITY_EMPATHY_THRESHOLD || process.env.EMPATHY_THRESHOLD || '0.7'),
     },
     
     plugins: {
@@ -212,8 +216,8 @@ function parseConfig(): AppConfig {
     },
     
     webSearch: {
-      timeout: parseInt(process.env.WEBSEARCH_TIMEOUT || '30000', 10),
-      maxResults: parseInt(process.env.WEBSEARCH_MAX_RESULTS || '10', 10),
+      timeout: parseInt(process.env.WEB_SEARCH_TIMEOUT || process.env.WEBSEARCH_TIMEOUT || '30000', 10),
+      maxResults: parseInt(process.env.WEB_SEARCH_MAX_RESULTS || process.env.WEBSEARCH_MAX_RESULTS || '10', 10),
     },
     
     journal: {

@@ -150,14 +150,19 @@ export async function initializeDatabase(): Promise<Database.Database> {
       );
       
       CREATE TABLE IF NOT EXISTS journal_entries (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        session_id TEXT,
-        entry_text TEXT NOT NULL,
-        mood_snapshot TEXT DEFAULT '{}',
-        sentiment_analysis TEXT DEFAULT '{}',
-        reflective_prompts TEXT DEFAULT '[]',
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL DEFAULT '',
+        content TEXT NOT NULL,
+        tags TEXT DEFAULT '[]',
+        mood TEXT DEFAULT 'neutral',
+        session_id TEXT DEFAULT 'default',
+        privacy_level TEXT DEFAULT 'private',
+        word_count INTEGER DEFAULT 0,
+        reading_time_minutes INTEGER DEFAULT 0,
+        themes TEXT DEFAULT '[]',
+        emotions TEXT DEFAULT '[]',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        tags TEXT DEFAULT '[]'
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
       
       CREATE TABLE IF NOT EXISTS plugin_states (
@@ -278,6 +283,53 @@ export async function initializeDatabase(): Promise<Database.Database> {
       // Update existing NULL values
       db.exec("UPDATE conversations SET sentiment_score = 0.0 WHERE sentiment_score IS NULL");
       db.exec("UPDATE conversations SET context_tags = '[]' WHERE context_tags IS NULL");
+
+      // Check and migrate journal_entries table for new schema
+      const journalColumns = db.prepare("PRAGMA table_info(journal_entries)").all();
+      const journalColumnNames = journalColumns.map((col: any) => col.name);
+
+      if (journalColumnNames.includes('entry_text') && !journalColumnNames.includes('title')) {
+        // Old schema detected — migrate to new schema
+        console.log('[DATABASE] Migrating journal_entries to new schema...');
+        db.exec(`
+          ALTER TABLE journal_entries RENAME TO journal_entries_old;
+          CREATE TABLE journal_entries (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL DEFAULT '',
+            content TEXT NOT NULL,
+            tags TEXT DEFAULT '[]',
+            mood TEXT DEFAULT 'neutral',
+            session_id TEXT DEFAULT 'default',
+            privacy_level TEXT DEFAULT 'private',
+            word_count INTEGER DEFAULT 0,
+            reading_time_minutes INTEGER DEFAULT 0,
+            themes TEXT DEFAULT '[]',
+            emotions TEXT DEFAULT '[]',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          );
+          INSERT INTO journal_entries (id, content, tags, session_id, created_at)
+            SELECT CAST(id AS TEXT), entry_text, tags, session_id, created_at FROM journal_entries_old;
+          DROP TABLE journal_entries_old;
+        `);
+        console.log('[DATABASE] Journal entries migrated successfully');
+      } else if (!journalColumnNames.includes('title') && !journalColumnNames.includes('entry_text')) {
+        // Table empty or doesn't exist — will be created with new schema on next restart
+      } else if (!journalColumnNames.includes('privacy_level')) {
+        db.exec("ALTER TABLE journal_entries ADD COLUMN privacy_level TEXT DEFAULT 'private'");
+      }
+      if (journalColumnNames.length > 0 && !journalColumnNames.includes('word_count') && journalColumnNames.includes('title')) {
+        db.exec("ALTER TABLE journal_entries ADD COLUMN word_count INTEGER DEFAULT 0");
+      }
+      if (journalColumnNames.length > 0 && !journalColumnNames.includes('reading_time_minutes') && journalColumnNames.includes('title')) {
+        db.exec("ALTER TABLE journal_entries ADD COLUMN reading_time_minutes INTEGER DEFAULT 0");
+      }
+      if (journalColumnNames.length > 0 && !journalColumnNames.includes('themes') && journalColumnNames.includes('title')) {
+        db.exec("ALTER TABLE journal_entries ADD COLUMN themes TEXT DEFAULT '[]'");
+      }
+      if (journalColumnNames.length > 0 && !journalColumnNames.includes('emotions') && journalColumnNames.includes('title')) {
+        db.exec("ALTER TABLE journal_entries ADD COLUMN emotions TEXT DEFAULT '[]'");
+      }
       
       console.log('[DATABASE] Schema migration completed successfully');
     } catch (migrationError) {

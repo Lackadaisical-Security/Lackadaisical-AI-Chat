@@ -3,6 +3,20 @@ import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import App from '../src/App';
 
+// Mock the API service to prevent real HTTP calls and timer leaks
+jest.mock('../src/services/api', () => ({
+  __esModule: true,
+  default: {
+    healthCheck: jest.fn().mockResolvedValue({
+      health: {
+        status: 'healthy',
+        services: { database: 'up', ai_providers: { ollama: 'down' } },
+      },
+    }),
+    getProfile: jest.fn().mockRejectedValue(new Error('Not authenticated')),
+  },
+}));
+
 // Mock the necessary components to avoid routing issues in tests
 jest.mock('../src/components/Companion/CompanionInterface', () => {
   return function MockCompanionInterface() {
@@ -56,6 +70,7 @@ describe('App', () => {
 
   it('shows AI connection status', () => {
     render(<App />);
-    expect(screen.getByText('AI Connected')).toBeInTheDocument();
+    // Initial state shows "Disconnected" until health check completes
+    expect(screen.getByText('Disconnected')).toBeInTheDocument();
   });
 });

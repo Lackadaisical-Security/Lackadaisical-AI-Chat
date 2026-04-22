@@ -1,4 +1,4 @@
-# 🔧 Troubleshooting Guide - v2-Alpha
+# 🔧 Troubleshooting Guide - v2.0.0-rc1
 
 Having issues with Lackadaisical AI Chat? This guide will help you resolve common problems and get your AI companion running smoothly.
 
@@ -6,28 +6,45 @@ Having issues with Lackadaisical AI Chat? This guide will help you resolve commo
 
 ### First Steps (Solve 80% of Issues)
 
-1. **Restart Everything**
+1. **Run the Setup Script (if you haven't)**
    ```bash
-   # Stop all processes (Ctrl+C in terminals)
-   # Then restart:
-   npm run start
-   ```
-
-2. **Check if Ollama is Running** (if using local AI)
-   ```bash
-   # Windows PowerShell
-   ollama list
+   # Windows:
+   setup-lackadaisical-ai.bat
    
-   # If not installed, visit: https://ollama.com/download
+   # Mac/Linux:
+   ./setup-lackadaisical-ai.sh
+   ```
+   This ensures dependencies, directories, `.env`, and the database are all set up.
+
+2. **Restart Everything**
+   ```bash
+   # Windows: use stop + start scripts
+   stop-lackadaisical-ai.bat
+   start-lackadaisical-ai.bat
+   
+   # Mac/Linux:
+   # Stop all processes (Ctrl+C in terminals), then restart:
+   npm run dev
    ```
 
-3. **Verify Node.js Version**
+3. **Check if Ollama is Running** (if using local AI)
+   ```bash
+   # Check status
+   curl http://localhost:11434/api/tags
+   
+   # If not running, start it
+   ollama serve
+   
+   # If not installed, visit: https://ollama.ai/
+   ```
+
+4. **Verify Node.js Version**
    ```bash
    node --version
-   # Should be 16+ (recommended: 18+)
+   # Must be v18+ 
    ```
 
-4. **Clear Cache and Reinstall**
+5. **Clear Cache and Reinstall**
    ```bash
    # Clean npm cache
    npm cache clean --force
@@ -35,7 +52,7 @@ Having issues with Lackadaisical AI Chat? This guide will help you resolve commo
    # Remove node_modules
    rm -rf node_modules frontend/node_modules backend/node_modules
    
-   # Reinstall everything
+   # Re-run setup script, or reinstall manually:
    npm install
    cd backend && npm install && cd ..
    cd frontend && npm install && cd ..

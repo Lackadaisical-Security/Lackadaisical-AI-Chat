@@ -11,6 +11,7 @@ import { ChatRequest, ChatResponse, Conversation, StreamChunk } from '../types';
 import { aiLogger, apiLogger } from '../utils/logger';
 import { config } from '../config/settings';
 import { v4 as uuidv4 } from 'uuid';
+import { isValidSessionId } from '../services/SecurityAuditService';
 
 // Import new services
 import { webSearchService } from '../services/WebSearchService';
@@ -56,6 +57,11 @@ export default function createChatRoutes(db: DatabaseService, aiService: AIServi
 
   if (body.session_id && typeof body.session_id !== 'string') {
     throw createValidationError('Session ID must be a string');
+  }
+
+  // Validate session ID format to prevent injection
+  if (body.session_id && !isValidSessionId(body.session_id)) {
+    throw createValidationError('Session ID contains invalid characters (alphanumeric, hyphens, underscores only, max 128 chars)');
   }
 
   return {

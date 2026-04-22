@@ -15,6 +15,8 @@ import { ApiError } from '../utils/ApiError';
 import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/settings';
+import { securityAuditService } from '../services/SecurityAuditService';
+import { anomalyDetectionService } from '../services/AnomalyDetectionService';
 
 /**
  * Create auth routes with database-backed user storage.
@@ -22,10 +24,29 @@ import { config } from '../config/settings';
  */
 export function createAuthRoutes(db: DatabaseService): Router {
   const router = Router();
-  const authRateLimiter = endpointRateLimiter('auth');
+  const authRateLimiter = endpointRateLimiter('auth');      // Strict: 5 per 15min (login/register)
+  const settingsRateLimiter = endpointRateLimiter('settings'); // Moderate: 10 per 5min (profile ops)
+
+  /**
+   * Validate email format safely — avoids ReDoS by using indexOf-based checks
+   * instead of regex with unbounded quantifiers on user input.
+   */
+  function isValidEmail(email: string): boolean {
+    if (typeof email !== 'string') return false;
+    if (email.length > 254) return false; // RFC 5321 max length
+    const atIndex = email.indexOf('@');
+    if (atIndex < 1) return false; // must have local part
+    const dotIndex = email.lastIndexOf('.');
+    if (dotIndex <= atIndex + 1) return false; // must have domain with dot
+    if (dotIndex >= email.length - 1) return false; // must have TLD
+    if (email.includes(' ')) return false; // no spaces
+    return true;
+  }
 
   /** Ensure the users and refresh_tokens tables exist */
+  let authTablesReady = false;
   async function ensureAuthTables(): Promise<void> {
+    if (authTablesReady) return;
     try {
       await db.executeStatement(`
         CREATE TABLE IF NOT EXISTS users (
@@ -52,12 +73,18 @@ export function createAuthRoutes(db: DatabaseService): Router {
       await db.executeStatement(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
       await db.executeStatement(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id)`);
       await db.executeStatement(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token)`);
+      authTablesReady = true;
     } catch (error) {
       logger.error('Failed to ensure auth tables:', error);
     }
   }
 
-  ensureAuthTables();
+  // Middleware to lazily ensure auth tables exist on first request
+  // (database may not be initialized when routes are created)
+  router.use(asyncHandler(async (req: Request, res: Response, next: Function) => {
+    await ensureAuthTables();
+    next();
+  }));
 
   /** Helper to extract first row from query result */
   function firstRow<T>(result: { data: T | T[] | null | undefined }): T | undefined {
@@ -70,6 +97,9 @@ export function createAuthRoutes(db: DatabaseService): Router {
   router.post('/register', authRateLimiter, asyncHandler(async (req: Request, res: Response) => {
     const { email, password, name } = req.body;
     if (!email || !password) throw new ApiError(400, 'Email and password are required');
+    if (!isValidEmail(email)) {
+      throw new ApiError(400, 'Valid email address is required');
+    }
     if (password.length < 8) throw new ApiError(400, 'Password must be at least 8 characters');
 
     const existing = firstRow(await db.executeQuery<{ id: string }>('SELECT id FROM users WHERE email = ?', [email]));
@@ -106,15 +136,41 @@ export function createAuthRoutes(db: DatabaseService): Router {
   // POST /auth/login
   router.post('/login', authRateLimiter, asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
+    const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
     if (!email || !password) throw new ApiError(400, 'Email and password are required');
 
     const user = firstRow(await db.executeQuery<{
       id: string; email: string; name: string; password_hash: string; role: string;
     }>('SELECT id, email, name, password_hash, role FROM users WHERE email = ?', [email]));
 
-    if (!user) throw new ApiError(401, 'Invalid email or password');
+    if (!user) {
+      // Audit failed login attempt
+      securityAuditService.log({
+        event_type: 'auth.failed_login',
+        actor_ip: clientIp,
+        resource: 'auth',
+        action: 'login',
+        outcome: 'failure',
+        details: { reason: 'user_not_found' },
+      });
+      anomalyDetectionService.trackAuthFailure(clientIp, email);
+      throw new ApiError(401, 'Invalid email or password');
+    }
     const valid = await comparePassword(password, user.password_hash);
-    if (!valid) throw new ApiError(401, 'Invalid email or password');
+    if (!valid) {
+      // Audit failed login attempt
+      securityAuditService.log({
+        event_type: 'auth.failed_login',
+        actor_ip: clientIp,
+        actor_user_id: user.id,
+        resource: 'auth',
+        action: 'login',
+        outcome: 'failure',
+        details: { reason: 'invalid_password' },
+      });
+      anomalyDetectionService.trackAuthFailure(clientIp, email);
+      throw new ApiError(401, 'Invalid email or password');
+    }
 
     const accessToken = generateToken(user.id, email, user.role as 'user' | 'admin');
     const refreshToken = generateRefreshToken(user.id);
@@ -124,6 +180,16 @@ export function createAuthRoutes(db: DatabaseService): Router {
       [user.id, refreshToken, expiresAt]
     );
     await db.executeStatement('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?', [user.id]);
+
+    // Audit successful login
+    securityAuditService.log({
+      event_type: 'auth.login',
+      actor_ip: clientIp,
+      actor_user_id: user.id,
+      resource: 'auth',
+      action: 'login',
+      outcome: 'success',
+    });
 
     logger.info('User logged in', { userId: user.id, email });
     res.json({
@@ -137,7 +203,7 @@ export function createAuthRoutes(db: DatabaseService): Router {
   }));
 
   // POST /auth/refresh
-  router.post('/refresh', authRateLimiter, asyncHandler(async (req: Request, res: Response) => {
+  router.post('/refresh', settingsRateLimiter, asyncHandler(async (req: Request, res: Response) => {
     const { refreshToken } = req.body;
     if (!refreshToken) throw new ApiError(400, 'Refresh token is required');
 
@@ -182,7 +248,7 @@ export function createAuthRoutes(db: DatabaseService): Router {
   }));
 
   // POST /auth/logout
-  router.post('/logout', authRateLimiter, requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  router.post('/logout', settingsRateLimiter, requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user?.userId;
     if (userId) await db.executeStatement('DELETE FROM refresh_tokens WHERE user_id = ?', [userId]);
     logger.info('User logged out', { userId });
@@ -190,7 +256,7 @@ export function createAuthRoutes(db: DatabaseService): Router {
   }));
 
   // GET /auth/me
-  router.get('/me', authRateLimiter, requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  router.get('/me', settingsRateLimiter, requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user?.userId;
     if (!userId) throw new ApiError(401, 'Not authenticated');
 
@@ -203,7 +269,7 @@ export function createAuthRoutes(db: DatabaseService): Router {
   }));
 
   // POST /auth/change-password
-  router.post('/change-password', authRateLimiter, requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  router.post('/change-password', settingsRateLimiter, requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { currentPassword, newPassword } = req.body;
     const userId = req.user?.userId;
     if (!currentPassword || !newPassword) throw new ApiError(400, 'Current password and new password are required');
@@ -223,6 +289,86 @@ export function createAuthRoutes(db: DatabaseService): Router {
 
     logger.info('Password changed', { userId });
     res.json({ success: true, message: 'Password changed successfully. Please log in again.' });
+  }));
+
+  // PUT /auth/profile — Update user profile (name, email)
+  router.put('/profile', settingsRateLimiter, requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user?.userId;
+    if (!userId) throw new ApiError(401, 'Not authenticated');
+
+    const { name, email } = req.body;
+    if (!name && !email) throw new ApiError(400, 'At least one of name or email is required');
+
+    const user = firstRow(await db.executeQuery<{ id: string; email: string; name: string; role: string }>(
+      'SELECT id, email, name, role FROM users WHERE id = ?', [userId]
+    ));
+    if (!user) throw new ApiError(404, 'User not found');
+
+    // Validate name
+    if (name !== undefined) {
+      if (typeof name !== 'string' || name.trim().length === 0) {
+        throw new ApiError(400, 'Name must be a non-empty string');
+      }
+      if (name.trim().length > 50) {
+        throw new ApiError(400, 'Name must be 50 characters or fewer');
+      }
+    }
+
+    // Validate email uniqueness if changing
+    if (email !== undefined && email !== user.email) {
+      if (!isValidEmail(email)) {
+        throw new ApiError(400, 'Valid email address is required');
+      }
+      const existingEmail = firstRow(await db.executeQuery<{ id: string }>(
+        'SELECT id FROM users WHERE email = ? AND id != ?', [email, userId]
+      ));
+      if (existingEmail) throw new ApiError(409, 'Email is already in use by another account');
+    }
+
+    // Build update query dynamically
+    const updates: string[] = [];
+    const params: any[] = [];
+
+    if (name !== undefined) {
+      updates.push('name = ?');
+      params.push(name.trim());
+    }
+    if (email !== undefined) {
+      updates.push('email = ?');
+      params.push(email.trim());
+    }
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+    params.push(userId);
+
+    await db.executeStatement(
+      `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
+      params
+    );
+
+    // Return updated profile
+    const updated = firstRow(await db.executeQuery<{
+      id: string; email: string; name: string; role: string; created_at: string;
+    }>('SELECT id, email, name, role, created_at FROM users WHERE id = ?', [userId]));
+
+    if (!updated) {
+      logger.error('Critical: User disappeared after UPDATE — possible race condition', { userId });
+      throw new ApiError(404, 'User not found after update');
+    }
+
+    logger.info('User profile updated', { userId, updatedFields: Object.keys(req.body) });
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: updated.id,
+          email: updated.email,
+          name: updated.name,
+          role: updated.role,
+          createdAt: updated.created_at
+        }
+      },
+      message: 'Profile updated successfully'
+    });
   }));
 
   return router;

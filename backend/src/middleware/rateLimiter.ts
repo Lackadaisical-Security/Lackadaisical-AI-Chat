@@ -3,6 +3,7 @@ import { RateLimiterMemory, RateLimiterRes } from 'rate-limiter-flexible';
 import { securityLogger as logger } from '../utils/logger';
 import { createRateLimitError } from './errorHandler';
 import { config } from '../config/settings';
+import { anomalyDetectionService } from '../services/AnomalyDetectionService';
 
 // Rate limiter configurations
 const rateLimiters = {
@@ -84,8 +85,6 @@ function getRateLimiter(req: Request): RateLimiterMemory {
 
   if (path.includes('/chat')) {
     return rateLimiters.chat;
-  } else if (path.includes('/auth') || path.includes('/login') || path.includes('/register')) {
-    return rateLimiters.auth;
   } else if (path.includes('/journal')) {
     return rateLimiters.journal;
   } else if (path.includes('/settings') || path.includes('/config') || path.includes('/personality')) {
@@ -93,6 +92,8 @@ function getRateLimiter(req: Request): RateLimiterMemory {
   } else if (path.includes('/upload')) {
     return rateLimiters.upload;
   }
+  // Note: /auth routes use the general limiter at the global level.
+  // Strict auth rate limiting (login/register) is applied per-route via endpointRateLimiter('auth').
 
   return rateLimiters.general;
 }
@@ -149,18 +150,23 @@ export const rateLimiter = async (req: Request, res: Response, next: NextFunctio
     // Log rate limit hit
     logger.logRateLimitHit(clientKey, req.path);
 
+    // Track in anomaly detection
+    anomalyDetectionService.trackAuthFailure(clientKey);
+
     // Calculate retry after in seconds
     const retryAfter = isRateLimiterRes ? 
       Math.round((rateLimiterRes as RateLimiterRes).msBeforeNext / 1000) : 60;
 
     res.set('Retry-After', String(retryAfter));
 
-    // Create rate limit error
-    const error = createRateLimitError(
-      `Rate limit exceeded. Try again in ${retryAfter} seconds.`
-    );
-
-    throw error;
+    // Send response directly instead of throwing (avoids uncaught promise rejection)
+    res.status(429).json({
+      error: {
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: `Rate limit exceeded. Try again in ${retryAfter} seconds.`,
+        timestamp: new Date().toISOString(),
+      },
+    });
   }
 };
 
@@ -187,16 +193,21 @@ export const strictRateLimiter = async (req: Request, res: Response, next: NextF
       { path: req.path, userAgent: req.get('User-Agent') }
     );
 
+    // Track in anomaly detection
+    anomalyDetectionService.trackAuthFailure(clientKey);
+
     const retryAfter = rateLimiterRes && typeof rateLimiterRes === 'object' ?
       Math.round((rateLimiterRes as RateLimiterRes).msBeforeNext / 1000) : 900;
 
     res.set('Retry-After', String(retryAfter));
 
-    const error = createRateLimitError(
-      `Strict rate limit exceeded. Try again in ${Math.round(retryAfter / 60)} minutes.`
-    );
-
-    throw error;
+    res.status(429).json({
+      error: {
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: `Strict rate limit exceeded. Try again in ${Math.round(retryAfter / 60)} minutes.`,
+        timestamp: new Date().toISOString(),
+      },
+    });
   }
 };
 
@@ -245,11 +256,13 @@ export const progressiveRateLimiter = (options: {
 
       res.set('Retry-After', String(retryAfter));
 
-      const error = createRateLimitError(
-        `Rate limit exceeded with progressive penalty. Try again in ${retryAfter} seconds.`
-      );
-
-      throw error;
+      res.status(429).json({
+        error: {
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: `Rate limit exceeded with progressive penalty. Try again in ${retryAfter} seconds.`,
+          timestamp: new Date().toISOString(),
+        },
+      });
     }
   };
 };
@@ -278,11 +291,13 @@ export const endpointRateLimiter = (endpoint: keyof typeof rateLimiters) => {
 
       res.set('Retry-After', String(retryAfter));
 
-      const error = createRateLimitError(
-        `${endpoint} rate limit exceeded. Try again in ${retryAfter} seconds.`
-      );
-
-      throw error;
+      res.status(429).json({
+        error: {
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: `${endpoint} rate limit exceeded. Try again in ${retryAfter} seconds.`,
+          timestamp: new Date().toISOString(),
+        },
+      });
     }
   };
 };

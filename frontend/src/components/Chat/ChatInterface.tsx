@@ -34,20 +34,26 @@ import ChatSidebar from './ChatSidebar';
 import TypingIndicator from '../ui/TypingIndicator';
 import useStreamingResponse from '../../hooks/useStreamingResponse';
 
-// Simple toast function for error handling
+// Simple toast function for error handling — uses react-hot-toast via dynamic import
 const toast = ({ title, description }: { 
   title: string; 
   description: string; 
 }) => {
   console.error(`${title}: ${description}`);
-  alert(`${title}: ${description}`);
+  // Use react-hot-toast if available, otherwise just log
+  try {
+    const hotToast = require('react-hot-toast').default;
+    hotToast.error(`${title}: ${description}`);
+  } catch {
+    // Fallback: no blocking alert
+  }
 };
 
 // AI Model options - Updated April 2026
 const AI_MODELS = [
   // Ollama Local Models
   { id: 'gemma3:4b', name: 'Gemma 3 4B', provider: 'ollama', description: 'Google lightweight model for testing' },
-  { id: 'gemma4:e4b', name: 'Gemma 4 E4B Vision', provider: 'ollama', description: 'Google vision + image generation (ComfyUI)' },
+  { id: 'gemma4:e4b', name: 'Gemma 4 E4B (Vision + Audio)', provider: 'ollama', description: 'Google multimodal: vision, audio/voice, image gen (ComfyUI)' },
   { id: 'gpt-oss:20b', name: 'GPT-OSS 20B (Local)', provider: 'ollama', description: 'OpenAI open-source reasoning model w/ 256k context' },
   { id: 'lackadaisical-uncensored:latest', name: 'Lacky Uncensored', provider: 'ollama', description: 'Unrestricted local AI' },
   { id: 'llama3.3:latest', name: 'Llama 3.3', provider: 'ollama', description: 'Meta flagship local model' },

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import { config } from '../config/settings';
 import { logger } from '../utils/logger';
 
@@ -59,11 +60,11 @@ export function generateToken(userId: string, email?: string, role: 'user' | 'ad
 }
 
 /**
- * Generate refresh token
+ * Generate refresh token with unique jti to prevent collisions
  */
 export function generateRefreshToken(userId: string): string {
   return jwt.sign(
-    { userId, type: 'refresh' },
+    { userId, type: 'refresh', jti: crypto.randomBytes(16).toString('hex') },
     config.security.jwtSecret,
     { expiresIn: '30d', issuer: 'lackadaisical-ai-chat' }
   );

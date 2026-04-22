@@ -21,10 +21,15 @@ import {
   AlertCircle,
   Brain,
   History,
-  Sparkles
+  Sparkles,
+  User,
+  LogIn,
+  LogOut,
+  UserPlus,
+  Edit3
 } from 'lucide-react';
 import { useAppStore } from '../../store';
-import { UserSettings, UserMemoryPreferences } from '../../types';
+import { UserSettings, UserMemoryPreferences, UserProfile } from '../../types';
 import Button from '../ui/Button';
 import ThemeSwitcher from '../ui/ThemeSwitcher';
 import { useTheme } from '../ui/ThemeProvider';
@@ -41,7 +46,7 @@ const SettingsInterface: React.FC = () => {
     toggleCrossSession,
   } = useAppStore();
 
-  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'ai' | 'memory' | 'privacy' | 'advanced'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'account' | 'appearance' | 'ai' | 'memory' | 'privacy' | 'advanced'>('general');
   const [localSettings, setLocalSettings] = useState<UserSettings>(settings);
   const [localMemoryPrefs, setLocalMemoryPrefs] = useState<Partial<UserMemoryPreferences> | null>(null);
   const [memoryPrefsLoaded, setMemoryPrefsLoaded] = useState(false);
@@ -57,11 +62,25 @@ const SettingsInterface: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
 
+  // User account state
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authName, setAuthName] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [newDisplayName, setNewDisplayName] = useState('');
+  const [profileSaveStatus, setProfileSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+
   // Load settings on mount
   useEffect(() => {
     loadSettings();
     loadApiKeys();
     fetchMemoryPreferences();
+    loadUserProfile();
   }, []);
 
   // Update local memory preferences when store changes (after fetch completes)
@@ -114,6 +133,88 @@ const SettingsInterface: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to load API keys:', error);
+    }
+  };
+
+  const loadUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+
+      const response = await api.getProfile();
+      if (response.success && response.data?.user) {
+        setUserProfile(response.data.user);
+        setIsLoggedIn(true);
+        setNewDisplayName(response.data.user.name);
+      }
+    } catch {
+      // Not logged in or token expired
+      localStorage.removeItem('auth_token');
+      setIsLoggedIn(false);
+      setUserProfile(null);
+    }
+  };
+
+  const handleAuth = async () => {
+    setAuthError('');
+    setAuthLoading(true);
+    try {
+      let response;
+      if (authMode === 'register') {
+        if (!authName.trim()) {
+          setAuthError('Display name is required for registration');
+          setAuthLoading(false);
+          return;
+        }
+        response = await api.register(authEmail, authPassword, authName);
+      } else {
+        response = await api.login(authEmail, authPassword);
+      }
+
+      if (response.success && response.data) {
+        localStorage.setItem('auth_token', response.data.tokens.accessToken);
+        localStorage.setItem('refresh_token', response.data.tokens.refreshToken);
+        setUserProfile(response.data.user);
+        setIsLoggedIn(true);
+        setNewDisplayName(response.data.user.name);
+        setAuthEmail('');
+        setAuthPassword('');
+        setAuthName('');
+      }
+    } catch (error: any) {
+      setAuthError(error.response?.data?.error || error.response?.data?.message || 'Authentication failed');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await api.logout();
+    } catch {
+      // Ignore errors on logout
+    }
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('refresh_token');
+    setIsLoggedIn(false);
+    setUserProfile(null);
+    setEditingName(false);
+  };
+
+  const handleUpdateDisplayName = async () => {
+    if (!newDisplayName.trim() || !userProfile) return;
+    setProfileSaveStatus('saving');
+    try {
+      const response = await api.updateProfile({ name: newDisplayName.trim() });
+      if (response.success && response.data?.user) {
+        setUserProfile(response.data.user);
+        setEditingName(false);
+        setProfileSaveStatus('success');
+        setTimeout(() => setProfileSaveStatus('idle'), 2000);
+      }
+    } catch (error: any) {
+      setProfileSaveStatus('error');
+      setTimeout(() => setProfileSaveStatus('idle'), 3000);
     }
   };
 
@@ -213,6 +314,7 @@ const SettingsInterface: React.FC = () => {
 
   const tabs = [
     { id: 'general', label: 'General', icon: Settings },
+    { id: 'account', label: 'Account', icon: User },
     { id: 'appearance', label: 'Appearance', icon: Palette },
     { id: 'ai', label: 'AI Settings', icon: Zap },
     { id: 'memory', label: 'Memory', icon: Brain },
@@ -410,6 +512,185 @@ const SettingsInterface: React.FC = () => {
                     </label>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Account Settings */}
+            {activeTab === 'account' && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold">User Account</h2>
+                
+                {!isLoggedIn ? (
+                  <div className="space-y-6">
+                    <div className="p-4 bg-info/10 border border-info/20 rounded-lg">
+                      <div className="flex items-start space-x-3">
+                        <User className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
+                        <div>
+                          <h4 className="font-medium text-info">Optional Account</h4>
+                          <p className="text-sm text-base-content/70 mt-1">
+                            Creating an account enables username display, profile management, and secure token-based authentication.
+                            The app works without an account — this is entirely optional.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Login / Register Form */}
+                    <div className="p-6 bg-base-200 rounded-lg max-w-md">
+                      <div className="flex space-x-2 mb-6">
+                        <button
+                          onClick={() => { setAuthMode('login'); setAuthError(''); }}
+                          className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
+                            authMode === 'login' ? 'bg-primary text-primary-content' : 'bg-base-300 hover:bg-base-100'
+                          }`}
+                        >
+                          <LogIn className="w-4 h-4 inline mr-2" />
+                          Sign In
+                        </button>
+                        <button
+                          onClick={() => { setAuthMode('register'); setAuthError(''); }}
+                          className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
+                            authMode === 'register' ? 'bg-primary text-primary-content' : 'bg-base-300 hover:bg-base-100'
+                          }`}
+                        >
+                          <UserPlus className="w-4 h-4 inline mr-2" />
+                          Create Account
+                        </button>
+                      </div>
+
+                      <div className="space-y-4">
+                        {authMode === 'register' && (
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Username</label>
+                            <input
+                              type="text"
+                              value={authName}
+                              onChange={(e) => setAuthName(e.target.value)}
+                              placeholder="Choose a display name"
+                              maxLength={50}
+                              className="w-full px-3 py-2 bg-base-100 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                            />
+                          </div>
+                        )}
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Email</label>
+                          <input
+                            type="email"
+                            value={authEmail}
+                            onChange={(e) => setAuthEmail(e.target.value)}
+                            placeholder="your@email.com"
+                            className="w-full px-3 py-2 bg-base-100 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Password</label>
+                          <input
+                            type="password"
+                            value={authPassword}
+                            onChange={(e) => setAuthPassword(e.target.value)}
+                            placeholder={authMode === 'register' ? 'Min 8 characters' : 'Enter password'}
+                            className="w-full px-3 py-2 bg-base-100 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleAuth(); }}
+                          />
+                        </div>
+
+                        {authError && (
+                          <div className="p-3 bg-error/10 border border-error/20 rounded-lg text-sm text-error">
+                            {authError}
+                          </div>
+                        )}
+
+                        <Button
+                          variant="primary"
+                          onClick={handleAuth}
+                          disabled={authLoading || !authEmail || !authPassword}
+                          className="w-full"
+                        >
+                          {authLoading ? (
+                            <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
+                          ) : authMode === 'register' ? (
+                            <><UserPlus className="w-4 h-4 mr-2" /> Create Account</>
+                          ) : (
+                            <><LogIn className="w-4 h-4 mr-2" /> Sign In</>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* User Profile Card */}
+                    <div className="p-6 bg-base-200 rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center">
+                            <User className="w-8 h-8 text-primary" />
+                          </div>
+                          <div>
+                            {editingName ? (
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="text"
+                                  value={newDisplayName}
+                                  onChange={(e) => setNewDisplayName(e.target.value)}
+                                  maxLength={50}
+                                  className="px-3 py-1 bg-base-100 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg font-bold"
+                                  onKeyDown={(e) => { if (e.key === 'Enter') handleUpdateDisplayName(); if (e.key === 'Escape') setEditingName(false); }}
+                                  autoFocus
+                                />
+                                <Button variant="primary" size="sm" onClick={handleUpdateDisplayName} disabled={profileSaveStatus === 'saving'}>
+                                  {profileSaveStatus === 'saving' ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => { setEditingName(false); setNewDisplayName(userProfile?.name || ''); }}>
+                                  ✕
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center space-x-2">
+                                <h3 className="text-lg font-bold">{userProfile?.name}</h3>
+                                <button
+                                  onClick={() => { setEditingName(true); setNewDisplayName(userProfile?.name || ''); }}
+                                  className="text-primary hover:text-primary/80 transition-colors"
+                                  title="Edit display name"
+                                >
+                                  <Edit3 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            )}
+                            <p className="text-sm text-base-content/60">{userProfile?.email}</p>
+                            <p className="text-xs text-base-content/40 mt-1">
+                              Role: {userProfile?.role} • Joined: {userProfile?.createdAt ? new Date(userProfile.createdAt).toLocaleDateString() : 'Unknown'}
+                            </p>
+                            {profileSaveStatus === 'success' && (
+                              <p className="text-xs text-success mt-1">✓ Profile updated</p>
+                            )}
+                            {profileSaveStatus === 'error' && (
+                              <p className="text-xs text-error mt-1">Failed to update profile</p>
+                            )}
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={handleLogout}>
+                          <LogOut className="w-4 h-4 mr-2" />
+                          Sign Out
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Quick Name Change Info */}
+                    <div className="p-4 bg-success/10 border border-success/20 rounded-lg">
+                      <div className="flex items-start space-x-3">
+                        <CheckCircle className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
+                        <div>
+                          <h4 className="font-medium text-success">Username Management</h4>
+                          <p className="text-sm text-base-content/70 mt-1">
+                            Click the edit icon next to your name to change your display name at any time.
+                            Your username is shown in the sidebar and used throughout the app.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
