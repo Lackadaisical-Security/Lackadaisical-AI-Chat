@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { toast as hotToast } from 'react-hot-toast';
 import api from '../../services/api';
 import { 
   Bot, 
@@ -34,19 +35,9 @@ import ChatSidebar from './ChatSidebar';
 import TypingIndicator from '../ui/TypingIndicator';
 import useStreamingResponse from '../../hooks/useStreamingResponse';
 
-// Simple toast function for error handling — uses react-hot-toast via dynamic import
-const toast = ({ title, description }: { 
-  title: string; 
-  description: string; 
-}) => {
-  console.error(`${title}: ${description}`);
-  // Use react-hot-toast if available, otherwise just log
-  try {
-    const hotToast = require('react-hot-toast').default;
-    hotToast.error(`${title}: ${description}`);
-  } catch {
-    // Fallback: no blocking alert
-  }
+// Simple toast wrapper
+const toast = ({ title, description }: { title: string; description: string }) => {
+  hotToast.error(`${title}: ${description}`);
 };
 
 // AI Model options - Updated April 2026
@@ -210,6 +201,12 @@ const ChatInterface: React.FC = () => {
             accumulatedContent += chunk.content;
             updateAssistantMessage(assistantMessage.id, accumulatedContent);
           }
+        },
+        {
+          model: selectedModel,
+          temperature: chatTemperature,
+          maxTokens,
+          attachmentIds: currentAttachments.map(f => f.id),
         }
       );
 
