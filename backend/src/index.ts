@@ -523,9 +523,9 @@ class LackadaisicalAIServer {
     router.get('/anomalies', asyncHandler(async (req: Request, res: Response) => {
       const { type, severity, since, limit } = req.query;
       const anomalies = anomalyDetectionService.getAnomalies({
-        type: type as string | undefined,
-        severity: severity as string | undefined,
-        since: since as string | undefined,
+        type: typeof type === 'string' ? (type as import('./services/AnomalyDetectionService').AnomalyType) : undefined,
+        severity: typeof severity === 'string' ? (severity as 'low' | 'medium' | 'high' | 'critical') : undefined,
+        since: typeof since === 'string' ? since : undefined,
         limit: limit ? parseInt(limit as string, 10) : 50,
       });
       res.json({ success: true, data: { anomalies, count: anomalies.length } });
@@ -541,7 +541,8 @@ class LackadaisicalAIServer {
     router.post('/anomalies/:id/resolve', asyncHandler(async (req: Request, res: Response) => {
       const resolved = anomalyDetectionService.resolveAnomaly(req.params.id);
       if (!resolved) {
-        return res.status(404).json({ success: false, error: 'Anomaly not found' });
+        res.status(404).json({ success: false, error: 'Anomaly not found' });
+        return;
       }
       res.json({ success: true, message: 'Anomaly resolved' });
     }));

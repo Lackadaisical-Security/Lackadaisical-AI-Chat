@@ -5,7 +5,41 @@ All notable changes to Lackadaisical AI Chat will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0-rc1] - 2026-04-21
+## [2.0.0-rc1-patch1] - 2026-04-23
+
+### 🐛 Critical Bug Fixes
+
+#### Streaming Chat — Message/Response Registration Fixed
+- **Root cause**: `api.streamMessage()` was using `EventSource` (GET) to `/api/v1/chat/stream`, a route that does not exist on the backend. The backend only accepts streaming via `POST /api/v1/chat` with `stream: true` in the JSON body.
+- **Fix**: Replaced `EventSource` with `fetch` POST in `api.streamMessage()`. The method now reads the SSE stream directly from the response body using `ReadableStream` + `TextDecoder`, matching the backend's actual SSE implementation.
+- **Non-streaming fallback**: If the backend returns `Content-Type: application/json` instead of `text/event-stream`, the response is parsed as a regular JSON chat response.
+- **Model/settings wired through**: Selected model, temperature, and max-tokens are now included in every streaming and non-streaming chat request.
+
+#### Frontend Build Fixed
+- `ChatInterface.tsx`: Removed `require('react-hot-toast')` dynamic import (invalid in ESM browser builds). Replaced with a static `import { toast as hotToast } from 'react-hot-toast'` at the top of the file.
+
+#### Backend TypeScript Build Fixed
+- `index.ts`: Fixed `AnomalyType` and severity type casts for `/security/anomalies` query parameters (were `string | undefined`, now properly typed).
+- `index.ts`: Fixed missing `return` path in the `/anomalies/:id/resolve` handler — removed `return res.status(404)` pattern that caused TypeScript error TS7030.
+
+### ✨ New Features
+
+#### Mobile App (Expo / React Native)
+- **Full companion mobile app** in `mobile/` directory
+- **Windows-first setup**: `cd mobile && npm install && npx expo start`
+- **Real-time streaming chat** via fetch POST SSE (same protocol as fixed web frontend)
+- **Chat screen**: Model selector, temperature control, max-tokens control, file attachment support, streaming stop button
+- **Companion screen**: Personality mood display, quick messages, connection status
+- **Sessions screen**: Create, load, and delete sessions; loads conversation history from backend
+- **Journal screen**: Create, edit, delete journal entries with mood selector
+- **Settings screen**: Backend URL config (for LAN access from device), model selection, temperature, max-tokens, theme, haptics, sound, streaming toggle, uncensored mode
+- **Connection health hook**: Polls `/health` every 30 seconds, shows banner when backend/Ollama offline
+- **Secure storage**: JWT tokens stored in device secure enclave via `expo-secure-store`
+- **EAS Build**: `eas.json` configured for development APK, preview APK, and production App Bundle
+- **TypeScript**: Strict mode, shared types matching backend API contracts
+- **Platform priority**: Windows development → Android APK → iOS
+
+
 
 ### 🚀 New Features
 

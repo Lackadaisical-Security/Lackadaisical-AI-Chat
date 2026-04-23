@@ -1,15 +1,17 @@
 # 🧠 Lackadaisical AI Chat - v2.0.0-rc1
 
-**Release Date:** April 21, 2026  
+**Release Date:** April 23, 2026  
 **Version:** 2.0.0-rc1 - Release Candidate with IDE, Emulator, Image Gen, User Accounts & Enhanced Memory  
 **License:** MIT (Free Forever)  
 **Development Status:** 🏗️ Release Candidate 1 🏗️
 
 ## 🎉 Your Personal AI Friend with Memory!
 
-Welcome to **Lackadaisical AI Chat** - an enterprise-grade, open-source AI companion that runs entirely on your computer with a complete Memory Management System, Code IDE, Traffic Emulator, and more! Meet **Lacky**, your personal AI friend who remembers your conversations, understands your emotions, and grows with you over time.
+Welcome to **Lackadaisical AI Chat** - an enterprise-grade, open-source AI companion that runs entirely on your computer with a complete Memory Management System, Code IDE, Traffic Emulator, **Mobile App**, and more! Meet **Lacky**, your personal AI friend who remembers your conversations, understands your emotions, and grows with you over time.
 
-**🚀 RC1 Status**: This release is feature-complete for the core experience. All major systems are functional and tested (140 tests passing — 111 backend + 29 frontend). User accounts, username management, and enhanced Gemma 4 multimodal support (vision + audio) are now included.
+**🚀 RC1 Status**: This release is feature-complete for the core experience. All major systems are functional and tested (140 tests passing — 111 backend + 29 frontend). User accounts, username management, enhanced Gemma 4 multimodal support (vision + audio), and **streaming has been fixed** to correctly use POST-based SSE.
+
+> **Streaming Fix (April 2026):** The chat streaming was previously broken due to the frontend using `EventSource` GET requests to a non-existent `/chat/stream` endpoint. This has been corrected — streaming now uses `fetch` POST to `/api/v1/chat` with `stream: true` in the JSON body, matching the backend's implementation. Model selection, temperature, and max-token settings are now properly wired through to the API call.
 
 Unlike cloud-based AI services, **everything stays private on your machine**. No data collection, no privacy concerns - just you and your AI companion with persistent memory.
 
@@ -129,7 +131,19 @@ Switch between AI providers on the fly without restarting:
 - **Real-time Streaming** - Watch AI responses appear in real-time
 - **Theme Support** - Multiple color themes (dark, light, and more)
 - **Session Switching** - Easy navigation between different conversations
-- **Mobile Friendly** - Works great on phones and tablets
+- **Mobile Friendly** - Works great on phones and tablets (see [Mobile App](mobile/README.md))
+
+### 📱 **Mobile App (NEW in RC1!)**
+- **React Native / Expo** - Full-featured companion on Android and iOS
+- **Full Streaming Chat** - Real-time streaming responses via POST SSE
+- **Session Management** - View and switch sessions from your phone
+- **Journal** - Create and read journal entries on the go
+- **Companion Dashboard** - Personality mood display and quick messages
+- **Windows-First Setup** - EAS Build targets Android APK directly from Windows
+- **Secure Storage** - JWT tokens stored in device secure enclave (expo-secure-store)
+- **Connection Health** - Real-time backend / Ollama status indicator
+- **Model Selector** - Choose from all configured Ollama and cloud models
+- See **[mobile/README.md](mobile/README.md)** for setup and build instructions
 
 ### 🔌 **Plugin Ecosystem**
 - **Weather Plugin** - Get weather updates (with fallback data when offline)

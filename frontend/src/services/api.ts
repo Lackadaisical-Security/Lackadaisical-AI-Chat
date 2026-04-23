@@ -73,61 +73,147 @@ class ApiService {
     }
   }
 
-  // Streaming chat method
-  streamMessage(
-    message: string, 
+  // Streaming chat method — uses fetch POST to /api/v1/chat with stream:true in body.
+  // EventSource (GET) is intentionally NOT used here because the backend requires
+  // a POST body containing the message, session_id, and options.
+  async streamMessage(
+    message: string,
     sessionId?: string,
-    onChunk?: (chunk: any) => void
+    onChunk?: (chunk: any) => void,
+    options?: {
+      model?: string;
+      temperature?: number;
+      maxTokens?: number;
+      useUncensored?: boolean;
+      attachmentIds?: string[];
+    }
   ): Promise<ApiResponse<Message>> {
-    return new Promise((resolve, reject) => {
-      const url = `${this.baseURL}/api/v1/chat/stream?message=${encodeURIComponent(message)}&session_id=${sessionId || 'default'}`;
-      const eventSource = new EventSource(url);
-      
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'text/event-stream',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const controller = new AbortController();
+    // 5-minute timeout for long AI responses
+    const timeoutId = setTimeout(() => controller.abort(), 300000);
+
+    try {
+      const response = await fetch(`${this.baseURL}/api/v1/chat`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          message,
+          session_id: sessionId || 'default',
+          stream: true,
+          ...(options?.model && { model: options.model }),
+          ...(options?.temperature !== undefined && { temperature: options.temperature }),
+          ...(options?.maxTokens && { max_tokens: options.maxTokens }),
+          ...(options?.useUncensored !== undefined && { useUncensored: options.useUncensored }),
+          ...(options?.attachmentIds && { attachment_ids: options.attachmentIds }),
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('text/event-stream')) {
+        // Non-streaming fallback: parse as regular JSON response
+        const json = await response.json();
+        return {
+          success: true,
+          data: {
+            id: json.conversation_id?.toString() || Date.now().toString(),
+            role: 'assistant' as const,
+            content: json.response || '',
+            timestamp: new Date().toISOString(),
+            tokens: json.tokens_used,
+            model: json.model_used,
+          }
+        };
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('Unable to read response stream');
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
       let fullResponse = '';
       let metadata: any = {};
-      
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          if (data.type === 'content' && data.content) {
-            fullResponse += data.content;
-            onChunk?.(data);
-          } else if (data.type === 'metadata') {
-            metadata = data;
-          } else if (data.type === 'end') {
-            eventSource.close();
-            resolve({
-              success: true,
-              data: {
-                id: metadata.conversationId?.toString() || Date.now().toString(),
-                role: 'assistant' as const,
-                content: fullResponse,
-                timestamp: new Date().toISOString(),
-                tokens: metadata.tokens,
-                model: metadata.model
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            try {
+              const data = JSON.parse(line.slice(6));
+
+              if (data.type === 'content' && data.content) {
+                fullResponse += data.content;
+                onChunk?.(data);
+              } else if (data.type === 'metadata') {
+                metadata = data;
+                onChunk?.(data);
+              } else if (data.type === 'end') {
+                onChunk?.(data);
+                return {
+                  success: true,
+                  data: {
+                    id: metadata.conversationId?.toString() || Date.now().toString(),
+                    role: 'assistant' as const,
+                    content: fullResponse,
+                    timestamp: new Date().toISOString(),
+                    tokens: metadata.tokens,
+                    model: metadata.model,
+                  }
+                };
+              } else if (data.type === 'error') {
+                onChunk?.(data);
+                throw new Error(data.error || 'Streaming failed');
+              } else {
+                onChunk?.(data);
               }
-            });
-          } else if (data.type === 'error') {
-            eventSource.close();
-            reject(new Error(data.error || 'Streaming failed'));
+            } catch (parseErr) {
+              // Skip malformed SSE lines
+              console.warn('Failed to parse SSE chunk:', line, parseErr);
+            }
           }
-        } catch (error) {
-          console.error('Error parsing stream data:', error);
+        }
+      } finally {
+        reader.releaseLock();
+      }
+
+      // Stream ended without an explicit 'end' chunk — return what we have
+      return {
+        success: true,
+        data: {
+          id: metadata.conversationId?.toString() || Date.now().toString(),
+          role: 'assistant' as const,
+          content: fullResponse,
+          timestamp: new Date().toISOString(),
+          tokens: metadata.tokens,
+          model: metadata.model,
         }
       };
-      
-      eventSource.onerror = (error) => {
-        eventSource.close();
-        reject(new Error('EventSource failed'));
-      };
-      
-      // Cleanup after 5 minutes
-      setTimeout(() => {
-        eventSource.close();
-        reject(new Error('Streaming timeout'));
-      }, 300000);
-    });
+
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   async getSessions(): Promise<ApiResponse<ChatSession[]>> {
