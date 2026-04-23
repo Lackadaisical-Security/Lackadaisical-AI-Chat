@@ -9,9 +9,7 @@
 
 Welcome to **Lackadaisical AI Chat** - an enterprise-grade, open-source AI companion that runs entirely on your computer with a complete Memory Management System, Code IDE, Traffic Emulator, **Mobile App**, and more! Meet **Lacky**, your personal AI friend who remembers your conversations, understands your emotions, and grows with you over time.
 
-**🚀 RC1 Status**: This release is feature-complete for the core experience. All major systems are functional and tested (140 tests passing — 111 backend + 29 frontend). User accounts, username management, enhanced Gemma 4 multimodal support (vision + audio), and **streaming has been fixed** to correctly use POST-based SSE.
-
-> **Streaming Fix (April 2026):** The chat streaming was previously broken due to the frontend using `EventSource` GET requests to a non-existent `/chat/stream` endpoint. This has been corrected — streaming now uses `fetch` POST to `/api/v1/chat` with `stream: true` in the JSON body, matching the backend's implementation. Model selection, temperature, and max-token settings are now properly wired through to the API call.
+**🚀 RC1 Status**: This release is feature-complete for the core experience. All major systems are functional and tested (140 tests passing — 111 backend + 29 frontend). User accounts, username management, enhanced Gemma 4 multimodal support (vision + audio), and **streaming has been fixed** to correctly use POST-based SSE. Custom Models Soon
 
 Unlike cloud-based AI services, **everything stays private on your machine**. No data collection, no privacy concerns - just you and your AI companion with persistent memory.
 
